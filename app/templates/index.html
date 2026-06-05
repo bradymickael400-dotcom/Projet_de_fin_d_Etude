@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARGOS — Black Box Monitoring Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}">
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-bg"><div class="login-grid"></div></div>
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="brand">ARGOS</div>
+      <div class="sub">Black Box Monitoring Platform</div>
+    </div>
+    <div class="form-group">
+      <label>Compte</label>
+      <select id="login-role">
+        <option value="superadmin">Super Admin (Équipe ARGOS)</option>
+        <option value="owner">Propriétaire de Boîte Noire</option>
+        <option value="company">Entreprise Abonnée</option>
+        <option value="driver">Chauffeur</option>
+        <option value="client">Client Final</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Identifiant</label>
+      <input type="text" id="login-user" placeholder="user@argos.io" value="admin@argos.io">
+    </div>
+    <div class="form-group">
+      <label>Mot de passe</label>
+      <input type="password" id="login-pass" placeholder="••••••••" value="••••••••">
+    </div>
+    <button class="btn-primary" onclick="doLogin()">🔐 Connexion Sécurisée</button>
+    <p style="text-align:center;margin-top:12px;font-size:12px;color:var(--text3)">Sélectionnez un rôle pour explorer la plateforme</p>
+  </div>
+</div>
+
+<!-- NOTIFICATIONS PANEL -->
+<div class="notif-panel" id="notif-panel">
+  <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+    <span style="font-size:13px;font-weight:600">Notifications</span>
+    <button onclick="closeNotif()" class="btn-icon" style="padding:4px 8px">✕</button>
+  </div>
+  <div id="notif-list"></div>
+</div>
+
+<!-- ALERT PANEL -->
+<div id="alert-panel"></div>
+
+<!-- MODAL CONTAINER -->
+<div id="modal-root"></div>
+
+<!-- APP -->
+<div id="app">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+    <div class="topbar-brand">ARGOS</div>
+    <div class="topbar-sep"></div>
+    <span class="topbar-role" id="topbar-role-label">SUPER ADMIN</span>
+    <div class="topbar-search">
+      <input type="text" placeholder="Rechercher conteneur, entreprise..." id="global-search" oninput="globalSearch(this.value)">
+    </div>
+    <div class="topbar-actions">
+      <center><div id="live-time" style="font-family:var(--mono);font-size:20px;color:var(--cyan);white-space:nowrap;"></div></center>
+      <button class="notif-btn" onclick="toggleNotif()" id="notif-btn">
+        🔔 <span class="notif-badge" id="notif-count">4</span>
+      </button>
+      <div class="user-avatar" id="user-avatar" onclick="showModal('settings')">SA</div>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+      <div id="nav-container"></div>
+    </div>
+
+    <!-- CONTENT AREA -->
+    <div class="content" id="content-area">
+      <div id="pages-container"></div>
+    </div>
+  </div>
+</div>
+
+<script src="{{url_for('static', filename='js/script.js')}}"></script>
+</body>
+</html>
