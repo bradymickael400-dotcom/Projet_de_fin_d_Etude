@@ -332,47 +332,296 @@ li {
 
 
 #legend-humidity {
-  bottom: 20px;
-  left: 20px;
-  background: rgba(3, 95, 231, 0.9);
+  background: rgba(3, 94, 231, 0.548);
   border: 1px solid rgb(12, 82, 212);
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 11px;
+  width: 120px;
+
 }
 #legend-wind {
-  bottom: 20px;
-  left: 20px;
-  background: rgba(114, 212, 89, 0.9);
+  background: rgba(114, 212, 89, 0.507);
   border: 1px solid rgb(32, 223, 7);
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 11px;
+  width: 120px;
+
 }
 #legend-shocks {
-  bottom: 20px;
-  left: 20px;
-  background: rgba(236, 58, 3, 0.9);
+  background: rgba(238, 58, 4, 0.5);
   border: 1px solid rgb(240, 12, 12);
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 11px;
+  width: 120px;
+
 }
 #legend-pressure {
-  bottom: 20px;
-  left: 20px;
-  background: rgba(114, 6, 236, 0.9);
+  background: rgba(113, 6, 236, 0.623);
   border: 1px solid rgb(149, 7, 231);
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 11px;
+  width: 120px;
+
 }
 #legend-temperature {
-  bottom: 20px;
-  left: 20px;
-  background: rgba(238, 234, 5, 0.9);
-  border: 1px solid rgb(241, 238, 8);
+  background: rgba(163, 148, 7, 0.692);
+  border: 1px solid rgb(255, 252, 50);
   border-radius: 8px;
-  padding: 10px_12px;
+  padding: 10px 12px;
+  font-size: 11px;
+  width: 120px;
+}
+
+#legend-list{
+  display: flex;
+  flex-direction:row-reverse;
+  gap: 10px;
+}
+
+
+
+/* attribue de responsabiliter  */
+
+
+
+/* =========================================
+   MODIFICATIONS POUR UNE SIDEBAR TOUJOURS VISIBLE
+   ET UN RESPONSIVE COMPLET
+   ========================================= */
+
+/* --- Suppression de la réduction de la sidebar sur les écrans intermédiaires --- */
+/* (Remplacer la règle @media(max-width:900px) existante) */
+@media(max-width:900px) {
+  /* On ne réduit plus la sidebar ni on ne cache les labels */
+}
+
+/* --- Nouveau comportement mobile (off-canvas) --- */
+@media(max-width:600px) {
+  .sidebar {
+    position: fixed;
+    left: -220px;
+    top: 52px;
+    bottom: 0;
+    z-index: 200;
+    width: 220px;           /* Largeur complète même sur mobile */
+    transition: left var(--trans);
+    box-shadow: var(--shadow); /* Ombre pour mieux la distinguer */
+  }
+  .sidebar.open {
+    left: 0;
+  }
+
+  /* Les labels et sections restent visibles quand le menu est ouvert */
+  .nav-label,
+  .sidebar-section {
+    display: block !important;
+  }
+
+  /* Espacement tactile plus confortable */
+  .nav-item {
+    padding: 12px 16px;
+    margin: 2px 8px;
+    font-size: 14px;
+  }
+
+  /* Bouton menu mobile (déjà présent mais on s'assure qu'il est visible) */
+  .mobile-menu-btn {
+    display: flex;
+  }
+}
+
+/* --- Masquer l'attribution Leaflet --- */
+.leaflet-control-attribution {
+  display: none !important;
+}
+
+/* --- S'assurer que la sidebar défile bien sur tous les écrans --- */
+.sidebar {
+  overflow-y: auto;    /* Déjà présent, on le renforce */
+  -webkit-overflow-scrolling: touch; /* Meilleur défilement sur iOS */
+}
+
+/* --- Ajustement optionnel pour les très petits mobiles (<400px) --- */
+@media(max-width:400px) {
+  .sidebar {
+    width: 100vw;       /* Occupe toute la largeur */
+    left: -100vw;
+  }
+  .sidebar.open {
+    left: 0;
+  }
+}
+
+/* Messages du chat IA */
+.ai-msg { display:flex; margin-bottom:12px; }
+.ai-msg.ai { justify-content:flex-start; }
+.ai-msg.user { justify-content:flex-end; }
+.ai-msg .msg-bubble {
+  max-width:70%;
+  padding:10px 14px;
+  border-radius:12px;
+  font-size:13px;
+  line-height:1.5;
+}
+.ai-msg.ai .msg-bubble {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.ai-msg.user .msg-bubble {
+  background: rgba(0,212,255,0.15);
+  border: 1px solid rgba(0,212,255,0.3);
+  color: var(--text);
+}
+
+/* Barre de saisie */
+#ai-chat-input::placeholder { color: var(--text3); }
+
+/* Boutons rapides */
+.ai-quick-btn, .ai-chip { padding:4px 10px; background:var(--bg3); border:1px solid var(--border); border-radius:4px; cursor:pointer; color:var(--text2); font-size:12px; }
+.ai-quick-btn:hover { background:var(--border2); color:var(--text); }
+
+/* Pertes card */
+.losses-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-top: 10px;
+}
+.losses-title {
+  font-weight: 600;
+  color: var(--amber);
+  margin-bottom: 10px;
+}
+.loss-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.loss-item:last-child { border-bottom: none; }
+.loss-total {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 10px;
+  margin-top: 6px;
+  border-top: 1px solid var(--border2);
+  font-weight: 600;
+}
+
+/* Impacts card */
+.impacts-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-top: 10px;
+}
+.impacts-title {
+  font-weight: 600;
+  color: var(--cyan);
+  margin-bottom: 10px;
+}
+.impacts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+.impacts-grid div span {
+  color: var(--text3);
   font-size: 11px;
 }
+.impact-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: 0.2s;
+}
+.impact-item:hover { border-color: var(--cyan); }
+.impact-item.selected { border-color: var(--cyan); background: rgba(0,212,255,0.08); }
+.prob-badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: bold;
+}
+.prob-high { background: rgba(255,68,68,0.15); color: var(--red); }
+.prob-med  { background: rgba(255,171,0,0.15); color: var(--amber); }
+.prob-low  { background: rgba(0,230,118,0.15); color: var(--green); }
+
+/* Boutons d'action pour le rapport */
+.ai-action-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: 0.2s;
+}
+.ai-action-btn.primary {
+  background: var(--cyan);
+  color: #000;
+}
+.ai-action-btn.primary:hover { background: #00b8e0; }
+.ai-action-btn.secondary {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.ai-action-btn.secondary:hover { background: var(--border); }
+
+
+/* ===== THÈME CLAIR ===== */
+.theme-light {
+  --bg: #f4f6f9;
+  --bg2: #ffffff;
+  --bg3: #f0f2f5;
+  --bg4: #e4e8ec;
+  --panel: #ffffff;
+  --card: #ffffff;
+  --card2: #f8f9fb;
+  --border: #d1d5db;
+  --border2: #c4c9d1;
+  --border3: #b0b7c0;
+  --text: #1a1d23;
+  --text2: #4b5563;
+  --text3: #7a8392;
+  --cyan: #007a99;
+  --cyan2: #006b8a;
+  --cyan3: #005a73;
+  --green: #008a3d;
+  --green2: #007033;
+  --green3: #005526;
+  --amber: #bf7a00;
+  --amber2: #9e6600;
+  --amber3: #7a4e00;
+  --red: #cc2222;
+  --red2: #aa1a1a;
+  --red3: #881111;
+  --blue: #1a5acc;
+  --blue2: #1347a8;
+  --blue3: #0d3380;
+  --purple: #8833cc;
+  --purple2: #6e26a6;
+  --purple3: #541d82;
+  --shadow: 0 4px 24px rgba(0,0,0,.1);
+  --glow: 0 0 20px rgba(0,212,255,.15);
+}
+
