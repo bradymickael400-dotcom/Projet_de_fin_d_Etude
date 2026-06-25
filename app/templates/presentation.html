@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ARGOS — Plateforme Intelligente de Gestion Maritime</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --navy-0:#020C16;
+  --navy-1:#071525;
+  --navy-2:#0C1E30;
+  --navy-3:#112538;
+  --cyan:#00D4FF;
+  --cyan-dim:#00A8CC;
+  --cyan-ghost:rgba(0,212,255,0.08);
+  --cyan-mid:rgba(0,212,255,0.18);
+  --blue:#1A6FE8;
+  --orange:#FF6B00;
+  --orange-ghost:rgba(255,107,0,0.1);
+  --gold:#FFB800;
+  --purple:#A064FF;
+  --green:#64C864;
+  --text-1:#E8F4F8;
+  --text-2:#7EAACC;
+  --text-3:#3E6880;
+  --border:rgba(0,212,255,0.12);
+  --border-s:rgba(0,212,255,0.28);
+  --disp:'Space Grotesk',sans-serif;
+  --body:'Inter',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --r:12px;
+  --rl:20px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:var(--body);background:var(--navy-0);color:var(--text-1);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+/* ─── NAV ─── */
+nav{position:fixed;inset:0 0 auto;z-index:999;height:70px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;background:rgba(2,12,22,.65);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-bottom:1px solid var(--border);transition:background .35s,border-color .35s}
+nav.scrolled{background:rgba(2,12,22,.96);border-bottom-color:var(--border-s)}
+.nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none}
+.logo-box{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--cyan),var(--blue));display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:800;font-size:13px;color:#fff;letter-spacing:-0.5px;flex-shrink:0}
+.logo-name{font-family:var(--disp);font-weight:800;font-size:19px;color:var(--text-1);letter-spacing:3px}
+.logo-name em{color:var(--cyan);font-style:normal}
+.nav-links{display:flex;align-items:center;gap:34px;list-style:none}
+.nav-links a{font-size:14px;font-weight:500;color:var(--text-2);text-decoration:none;letter-spacing:.4px;transition:color .2s}
+.nav-links a:hover{color:var(--cyan)}
+.nav-cta{background:linear-gradient(135deg,var(--cyan),var(--blue))!important;color:#fff!important;padding:9px 22px;border-radius:8px;font-weight:600!important;transition:transform .2s,box-shadow .2s!important}
+.nav-cta:hover{transform:translateY(-2px)!important;box-shadow:0 6px 28px rgba(0,212,255,.35)!important}
+
+/* ─── HERO ─── */
+#hero{position:relative;height:100vh;min-height:680px;overflow:hidden;display:flex;align-items:center;max-width:none;padding:0;margin:0}
+.hero-bg{position:absolute;inset:0;z-index:0}
+.hero-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.8s ease-in-out}
+.hero-slide.active{opacity:1}
+.hero-slide::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(2,12,22,.90) 0%,rgba(7,21,37,.78) 45%,rgba(0,60,100,.38) 100%)}
+#particle-canvas{position:absolute;inset:0;z-index:1;opacity:.55}
+.hero-body{position:relative;z-index:2;max-width:1220px;margin:0 auto;padding:0 48px;padding-top:70px;width:100%}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:10px;background:var(--cyan-ghost);border:1px solid var(--border-s);border-radius:100px;padding:7px 18px;margin-bottom:32px}
+.hero-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);animation:dot-pulse 2s infinite}
+@keyframes dot-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+.hero-eyebrow span{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--cyan);letter-spacing:2.5px;text-transform:uppercase}
+h1.hero-h{font-family:var(--disp);font-size:clamp(42px,5.8vw,80px);font-weight:800;line-height:1.03;letter-spacing:-2.5px;margin-bottom:28px;max-width:860px}
+.line-g{background:linear-gradient(90deg,var(--cyan) 0%,var(--blue) 60%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:18px;font-weight:400;color:var(--text-2);max-width:580px;line-height:1.72;margin-bottom:44px}
+.hero-ctas{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:60px}
+.btn-primary{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#fff;font-family:var(--disp);font-weight:600;font-size:15px;padding:15px 34px;border-radius:10px;text-decoration:none;border:none;cursor:pointer;transition:transform .22s,box-shadow .22s;box-shadow:0 4px 28px rgba(0,212,255,.22)}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 10px 42px rgba(0,212,255,.42)}
+.btn-ghost{display:inline-flex;align-items:center;gap:10px;background:transparent;color:var(--text-1);font-family:var(--disp);font-weight:500;font-size:15px;padding:15px 30px;border-radius:10px;text-decoration:none;border:1px solid var(--border-s);cursor:pointer;transition:background .2s,border-color .2s}
+.btn-ghost:hover{background:var(--cyan-ghost);border-color:var(--cyan)}
+.hero-stats{display:flex;gap:52px;flex-wrap:wrap}
+.hstat-val{font-family:var(--disp);font-size:38px;font-weight:800;background:linear-gradient(90deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.hstat-suf{font-family:var(--disp);font-size:22px;font-weight:800;background:linear-gradient(90deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hstat-lbl{font-size:11.5px;font-weight:500;color:var(--text-3);margin-top:7px;text-transform:uppercase;letter-spacing:1.2px;font-family:var(--mono)}
+.slide-dots{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);z-index:3;display:flex;gap:8px}
+.sdot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.28);cursor:pointer;transition:all .3s}
+.sdot.active{background:var(--cyan);width:26px;border-radius:4px}
+.progress-bar{position:absolute;bottom:0;left:0;height:2.5px;background:linear-gradient(90deg,var(--cyan),var(--blue));z-index:3;animation:prog 10s linear infinite}
+@keyframes prog{from{width:0}to{width:100%}}
+
+/* ─── TICKER ─── */
+.ticker-wrap{background:var(--cyan-ghost);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:14px 0;overflow:hidden}
+.ticker{display:flex;white-space:nowrap;animation:tick 36s linear infinite}
+.ticker:hover{animation-play-state:paused}
+.t-item{display:inline-flex;align-items:center;gap:12px;padding:0 36px;font-family:var(--mono);font-size:11.5px;font-weight:500;color:var(--cyan-dim);text-transform:uppercase;letter-spacing:1.5px}
+.t-sep{color:var(--text-3);font-size:14px}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ─── CONTENT WRAPPER ─── */
+.cw{max-width:1220px;margin:0 auto;padding:100px 48px}
+.cw-narrow{max-width:1220px;margin:0 auto;padding:0 48px}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--border-s),transparent);max-width:1220px;margin:0 auto}
+
+/* ─── SECTION LABELS ─── */
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;font-weight:500;color:var(--cyan);text-transform:uppercase;letter-spacing:2.5px;margin-bottom:18px}
+.eyebrow::before{content:'';display:block;width:22px;height:1px;background:var(--cyan)}
+.eyebrow.centered{justify-content:center}
+.eyebrow.centered::before{display:none}
+h2.sh{font-family:var(--disp);font-size:clamp(30px,4vw,52px);font-weight:800;line-height:1.08;letter-spacing:-1.5px;margin-bottom:18px}
+h2.sh .acc{color:var(--cyan)}
+p.sb{font-size:17px;color:var(--text-2);line-height:1.72;max-width:620px}
+
+/* ─── REVEAL ─── */
+.rev{opacity:0;transform:translateY(32px);transition:opacity .75s ease,transform .75s ease}
+.rev.vis{opacity:1;transform:translateY(0)}
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}.d4{transition-delay:.4s}.d5{transition-delay:.5s}
+
+/* ─── ABOUT ─── */
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.about-img-wrap{position:relative}
+.about-img{width:100%;height:500px;object-fit:cover;border-radius:var(--rl);display:block}
+.about-badge{position:absolute;bottom:-26px;right:-26px;background:var(--navy-2);border:1px solid var(--border-s);border-radius:var(--r);padding:22px 26px;backdrop-filter:blur(12px)}
+.ab-lbl{font-family:var(--mono);font-size:9.5px;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+.ab-val{font-family:var(--disp);font-size:32px;font-weight:800;color:var(--cyan);line-height:1}
+.ab-sub{font-size:11.5px;color:var(--text-2);margin-top:5px}
+.about-lead{font-size:20px;font-weight:500;line-height:1.6;margin-bottom:22px}
+.about-text{font-size:15.5px;color:var(--text-2);line-height:1.78;margin-bottom:34px}
+.hl-list{display:flex;flex-direction:column;gap:14px}
+.hl{display:flex;align-items:flex-start;gap:14px;padding:16px 18px;background:var(--cyan-ghost);border-left:2.5px solid var(--cyan);border-radius:0 var(--r) var(--r) 0}
+.hl-ico{font-size:20px;flex-shrink:0;margin-top:1px}
+.hl-text{font-size:13.5px;color:var(--text-2);line-height:1.55}
+.hl-text strong{display:block;color:var(--text-1);font-weight:600;margin-bottom:3px;font-size:14px}
+
+/* ─── FEATURES ─── */
+.feat-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:56px;gap:40px}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.fc{background:var(--navy-2);border:1px solid var(--border);border-radius:var(--rl);padding:34px;position:relative;overflow:hidden;transition:border-color .3s,transform .3s,box-shadow .3s;cursor:default}
+.fc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--blue));opacity:0;transition:opacity .3s}
+.fc:hover{border-color:var(--border-s);transform:translateY(-5px);box-shadow:0 22px 60px rgba(0,212,255,.07)}
+.fc:hover::before{opacity:1}
+.fi{width:50px;height:50px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:22px}
+.fc-title{font-family:var(--disp);font-size:18.5px;font-weight:700;margin-bottom:11px}
+.fc-desc{font-size:13.5px;color:var(--text-2);line-height:1.65}
+.fc-tag{display:inline-block;margin-top:18px;font-family:var(--mono);font-size:9.5px;font-weight:500;padding:4px 10px;border-radius:5px;text-transform:uppercase;letter-spacing:1.2px}
+
+/* ─── APP PREVIEW SECTION ─── */
+#preview{background:linear-gradient(180deg,var(--navy-0) 0%,var(--navy-1) 50%,var(--navy-0) 100%);padding:100px 0;overflow:hidden}
+.preview-hd{text-align:center;margin-bottom:56px}
+.preview-frame{border-radius:var(--rl);overflow:hidden;border:1px solid var(--border-s);box-shadow:0 40px 100px rgba(0,0,0,.55),0 0 60px rgba(0,212,255,.09)}
+.dash{background:#061220;display:grid;grid-template-columns:198px 1fr;height:560px;font-family:var(--body)}
+.dash-sb{background:#040E1A;border-right:1px solid rgba(0,212,255,.1);padding:20px 0;display:flex;flex-direction:column}
+.sb-brand{padding:0 18px 18px;border-bottom:1px solid rgba(0,212,255,.08);margin-bottom:14px}
+.sb-title{font-family:var(--disp);font-weight:800;font-size:15px;color:var(--cyan);letter-spacing:3px}
+.sb-role{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:2px;margin-top:2px}
+.sb-item{display:flex;align-items:center;gap:9px;padding:9px 18px;font-size:12.5px;color:#4A7A96;cursor:pointer;border-right:2.5px solid transparent;transition:background .2s}
+.sb-item.on{background:rgba(0,212,255,.07);color:var(--cyan);border-right-color:var(--cyan)}
+.sb-item:hover:not(.on){background:rgba(0,212,255,.04)}
+.dash-main{overflow:hidden;display:flex;flex-direction:column}
+.dash-top{background:#040E1A;border-bottom:1px solid rgba(0,212,255,.1);padding:11px 22px;display:flex;align-items:center;justify-content:space-between}
+.dash-ptitle{font-family:var(--disp);font-weight:700;font-size:15px;color:var(--text-1)}
+.live-badge{display:flex;align-items:center;gap:6px;background:rgba(0,212,255,.09);border:1px solid rgba(0,212,255,.25);border-radius:20px;padding:4px 12px;font-family:var(--mono);font-size:10.5px;color:var(--cyan)}
+.ld{width:6px;height:6px;border-radius:50%;background:var(--cyan);animation:dot-pulse 1.6s infinite}
+.dash-body{padding:18px 22px;overflow:hidden;flex:1}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kpi{background:#0C1E30;border:1px solid rgba(0,212,255,.09);border-radius:9px;padding:13px 15px}
+.kpi-lbl{font-size:8.5px;text-transform:uppercase;letter-spacing:1.5px;color:#3E6880;margin-bottom:7px;font-family:var(--mono)}
+.kpi-val{font-family:var(--disp);font-size:22px;font-weight:800;line-height:1}
+.kpi-sub{font-size:9px;color:#3E6880;margin-top:3px}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chart-card{background:#0C1E30;border:1px solid rgba(0,212,255,.09);border-radius:9px;padding:14px;height:200px;overflow:hidden}
+.chart-lbl{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#3E6880;margin-bottom:10px;font-family:var(--mono)}
+.csrow{height:160px;display:flex;flex-direction:column;justify-content:flex-end;position:relative}
+.csrow svg{width:100%;height:150px;overflow:visible}
+/* animated chart line */
+.line-path{stroke-dasharray:600;stroke-dashoffset:600;animation:lineDraw 3s ease forwards .5s}
+@keyframes lineDraw{to{stroke-dashoffset:0}}
+
+/* ─── HOW ─── */
+.how-hd{text-align:center;margin-bottom:76px}
+.how-steps{display:grid;grid-template-columns:repeat(4,1fr);position:relative}
+.how-steps::before{content:'';position:absolute;top:27px;left:calc(12.5% + 27px);right:calc(12.5% + 27px);height:1px;background:linear-gradient(90deg,var(--cyan),var(--blue),var(--orange),var(--gold));z-index:0}
+.hstep{display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 18px;position:relative;z-index:1}
+.hn{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:800;font-size:18px;margin-bottom:22px;flex-shrink:0;border:2px solid}
+.hico{font-size:27px;margin-bottom:14px}
+.htitle{font-family:var(--disp);font-size:15.5px;font-weight:700;margin-bottom:10px}
+.hdesc{font-size:13px;color:var(--text-2);line-height:1.62}
+
+/* ─── AFRICA ─── */
+#africa{background:var(--navy-1);padding:100px 0;overflow:hidden}
+.africa-g{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;max-width:1220px;margin:0 auto;padding:0 48px}
+.africa-map{position:relative}
+.africa-img{width:100%;height:500px;object-fit:cover;border-radius:var(--rl);filter:brightness(.75) saturate(.85)}
+.africa-ov{position:absolute;inset:0;border-radius:var(--rl);background:linear-gradient(180deg,transparent 35%,rgba(7,21,37,.88) 100%)}
+.ping{position:absolute;width:14px;height:14px}
+.ping-dot{width:7px;height:7px;background:var(--cyan);border-radius:50%;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2}
+.ping-ring{position:absolute;inset:0;border:1.5px solid var(--cyan);border-radius:50%;opacity:0;animation:pr 3s ease-out infinite}
+.ping:nth-child(2) .ping-ring{animation-delay:.9s}
+.ping:nth-child(3) .ping-ring{animation-delay:1.8s}
+.ping:nth-child(4) .ping-ring{animation-delay:.4s}
+.ping:nth-child(5) .ping-ring{animation-delay:1.3s}
+@keyframes pr{0%{transform:scale(1);opacity:.8}100%{transform:scale(5);opacity:0}}
+.africa-sts{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:32px}
+.ast{background:var(--navy-2);border:1px solid var(--border);border-radius:var(--r);padding:18px}
+.ast-v{font-family:var(--disp);font-size:26px;font-weight:800;color:var(--cyan)}
+.ast-l{font-size:11.5px;color:var(--text-3);margin-top:4px}
+
+/* ─── TECH ─── */
+.tech-g{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start;margin-top:56px}
+.tech-pills{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:0}
+.tp{display:inline-flex;align-items:center;gap:8px;padding:8px 15px;border-radius:8px;font-family:var(--mono);font-size:11.5px;font-weight:500;border:1px solid}
+.chain-vis{display:flex;flex-direction:column;gap:0}
+.cblock{background:var(--navy-2);border:1px solid var(--border);border-radius:var(--r);padding:17px 20px;display:flex;align-items:center;gap:14px;transition:border-color .3s;margin-bottom:6px}
+.cblock.sealed{border-color:rgba(0,212,255,.35)}
+.cblock-hash{font-family:var(--mono);font-size:10.5px;color:var(--cyan);opacity:.65;margin-bottom:4px}
+.cblock-label{font-size:12.5px;font-weight:600;color:var(--text-1)}
+.cblock-meta{font-size:11px;color:var(--text-3);margin-top:2px}
+.cblock-st{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:4px;white-space:nowrap;flex-shrink:0;margin-left:auto}
+.cblock-arr{text-align:center;color:var(--cyan);opacity:.4;font-size:14px;margin-bottom:6px}
+
+/* ─── TEAM ─── */
+.team-hd{text-align:center;margin-bottom:60px}
+.team-g{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;max-width:860px;margin:0 auto}
+.tcard{background:var(--navy-2);border:1px solid var(--border);border-radius:var(--rl);padding:40px 30px;text-align:center;transition:border-color .3s,transform .3s;position:relative;overflow:hidden}
+.tcard::before{content:'';position:absolute;top:-50px;left:50%;transform:translateX(-50%);width:120px;height:120px;border-radius:50%;opacity:.25;filter:blur(40px)}
+.tcard:hover{border-color:var(--border-s);transform:translateY(-6px)}
+.tav{width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:800;font-size:21px;color:#fff;margin:0 auto 18px;position:relative}
+.tav::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1.5px solid currentColor;opacity:.35}
+.tname{font-family:var(--disp);font-size:16.5px;font-weight:700;margin-bottom:5px}
+.trole{font-family:var(--mono);font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px}
+.tbio{font-size:12.5px;color:var(--text-2);line-height:1.62;margin-top:14px}
+
+/* ─── CTA ─── */
+#cta{background:linear-gradient(135deg,var(--navy-1) 0%,#0A2040 50%,#051830 100%);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:110px 48px;text-align:center;position:relative;overflow:hidden}
+#cta::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;height:700px;background:radial-gradient(circle,rgba(0,212,255,.055) 0%,transparent 70%);border-radius:50%;pointer-events:none}
+#cta::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(0,212,255,.025) 0,rgba(0,212,255,.025) 1px,transparent 1px,transparent 60px),repeating-linear-gradient(0deg,rgba(0,212,255,.025) 0,rgba(0,212,255,.025) 1px,transparent 1px,transparent 60px);pointer-events:none}
+.cta-title{font-family:var(--disp);font-size:clamp(34px,5vw,60px);font-weight:800;letter-spacing:-2px;line-height:1.05;margin-bottom:20px;position:relative;z-index:1}
+.cta-sub{font-size:17px;color:var(--text-2);max-width:520px;margin:0 auto 44px;line-height:1.65;position:relative;z-index:1}
+.cta-acts{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;position:relative;z-index:1}
+
+/* ─── FOOTER ─── */
+footer{max-width:1220px;margin:0 auto;padding:64px 48px;display:grid;grid-template-columns:2.2fr 1fr 1fr 1fr;gap:56px;border-top:1px solid var(--border)}
+.flogo{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.ftag{font-size:13px;color:var(--text-3);line-height:1.68;max-width:255px;margin-bottom:22px}
+.fcopy{font-size:11.5px;color:var(--text-3)}
+.fch{font-family:var(--disp);font-size:12px;font-weight:700;color:var(--text-1);margin-bottom:18px;text-transform:uppercase;letter-spacing:1.2px}
+.flinks{list-style:none;display:flex;flex-direction:column;gap:11px}
+.flinks a{font-size:13px;color:var(--text-3);text-decoration:none;transition:color .2s}
+.flinks a:hover{color:var(--cyan)}
+.fbot{max-width:1220px;margin:0 auto;padding:22px 48px;display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--text-3);border-top:1px solid var(--border)}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:960px){
+  nav{padding:0 24px}
+  .nav-links li:not(:last-child){display:none}
+  .cw{padding:80px 24px}
+  .cw-narrow{padding:0 24px}
+  .about-grid,.africa-g,.tech-g,.feat-grid,.how-steps,.team-g{grid-template-columns:1fr}
+  .how-steps::before{display:none}
+  .feat-grid{grid-template-columns:1fr 1fr}
+  footer{grid-template-columns:1fr 1fr;gap:36px;padding:48px 24px}
+  .fbot{padding:20px 24px;flex-direction:column;gap:8px;text-align:center}
+  #cta{padding:80px 24px}
+  .about-badge{right:-12px;bottom:-16px}
+  .hero-body{padding:0 24px;padding-top:80px}
+}
+@media(max-width:600px){
+  .feat-grid,.team-g{grid-template-columns:1fr}
+  footer{grid-template-columns:1fr}
+  .hero-stats{gap:28px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .charts{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ NAV ═══════════════════════════════ -->
+<nav id="mainnav">
+  <a class="nav-logo" href="#">
+    <div class="logo-box">AG</div>
+    <span class="logo-name">AR<em>G</em>OS</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Fonctionnalités</a></li>
+    <li><a href="#preview">Interface</a></li>
+    <li><a href="#africa">Afrique Centrale</a></li>
+    <li><a href="#tech">Technologie</a></li>
+    <li><a href="#team">Équipe</a></li>
+    <li><a href="#cta" class="nav-cta">Demander une démo →</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════════════ HERO ══════════════════════════════ -->
+<header id="hero">
+  <div class="hero-bg">
+    <div class="hero-slide active" style="background-image:url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=1920&q=80')"></div>
+    <div class="hero-slide" style="background-image:url('https://images.unsplash.com/photo-1504867921636-4e5f7d5571ed?auto=format&fit=crop&w=1920&q=80')"></div>
+    <div class="hero-slide" style="background-image:url('https://images.unsplash.com/photo-1587293852726-70cdb56c2866?auto=format&fit=crop&w=1920&q=80')"></div>
+    <div class="hero-slide" style="background-image:url('https://images.unsplash.com/photo-1494412519316-5bdd4b43a7e2?auto=format&fit=crop&w=1920&q=80')"></div>
+    <div class="hero-slide" style="background-image:url('https://images.unsplash.com/photo-1483682738011-e1e3d0f8a16e?auto=format&fit=crop&w=1920&q=80')"></div>
+  </div>
+  <canvas id="particle-canvas"></canvas>
+
+  <div class="hero-body">
+    <div class="hero-eyebrow">
+      <div class="hero-dot"></div>
+      <span>Supply Chain 4.0 · IoT · Blockchain</span>
+    </div>
+
+    <h1 class="hero-h">
+      La flotte maritime<br>
+      <span class="line-g">d'Afrique Centrale,</span><br>
+      sous contrôle total.
+    </h1>
+
+    <p class="hero-sub">
+      ARGOS connecte vos conteneurs maritimes à une plateforme intelligente de surveillance en temps réel — alertes automatiques, traçabilité blockchain et analytiques avancés, depuis n'importe où dans le monde.
+    </p>
+
+    <div class="hero-ctas">
+      <a href="#cta" class="btn-primary">Commencer gratuitement <span>→</span></a>
+      <a href="#preview" class="btn-ghost"><span>▶</span> Voir la démo</a>
+    </div>
+
+    <div class="hero-stats">
+      <div>
+        <div><span class="hstat-val counter" data-t="1200">0</span><span class="hstat-suf">+</span></div>
+        <div class="hstat-lbl">Conteneurs suivis</div>
+      </div>
+      <div>
+        <div><span class="hstat-val counter" data-t="98">0</span><span class="hstat-suf">%</span></div>
+        <div class="hstat-lbl">Fiabilité système</div>
+      </div>
+      <div>
+        <div><span class="hstat-val counter" data-t="24">0</span><span class="hstat-suf">h</span></div>
+        <div class="hstat-lbl">Monitoring continu</div>
+      </div>
+      <div>
+        <div><span class="hstat-val counter" data-t="5">0</span></div>
+        <div class="hstat-lbl">Rôles utilisateurs</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-dots">
+    <div class="sdot active" data-i="0"></div>
+    <div class="sdot" data-i="1"></div>
+    <div class="sdot" data-i="2"></div>
+    <div class="sdot" data-i="3"></div>
+    <div class="sdot" data-i="4"></div>
+  </div>
+  <div class="progress-bar" id="pb"></div>
+</header>
+
+<!-- ═══════════════════════════════ TICKER ════════════════════════════ -->
+<div class="ticker-wrap">
+  <div class="ticker" id="ticker">
+    <div class="t-item">📡 Surveillance IoT temps réel <span class="t-sep">·</span></div>
+    <div class="t-item">🔐 Scellement blockchain SHA-256 <span class="t-sep">·</span></div>
+    <div class="t-item">🌍 Flotte Afrique Centrale <span class="t-sep">·</span></div>
+    <div class="t-item">📊 Analytiques avancées <span class="t-sep">·</span></div>
+    <div class="t-item">🔔 Alertes Email · WhatsApp · Push <span class="t-sep">·</span></div>
+    <div class="t-item">🏭 Supply Chain 4.0 <span class="t-sep">·</span></div>
+    <div class="t-item">👥 5 rôles utilisateurs <span class="t-sep">·</span></div>
+    <div class="t-item">🌡️ Température · Humidité · Chocs · Pression <span class="t-sep">·</span></div>
+    <div class="t-item">📡 Surveillance IoT temps réel <span class="t-sep">·</span></div>
+    <div class="t-item">🔐 Scellement blockchain SHA-256 <span class="t-sep">·</span></div>
+    <div class="t-item">🌍 Flotte Afrique Centrale <span class="t-sep">·</span></div>
+    <div class="t-item">📊 Analytiques avancées <span class="t-sep">·</span></div>
+    <div class="t-item">🔔 Alertes Email · WhatsApp · Push <span class="t-sep">·</span></div>
+    <div class="t-item">🏭 Supply Chain 4.0 <span class="t-sep">·</span></div>
+    <div class="t-item">👥 5 rôles utilisateurs <span class="t-sep">·</span></div>
+    <div class="t-item">🌡️ Température · Humidité · Chocs · Pression <span class="t-sep">·</span></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ ABOUT ════════════════════════════ -->
+<div class="divider" style="margin-top:0"></div>
+<div class="cw">
+  <div class="about-grid">
+    <div class="about-img-wrap rev">
+      <img class="about-img"
+           src="https://images.unsplash.com/photo-1567010928710-6e7ac74bfdb5?auto=format&fit=crop&w=900&q=80"
+           alt="Vue aérienne d'un port maritime"/>
+      <div class="about-badge">
+        <div class="ab-lbl">Boîtes Noires actives</div>
+        <div class="ab-val">247</div>
+        <div class="ab-sub">En transmission temps réel</div>
+      </div>
+    </div>
+
+    <div class="rev d2">
+      <div class="eyebrow">À propos d'ARGOS</div>
+      <h2 class="sh">Vos conteneurs ne devraient jamais être <span class="acc">hors de portée</span></h2>
+      <p class="about-lead">ARGOS est né d'un constat simple : les opérateurs maritimes d'Afrique Centrale perdent des millions chaque année faute de visibilité sur leurs cargaisons.</p>
+      <p class="about-text">Notre plateforme connecte chaque conteneur à une <strong>Boîte Noire IoT</strong> — un dispositif embarqué qui capture température, humidité, chocs, pression et vitesse en continu. Ces données sont transmises en temps réel, scellées dans une blockchain immuable, et présentées dans un tableau de bord ultra-précis accessible à tous vos collaborateurs.</p>
+      <div class="hl-list">
+        <div class="hl">
+          <span class="hl-ico">📦</span>
+          <div class="hl-text"><strong>Boîte Noire embarquée</strong>Chaque conteneur reçoit un capteur IoT qui enregistre 5 dimensions de données environnementales en temps réel.</div>
+        </div>
+        <div class="hl">
+          <span class="hl-ico">🔐</span>
+          <div class="hl-text"><strong>Scellement blockchain</strong>Chaque événement est signé SHA-256 et enchaîné — garantissant une traçabilité légalement opposable.</div>
+        </div>
+        <div class="hl">
+          <span class="hl-ico">⚡</span>
+          <div class="hl-text"><strong>Alertes multicanaux instantanées</strong>E-mail, WhatsApp et notifications in-app dès qu'un seuil critique est dépassé.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════ FEATURES ══════════════════════════ -->
+<div class="cw" id="features">
+  <div class="feat-head">
+    <div>
+      <div class="eyebrow">Fonctionnalités</div>
+      <h2 class="sh">Tout ce dont vous avez besoin,<br><span class="acc">rien de superflu</span></h2>
+    </div>
+    <p class="sb" style="max-width:280px;text-align:right;margin-left:auto">Conçu pour les opérateurs maritimes, propriétaires de flottes et leurs équipes terrain.</p>
+  </div>
+
+  <div class="feat-grid">
+    <div class="fc rev">
+      <div class="fi" style="background:rgba(0,212,255,.1)">🌡️</div>
+      <div class="fc-title">Monitoring environnemental</div>
+      <p class="fc-desc">Suivez température, humidité, pression atmosphérique, chocs et vibrations de chaque conteneur en temps réel depuis n'importe quel appareil connecté.</p>
+      <span class="fc-tag" style="background:rgba(0,212,255,.1);color:var(--cyan);border:1px solid rgba(0,212,255,.22)">IoT · Live BD</span>
+    </div>
+
+    <div class="fc rev d1">
+      <div class="fi" style="background:rgba(255,107,0,.1)">🔐</div>
+      <div class="fc-title">Blockchain immuable</div>
+      <p class="fc-desc">Chaque événement de conteneur est scellé avec SHA-256 dans une chaîne de blocs en insertion seule. Traçabilité légale, auditable et inaltérable.</p>
+      <span class="fc-tag" style="background:rgba(255,107,0,.1);color:var(--orange);border:1px solid rgba(255,107,0,.22)">SHA-256 · Seal Pattern</span>
+    </div>
+
+    <div class="fc rev d2">
+      <div class="fi" style="background:rgba(255,184,0,.1)">📊</div>
+      <div class="fc-title">Analytiques avancées</div>
+      <p class="fc-desc">Tableaux de bord temps réel avec graphiques interactifs, rapports IA automatiques et statistiques agrégées sur toute la flotte.</p>
+      <span class="fc-tag" style="background:rgba(255,184,0,.1);color:var(--gold);border:1px solid rgba(255,184,0,.22)">IA · Rapport Auto</span>
+    </div>
+
+    <div class="fc rev">
+      <div class="fi" style="background:rgba(100,200,100,.1)">👥</div>
+      <div class="fc-title">Gestion multi-rôles</div>
+      <p class="fc-desc">Architecture à 5 rôles — Superadmin, Owner, Client, Driver, Company — avec isolation stricte des données par compte et per-user query filtering.</p>
+      <span class="fc-tag" style="background:rgba(100,200,100,.1);color:var(--green);border:1px solid rgba(100,200,100,.22)">RBAC · Isolation stricte</span>
+    </div>
+
+    <div class="fc rev d1">
+      <div class="fi" style="background:rgba(160,100,255,.1)">🔔</div>
+      <div class="fc-title">Alertes multi-canaux</div>
+      <p class="fc-desc">Notifications configurables par rôle via e-mail, WhatsApp et interface in-app. Seuils personnalisables par conteneur et par type d'événement.</p>
+      <span class="fc-tag" style="background:rgba(160,100,255,.1);color:var(--purple);border:1px solid rgba(160,100,255,.22)">Email · WhatsApp · Push</span>
+    </div>
+
+    <div class="fc rev d2">
+      <div class="fi" style="background:rgba(0,212,255,.1)">🗺️</div>
+      <div class="fc-title">Cartographie en direct</div>
+      <p class="fc-desc">Visualisez la position GPS de l'ensemble de votre flotte sur une carte interactive. Géofencing, historique de trajectoire et alertes de zone inclus.</p>
+      <span class="fc-tag" style="background:rgba(0,212,255,.1);color:var(--cyan);border:1px solid rgba(0,212,255,.22)">GPS · Géofencing Live</span>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════ APP PREVIEW ════════════════════════ -->
+<div id="preview">
+  <div class="cw-narrow">
+    <div class="preview-hd rev">
+      <div class="eyebrow centered">Interface</div>
+      <h2 class="sh" style="text-align:center">Un tableau de bord <span class="acc">conçu pour l'action</span></h2>
+      <p class="sb" style="text-align:center;margin:14px auto 0">Toutes les données critiques de votre flotte, agrégées et présentées dans une interface épurée.</p>
+    </div>
+    <div class="preview-frame rev d2">
+      <!-- ARGOS Dashboard Mockup -->
+      <div class="dash">
+        <div class="dash-sb">
+          <div class="sb-brand">
+            <div class="sb-title">ARGOS</div>
+            <div class="sb-role">Super Admin</div>
+          </div>
+          <div class="sb-item">📊 Dashboard</div>
+          <div class="sb-item">🗺️ Map</div>
+          <div class="sb-item">📦 Containers</div>
+          <div class="sb-item">↗️ Assign</div>
+          <div class="sb-item">🏢 Companies</div>
+          <div class="sb-item">👥 Subscribers</div>
+          <div class="sb-item on">📈 Stats</div>
+          <div class="sb-item">⚠️ Events</div>
+          <div class="sb-item">🔐 Blockchain</div>
+          <div class="sb-item">📰 Publications</div>
+          <div class="sb-item">⚙️ Settings</div>
+        </div>
+        <div class="dash-main">
+          <div class="dash-top">
+            <div class="dash-ptitle">Statistiques &amp; Analytiques</div>
+            <div style="display:flex;gap:12px;align-items:center">
+              <div class="live-badge"><div class="ld"></div>LIVE BD</div>
+              <div style="font-size:11.5px;color:#3E6880">7 derniers jours</div>
+            </div>
+          </div>
+          <div class="dash-body">
+            <div class="kpis">
+              <div class="kpi"><div class="kpi-lbl">Temp. Moy.</div><div class="kpi-val" style="color:var(--cyan)">30.9°C</div><div class="kpi-sub">Sur 7 jours</div></div>
+              <div class="kpi"><div class="kpi-lbl">Alertes</div><div class="kpi-val" style="color:var(--gold)">54</div><div class="kpi-sub">Sur 7 jours</div></div>
+              <div class="kpi"><div class="kpi-lbl">Chocs</div><div class="kpi-val" style="color:var(--orange)">299</div><div class="kpi-sub">Sur 7 jours</div></div>
+              <div class="kpi"><div class="kpi-lbl">Fiabilité</div><div class="kpi-val" style="color:var(--green)">82.1%</div><div class="kpi-sub">Sur 7 jours</div></div>
+            </div>
+            <div class="charts">
+              <div class="chart-card">
+                <div class="chart-lbl">Température (°C)</div>
+                <div class="csrow">
+                  <svg viewBox="0 0 320 130" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#00D4FF" stop-opacity=".32"/>
+                        <stop offset="100%" stop-color="#00D4FF" stop-opacity="0"/>
+                      </linearGradient>
+                    </defs>
+                    <path class="line-path" d="M0,18 C55,22 110,45 165,72 C220,99 265,108 320,112" fill="none" stroke="#00D4FF" stroke-width="2.5"/>
+                    <path d="M0,18 C55,22 110,45 165,72 C220,99 265,108 320,112 L320,130 L0,130 Z" fill="url(#tg)" opacity=".8"/>
+                    <circle cx="0" cy="18" r="4" fill="#00D4FF"/><circle cx="320" cy="112" r="4" fill="#00D4FF"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="chart-card">
+                <div class="chart-lbl">Pression Atmosphérique (hPa)</div>
+                <div class="csrow">
+                  <svg viewBox="0 0 320 130" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#A064FF" stop-opacity=".32"/>
+                        <stop offset="100%" stop-color="#A064FF" stop-opacity="0"/>
+                      </linearGradient>
+                    </defs>
+                    <path class="line-path" style="animation-delay:.9s" d="M0,105 C60,98 120,78 180,55 C240,33 280,16 320,8" fill="none" stroke="#A064FF" stroke-width="2.5"/>
+                    <path d="M0,105 C60,98 120,78 180,55 C240,33 280,16 320,8 L320,130 L0,130 Z" fill="url(#pg)" opacity=".8"/>
+                    <circle cx="0" cy="105" r="4" fill="#A064FF"/><circle cx="320" cy="8" r="4" fill="#A064FF"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════ HOW IT WORKS ═══════════════════════ -->
+<div class="cw">
+  <div class="how-hd rev">
+    <div class="eyebrow centered">Processus</div>
+    <h2 class="sh" style="text-align:center">Comment ARGOS <span class="acc">fonctionne</span></h2>
+  </div>
+  <div class="how-steps">
+    <div class="hstep rev">
+      <div class="hn" style="background:rgba(0,212,255,.1);color:var(--cyan);border-color:rgba(0,212,255,.3)">01</div>
+      <div class="hico">📦</div>
+      <div class="htitle">Installation Boîte Noire</div>
+      <p class="hdesc">Un capteur IoT est installé dans chaque conteneur et lié à votre compte ARGOS via l'interface d'administration sécurisée.</p>
+    </div>
+    <div class="hstep rev d1">
+      <div class="hn" style="background:rgba(255,107,0,.1);color:var(--orange);border-color:rgba(255,107,0,.3)">02</div>
+      <div class="hico">📡</div>
+      <div class="htitle">Collecte des données</div>
+      <p class="hdesc">La boîte noire transmet en continu 5 métriques environnementales vers la plateforme cloud ARGOS en temps réel.</p>
+    </div>
+    <div class="hstep rev d2">
+      <div class="hn" style="background:rgba(255,184,0,.1);color:var(--gold);border-color:rgba(255,184,0,.3)">03</div>
+      <div class="hico">🔐</div>
+      <div class="htitle">Scellement blockchain</div>
+      <p class="hdesc">Chaque événement est haché SHA-256, enchaîné au bloc précédent et stocké de façon immuable et auditable.</p>
+    </div>
+    <div class="hstep rev d3">
+      <div class="hn" style="background:rgba(100,200,100,.1);color:var(--green);border-color:rgba(100,200,100,.3)">04</div>
+      <div class="hico">📊</div>
+      <div class="htitle">Visualisation & Alertes</div>
+      <p class="hdesc">Vos équipes accèdent aux dashboards temps réel, rapports IA automatiques et alertes multicanaux depuis tout appareil.</p>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════ AFRICA ════════════════════════════ -->
+<div id="africa">
+  <div class="africa-g">
+    <div class="rev">
+      <div class="eyebrow">Afrique Centrale</div>
+      <h2 class="sh">La flotte de toute <span class="acc">l'Afrique Centrale,</span> à portée de clic</h2>
+      <p class="sb" style="margin-top:16px">ARGOS est conçu pour les réalités opérationnelles des ports d'Afrique Centrale. Douala, Libreville, Pointe-Noire, Matadi — chaque port, chaque route maritime, sous un seul tableau de bord unifié.</p>
+      <div class="africa-sts">
+        <div class="ast"><div class="ast-v">6+</div><div class="ast-l">Ports couverts</div></div>
+        <div class="ast"><div class="ast-v">24/7</div><div class="ast-l">Monitoring actif</div></div>
+        <div class="ast"><div class="ast-v">∞</div><div class="ast-l">Routes maritimes</div></div>
+        <div class="ast"><div class="ast-v">100%</div><div class="ast-l">Données souveraines</div></div>
+      </div>
+    </div>
+    <div class="africa-map rev d2">
+      <img class="africa-img"
+           src="https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=900&q=80"
+           alt="Vue satellitaire de l'Afrique"/>
+      <div class="africa-ov"></div>
+      <div class="ping" style="top:32%;left:52%"><div class="ping-ring"></div><div class="ping-dot"></div></div>
+      <div class="ping" style="top:52%;left:44%"><div class="ping-ring"></div><div class="ping-dot"></div></div>
+      <div class="ping" style="top:62%;left:64%"><div class="ping-ring"></div><div class="ping-dot"></div></div>
+      <div class="ping" style="top:25%;left:36%"><div class="ping-ring"></div><div class="ping-dot"></div></div>
+      <div class="ping" style="top:70%;left:40%"><div class="ping-ring"></div><div class="ping-dot"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════ TECH ═════════════════════════════ -->
+<div class="cw" id="tech">
+  <div class="eyebrow">Technologie</div>
+  <h2 class="sh">Supply Chain 4.0 — <span class="acc">Le futur est déjà là</span></h2>
+
+  <div class="tech-g">
+    <div class="rev">
+      <p class="sb">ARGOS combine les trois piliers de l'industrie 4.0 pour offrir une traçabilité sans précédent à la logistique maritime africaine.</p>
+      <div class="tech-pills" style="margin-top:30px">
+        <span class="tp" style="background:rgba(0,212,255,.08);color:var(--cyan);border-color:rgba(0,212,255,.2)">📡 IoT Sensors</span>
+        <span class="tp" style="background:rgba(255,107,0,.08);color:var(--orange);border-color:rgba(255,107,0,.2)">🔐 Blockchain SHA-256</span>
+        <span class="tp" style="background:rgba(160,100,255,.08);color:var(--purple);border-color:rgba(160,100,255,.2)">🤖 IA / Analytics</span>
+        <span class="tp" style="background:rgba(255,184,0,.08);color:var(--gold);border-color:rgba(255,184,0,.2)">📊 Data Visualization</span>
+        <span class="tp" style="background:rgba(100,200,100,.08);color:var(--green);border-color:rgba(100,200,100,.2)">🐍 Python / Flask</span>
+        <span class="tp" style="background:rgba(0,100,200,.08);color:#6699FF;border-color:rgba(0,100,200,.2)">🗄️ PostgreSQL</span>
+        <span class="tp" style="background:rgba(255,184,0,.08);color:var(--gold);border-color:rgba(255,184,0,.2)">🌐 REST API</span>
+        <span class="tp" style="background:rgba(0,212,255,.08);color:var(--cyan);border-color:rgba(0,212,255,.2)">📱 Multi-device</span>
+      </div>
+    </div>
+
+    <div class="chain-vis rev d2">
+      <div class="cblock sealed">
+        <div style="flex:1">
+          <div class="cblock-hash">#a3f7e1... ← Genesis Block</div>
+          <div class="cblock-label">Bloc #001 — Activation conteneur</div>
+          <div class="cblock-meta">17/06/2026 00:00 · Douala, CMR</div>
+        </div>
+        <span class="cblock-st" style="background:rgba(100,200,100,.1);color:var(--green)">✓ SCELLÉ</span>
+      </div>
+      <div class="cblock-arr">↓</div>
+      <div class="cblock sealed">
+        <div style="flex:1">
+          <div class="cblock-hash">#b9e2c4... ← Temp: 32.4°C</div>
+          <div class="cblock-label">Bloc #002 — Alerte température</div>
+          <div class="cblock-meta">17/06/2026 08:15 · En transit</div>
+        </div>
+        <span class="cblock-st" style="background:rgba(100,200,100,.1);color:var(--green)">✓ SCELLÉ</span>
+      </div>
+      <div class="cblock-arr">↓</div>
+      <div class="cblock sealed">
+        <div style="flex:1">
+          <div class="cblock-hash">#d1c4a8... ← Choc: 299G</div>
+          <div class="cblock-label">Bloc #003 — Impact détecté</div>
+          <div class="cblock-meta">17/06/2026 14:32 · Port Pointe-Noire</div>
+        </div>
+        <span class="cblock-st" style="background:rgba(255,107,0,.1);color:var(--orange)">⚠️ ALERTE</span>
+      </div>
+      <div class="cblock-arr">↓</div>
+      <div class="cblock" style="border-style:dashed;opacity:.48">
+        <div style="flex:1">
+          <div class="cblock-hash">#...calcul en cours</div>
+          <div class="cblock-label">Bloc #004 — En attente</div>
+          <div class="cblock-meta">Prochain scellement automatique</div>
+        </div>
+        <span class="cblock-st" style="background:rgba(0,212,255,.1);color:var(--cyan)">⏳ LIVE</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════ TEAM ════════════════════════════════ -->
+<div class="cw" id="team">
+  <div class="team-hd rev">
+    <div class="eyebrow centered">L'équipe</div>
+    <h2 class="sh" style="text-align:center">Les ingénieurs derrière <span class="acc">ARGOS</span></h2>
+    <p class="sb" style="text-align:center;margin:14px auto 0">Une équipe d'ingénieurs passionnés, convaincus que l'Afrique mérite les meilleures technologies logistiques.</p>
+  </div>
+
+  <div class="team-g">
+    <div class="tcard rev">
+      <div class="tcard::before" style="background:var(--cyan)"></div>
+      <div class="tav" style="background:linear-gradient(135deg,#00D4FF,#1A6FE8);color:var(--cyan)">MN</div>
+      <div class="tname">Meke Nanilaou</div>
+      <div class="trole">Lead Architect</div>
+      <p class="tbio">Architecte principal de la plateforme ARGOS. Conçoit les systèmes distribués, l'infrastructure IoT et l'expérience utilisateur globale.</p>
+    </div>
+
+    <div class="tcard rev d1">
+      <div class="tav" style="background:linear-gradient(135deg,#FF6B00,#CC4400);color:var(--orange)">BM</div>
+      <div class="tname">Brady Mickael</div>
+      <div class="trole">Full-Stack Engineer</div>
+      <p class="tbio">Développeur full-stack en charge du backend Python/Flask, de la base PostgreSQL, de l'intégration blockchain et de la logique métier ARGOS.</p>
+    </div>
+
+    <div class="tcard rev d2">
+      <div class="tav" style="background:linear-gradient(135deg,#A064FF,#6600CC);color:var(--purple)">&amp;</div>
+      <div class="tname">& Company</div>
+      <div class="trole">Équipe ARGOS</div>
+      <p class="tbio">Une communauté d'ingénieurs africains unis par la vision d'une logistique maritime souveraine, intelligente et accessible à tous les opérateurs.</p>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════ CTA ═════════════════════════════════ -->
+<div id="cta">
+  <h2 class="cta-title rev">
+    Prêt à connecter<br>
+    <span class="line-g">votre flotte ?</span>
+  </h2>
+  <p class="cta-sub rev d1">Rejoignez les premiers opérateurs maritimes d'Afrique Centrale à piloter leur flotte avec la précision d'ARGOS.</p>
+  <div class="cta-acts rev d2">
+    <a href="#" class="btn-primary">Demander une démo gratuite →</a>
+    <a href="mailto:contact@argos-platform.cm" class="btn-ghost">Contacter l'équipe</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ FOOTER ══════════════════════════════ -->
+<footer>
+  <div>
+    <div class="flogo">
+      <div class="logo-box">AG</div>
+      <span class="logo-name" style="font-size:17px">AR<em>G</em>OS</span>
+    </div>
+    <p class="ftag">La plateforme intelligente de gestion des conteneurs maritimes pour l'Afrique Centrale. Supply Chain 4.0.</p>
+    <div class="fcopy">© 2026 ARGOS Platform. Tous droits réservés.<br>Meke Nanilaou · Brady Mickael &amp; Company</div>
+  </div>
+  <div>
+    <div class="fch">Plateforme</div>
+    <ul class="flinks">
+      <li><a href="#">Dashboard</a></li>
+      <li><a href="#">Conteneurs</a></li>
+      <li><a href="#">Blockchain</a></li>
+      <li><a href="#">Analytiques</a></li>
+      <li><a href="#">Alertes</a></li>
+    </ul>
+  </div>
+  <div>
+    <div class="fch">Entreprise</div>
+    <ul class="flinks">
+      <li><a href="#">À propos</a></li>
+      <li><a href="#">Équipe</a></li>
+      <li><a href="#">Blog</a></li>
+      <li><a href="#">Contact</a></li>
+    </ul>
+  </div>
+  <div>
+    <div class="fch">Légal</div>
+    <ul class="flinks">
+      <li><a href="#">Conditions d'utilisation</a></li>
+      <li><a href="#">Confidentialité</a></li>
+      <li><a href="#">Sécurité</a></li>
+      <li><a href="#">API</a></li>
+    </ul>
+  </div>
+</footer>
+<div class="fbot">
+  <span>Conçu et développé en Afrique Centrale 🌍</span>
+  <span>ARGOS v2.0 · Supply Chain 4.0 · 2026</span>
+</div>
+
+<!-- ═══════════════════════════════ SCRIPTS ════════════════════════════ -->
+<script>
+// ── HERO SLIDESHOW (10 secondes) ──
+const slides = document.querySelectorAll('.hero-slide');
+const dots = document.querySelectorAll('.sdot');
+let cur = 0, timer;
+
+function goSlide(i) {
+  slides[cur].classList.remove('active');
+  dots[cur].classList.remove('active');
+  cur = i;
+  slides[cur].classList.add('active');
+  dots[cur].classList.add('active');
+  const pb = document.getElementById('pb');
+  pb.style.animation = 'none';
+  void pb.offsetWidth;
+  pb.style.animation = 'prog 10s linear infinite';
+}
+
+function nextSlide() { goSlide((cur + 1) % slides.length); }
+timer = setInterval(nextSlide, 10000);
+
+dots.forEach(d => d.addEventListener('click', () => {
+  clearInterval(timer);
+  goSlide(+d.dataset.i);
+  timer = setInterval(nextSlide, 10000);
+}));
+
+// ── CANVAS PARTICLES ──
+const cv = document.getElementById('particle-canvas');
+const ctx = cv.getContext('2d');
+function resize() { cv.width = window.innerWidth; cv.height = window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+const N = 55;
+const pts = Array.from({length: N}, () => ({
+  x: Math.random() * cv.width,
+  y: Math.random() * cv.height,
+  vx: (Math.random() - .5) * .38,
+  vy: (Math.random() - .5) * .38,
+  r: Math.random() * 1.8 + .5,
+  o: Math.random() * .45 + .1
+}));
+
+function drawCanvas() {
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  for (let i = 0; i < N; i++) {
+    const p = pts[i];
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0 || p.x > cv.width) p.vx *= -1;
+    if (p.y < 0 || p.y > cv.height) p.vy *= -1;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(0,212,255,${p.o})`;
+    ctx.fill();
+    for (let j = i + 1; j < N; j++) {
+      const q = pts[j];
+      const dx = p.x - q.x, dy = p.y - q.y;
+      const d = Math.sqrt(dx*dx + dy*dy);
+      if (d < 130) {
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(q.x, q.y);
+        ctx.strokeStyle = `rgba(0,212,255,${(1 - d/130) * .12})`;
+        ctx.lineWidth = .6;
+        ctx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(drawCanvas);
+}
+drawCanvas();
+
+// ── NAV SCROLL ──
+const nav = document.getElementById('mainnav');
+window.addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 50), {passive:true});
+
+// ── SCROLL REVEAL ──
+const revEls = document.querySelectorAll('.rev');
+const ro = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vis'); ro.unobserve(e.target); }});
+}, {threshold:.1});
+revEls.forEach(el => ro.observe(el));
+
+// ── COUNTERS ──
+function animateCounter(el) {
+  const target = +el.dataset.t;
+  const dur = 2000, step = target / (dur / 16);
+  let c = 0;
+  const t = setInterval(() => {
+    c += step;
+    if (c >= target) { c = target; clearInterval(t); }
+    el.textContent = Math.floor(c).toLocaleString('fr-FR');
+  }, 16);
+}
+const counters = document.querySelectorAll('.counter');
+const co = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { animateCounter(e.target); co.unobserve(e.target); }});
+}, {threshold:.5});
+counters.forEach(el => co.observe(el));
+
+// Start hero counters after 0.9s
+setTimeout(() => counters.forEach(el => { if (!el.classList.contains('done')) { el.classList.add('done'); animateCounter(el); }}), 900);
+
+// ── SMOOTH SCROLL ──
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const t = document.querySelector(a.getAttribute('href'));
+    if (t) { e.preventDefault(); t.scrollIntoView({behavior:'smooth', block:'start'}); }
+  });
+});
+</script>
+</body>
+</html>

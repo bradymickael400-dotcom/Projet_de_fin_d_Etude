@@ -1,67 +1,65 @@
+import os
 from flask import Flask
 from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy 
-from sqlalchemy.ext.automap import automap_base
 
-db = SQLAlchemy()
-Base = automap_base()
-
-
-def init_automap(app):
-    # Envelopper la préparation de l'automap dans le contexte de l'application
-    with app.app_context():
-        # ENLEVER LES PARENTHÈSES ICI : db.engine et non db.engine() 💡
-        engine = db.engine
-
-        # Prépare les modèles à partir de la base de données 
-        Base.prepare(autoload_with=engine)
-        
-        # Importer les classes automap dans le contexte de l'application
-        app.config['AUTOMAP_CLASSES'] = Base.classes
+# Instance unique de SQLAlchemy (définie dans extensions.py)
+from app.extensions import db
+from app.config import Config
+# Helpers de la blockchain — source unique de vérité dans app.utils
+from app.utils import init_blockchain, seal_block  # noqa: F401  (réexportés pour `from app import db, seal_block`)
 
 
 def create_app():
     app = Flask(__name__)
-    
-    # 1. Configurations de base
-    app.config['SECRET_KEY'] = 'Argos_direction_generale2026'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://brady:argos%401234@localhost:5432/argos'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    
-    # 2. Options de l'Engine (Doivent être définies ICI dans app.config)
-    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    app.config.from_object(Config)
+    schema = os.getenv("DB_SCHEMA", "brady")
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
         "pool_pre_ping": True,
-        "pool_recycle": 2400,       # Recycle la connexion après 40 minutes
+        "pool_recycle": 2400,
         "connect_args": {
-            "keepalives": 1,        # Active les keepalives TCP
-            "keepalives_idle": 30,  # Envoie un keepalive après 30 secondes d'inactivité
-            "keepalives_interval": 5, # Puis envoie toutes les 5 secondes
-            "keepalives_count": 5,   # Après 5 échecs, abandonne
-        }
+            "keepalives": 1,
+            "keepalives_idle": 30,
+            "keepalives_interval": 5,
+            "keepalives_count": 5,
+            "options": f"-csearch_path={schema},public",
+        },
     }
-    
-    # 3. Configuration CORS globale et permissive pour le développement
-    # On autorise explicitement les méthodes POST, GET, OPTIONS et les en-têtes de contenu
-    CORS(app, resources={r"/api/*": {
-        "origins": "*", 
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"]
-    }})
-    
-    # 4. Initialisation des composants
-    db.init_app(app)
-    init_automap(app)
 
-    # 5. Importer et enregistrer les routes
-    from app.routes.main import main_bp
-    app.register_blueprint(main_bp)
-# À insérer dans create_app() juste avant le "return app"
-    @app.after_request
-    def add_cors_headers(response):
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-        return response
+    # ── 2. CORS (dev permissif sur /api/*) ────────────────────────────
+    CORS(app, resources={r"/api/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+    }})
+
+    # ── 3. Extensions ─────────────────────────────────────────────────
+    db.init_app(app)
+
+    # ── 4. Blueprints (source canonique des routes) ───────────────────
+    from app.routes.auth import auth_bp
+    from app.routes.containers import cnt_bp
+    from app.routes.telemetry import tel_bp
+    from app.routes.dashboard import dash_bp
+    from app.routes.blockchain import blockchain_bp
+    from app.routes.users import users_bp
+    from app.routes.publications import pub_bp
+
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(cnt_bp)
+    app.register_blueprint(tel_bp)
+    app.register_blueprint(dash_bp)
+    app.register_blueprint(blockchain_bp)
+    app.register_blueprint(users_bp)
+    app.register_blueprint(pub_bp)
+
+    # ── 5. Initialisation paresseuse de la blockchain (une seule fois) ─
+    @app.before_request
+    def _setup_db_once():
+        if not getattr(app, "db_initialized", False):
+            try:
+                init_blockchain()
+            except Exception:
+                pass
+            app.db_initialized = True  # type: ignore[attr-defined]
 
     return app
-

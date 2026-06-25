@@ -5,32 +5,47 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ARGOS — Black Box Monitoring Platform</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <!-- Font Awesome 6 pour icônes professionnelles -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}">
 </head>
 <body>
 
 <!-- LOGIN SCREEN -->
 <div id="login-screen">
-  <div class="login-bg"><div class="login-grid"></div></div>
+  <div class="login-bg">
+    <div id="react-login-hero" class="login-hero-overlay" aria-hidden="true"></div>
+    <div class="login-hero-images" aria-hidden="true">
+      <div class="hero-image"></div>
+      <div class="hero-image"></div>
+      <div class="hero-image"></div>
+    </div>
+    <div class="login-grid"></div>
+    <div class="login-containers-decor" aria-hidden="true"></div>
+  </div>
   <div class="login-card">
     <div class="login-logo">
       <div class="brand">ARGOS</div>
-      <div class="sub">Black Box Monitoring Platform</div>
+      <div class="sub">Smart logistics command & container supervision</div>
     </div>
     <div class="form-group">
       <label>Identifiant</label>
+      <br>
       <input type="text" id="login-username" placeholder="user@argos.io" required value="">
     </div>
     <div class="form-group">
       <label>Mot de passe</label>
-      <input type="password" id="login-password" placeholder="••••••••" required value=""><label for="show-password" style="font-size:12px;color:var(--text3);">Afficher le mot de passe</label><input type="checkbox" id="show-password" style="margin-left:8px">
+      <input type="password" id="login-password" placeholder="••••••••" required value="">
     </div>
+    <br>
+    <br>
+    <div class="login-helper-row"><label><input type="checkbox" id="show-password"> Afficher le mot de passe</label></div>
     <script>
       function togglePasswordVisibility() {
         const passwordInput = document.getElementById('login-password');
@@ -44,6 +59,10 @@
       document.getElementById('show-password').addEventListener('change', togglePasswordVisibility);
     </script>
     <button class="btn-primary" onclick="doLogin()"><i class="fas fa-lock"></i> Connexion Sécurisée</button>
+    <div class="login-card-meta">
+      <span class="badge badge-info">Dashboard maritime</span>
+      <span class="login-card-annotation">Analytique conteneurs, supervision live, profile image support</span>
+    </div>
     <!-- <p style="text-align:center;margin-top:12px;font-size:12px;color:var(--text3)">Sélectionnez un rôle pour explorer la plateforme</p> -->
     <div id="login-error-message" style="color: red; margin-top: 15px; font-weight: bold;"></div>
 
@@ -81,7 +100,8 @@
       <button class="notif-btn" onclick="toggleNotif()" id="notif-btn">
         <i class="fas fa-bell"></i> <span class="notif-badge" id="notif-count">4</span>
       </button>
-      <div class="user-avatar" id="user-avatar" onclick="showModal('settings')">SA</div>
+      <button class="btn-icon" id="theme-toggle-btn" onclick="toggleTheme()" title="Basculer thème clair/sombre"><i class="fas fa-adjust"></i></button>
+      <div class="user-avatar" id="user-avatar" onclick="navigateTo('settings')">SA</div>
     </div>
   </div>
 
@@ -97,7 +117,53 @@
     </div>
   </div>
 </div>
-
-<script src="{{url_for('static', filename='js/script.js')}}"></script>
+  <script src="{{url_for('static', filename='js/script.js')}}?v=20260617.01"></script>
+  <script>
+    const { useState, useEffect } = React;
+    function LoginHeroOverlay() {
+      const slides = [
+        {title:'Supervision navale 360°', subtitle:'Routes, alertes et containers visibles en un seul écran.', metric:'8.2ms', label:'Latence IA'},
+        {title:'Pilotez vos boîtes noires', subtitle:'Suivi live, historique de chocs et seuils thermique intégrés.', metric:'24/7', label:'Ops en continu'},
+        {title:'Profiles et documents', subtitle:'Affichez les images CNI ou profils clients directement dans les modales.', metric:'+42%', label:'Visibilité'}
+      ];
+      const [index, setIndex] = useState(0);
+      useEffect(() => {
+        const id = setInterval(() => setIndex(i => (i + 1) % slides.length), 4200);
+        return () => clearInterval(id);
+      }, []);
+      const slide = slides[index];
+      return React.createElement('div', {className:'login-hero-panel'},
+        React.createElement('div',{className:'login-hero-chip'},
+          React.createElement('div',{className:'hero-chip-dot'}),
+          React.createElement('div',null,'ARGOS Command Center')
+        ),
+        React.createElement('div',{className:'login-hero-copy'},
+          React.createElement('div',{className:'login-hero-title'}, slide.title),
+          React.createElement('div',{className:'login-hero-subtitle'}, slide.subtitle)
+        ),
+        React.createElement('div',{className:'login-hero-metrics'},
+          React.createElement('div',{className:'hero-metric'},
+            React.createElement('div',{className:'hero-metric-value'}, slide.metric),
+            React.createElement('div',{className:'hero-metric-label'}, slide.label)
+          ),
+          React.createElement('div',{className:'hero-metric hero-metric-secondary'},
+            React.createElement('div',{className:'hero-metric-value'}, 'Conteneurs'),
+            React.createElement('div',{className:'hero-metric-label'}, 'Gestion premium')
+          )
+        )
+      );
+    }
+    const mountLoginHero = () => {
+      const root = document.getElementById('react-login-hero');
+      if(root && window.React && window.ReactDOM) {
+        ReactDOM.createRoot(root).render(React.createElement(LoginHeroOverlay));
+      }
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', mountLoginHero);
+    } else {
+      mountLoginHero();
+    }
+  </script>
 </body>
 </html>
