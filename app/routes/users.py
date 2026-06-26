@@ -78,8 +78,7 @@ def get_companies():
 
 @users_bp.route("/api/clients", methods=["GET"])
 def get_clients():
-    role    = request.args.get("role")
-    user_id = request.args.get("user_id")
+    role, user_id = get_caller_identity()
     if not role or not user_id:
         return jsonify({"error": "Accès non autorisé"}), 401
     _ensure_client_cni_file_column()
@@ -128,8 +127,7 @@ def get_clients():
 
 @users_bp.route("/api/drivers", methods=["GET"])
 def get_drivers():
-    role    = request.args.get("role", "")
-    user_id = request.args.get("user_id", "")
+    role, user_id = get_caller_identity()
     if role in ["driver", "client"]:
         return jsonify([])
     try:

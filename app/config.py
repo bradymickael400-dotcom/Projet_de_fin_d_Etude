@@ -21,3 +21,10 @@ class Config:
     SMTP_PORT = int(os.getenv('SMTP_PORT', '587'))
     SMTP_USER = os.getenv('SMTP_USER', '')
     SMTP_PASSWORD = os.getenv('SMTP_PASSWORD', '')
+
+    # ── BIC BoxTech / Maritime Tracking ──
+    BIC_CLIENT_ID = os.getenv('BIC_CLIENT_ID', '')
+    BIC_CLIENT_SECRET = os.getenv('BIC_CLIENT_SECRET', '')
+    MARITIME_PROVIDER = os.getenv('MARITIME_PROVIDER', 'vizion')
+    VIZION_API_KEY = os.getenv('VIZION_API_KEY', '')
+    MT_API_KEY = os.getenv('MT_API_KEY', '')

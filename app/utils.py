@@ -5,6 +5,7 @@ import json, hashlib, smtplib, threading
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
+from flask import request as flask_request
 
 # from app import db # Import de la base de données
 
@@ -73,42 +74,50 @@ def _anchor_to_remote_blockchain(block_index, previous_hash, block_hash, event_t
         return None
 
 
+def get_caller_identity():
+    """Lit le rôle et l'ID appelant depuis les headers, avec compatibilité query-string."""
+    role = flask_request.headers.get("X-Role", "") or flask_request.args.get("role", "")
+    user_id = flask_request.headers.get("X-User-Id", "") or flask_request.args.get("user_id", "")
+    return role.strip(), user_id.strip()
+
+
 def _sceller_evenement(event_type, id_boite, payload):
     from app import db
 
-    """
-    Scelle un événement dans la blockchain.
-    """
+    """Scelle un événement dans la blockchain de façon atomique."""
     try:
-        # 1. Récupérer le dernier bloc pour obtenir son hash
-        last_block = db.session.execute(text(
-            "SELECT block_index, block_hash FROM blockchain_argos ORDER BY block_index DESC LIMIT 1"
-        )).fetchone()
-        
-        index = last_block.block_index + 1 if last_block else 1
-        prev_hash = last_block.block_hash if last_block else "0"
-        ts = datetime.utcnow().isoformat()
-        
-        # 2. Calculer le nouveau hash
-        new_hash = _hash_block(index, prev_hash, ts, payload)
-        
-        # 3. Insérer dans la table blockchain
-        db.session.execute(text("""
-            INSERT INTO blockchain_argos 
-            (block_index, previous_hash, block_hash, horodatage, event_type, id_boite, payload)
-            VALUES (:idx, :prev, :hash, :ts, :type, :id, :payload)
-        """), {
-            "idx": index,
-            "prev": prev_hash,
-            "hash": new_hash,
-            "ts": ts,
-            "type": event_type,
-            "id": id_boite,
-            "payload": json.dumps(payload)
-        })
+        payload_clean = json.loads(json.dumps(payload or {}, default=str))
+        with db.session.begin_nested():
+            last_block = db.session.execute(text(
+                "SELECT block_index, block_hash FROM blockchain_argos "
+                "ORDER BY block_index DESC LIMIT 1 FOR UPDATE"
+            )).fetchone()
+
+            index = last_block.block_index + 1 if last_block else 1
+            prev_hash = last_block.block_hash if last_block else "0"
+            ts = datetime.utcnow().isoformat()
+            new_hash = _hash_block(index, prev_hash, ts, payload_clean)
+
+            db.session.execute(text("""
+                INSERT INTO blockchain_argos
+                    (block_index, previous_hash, block_hash, horodatage,
+                     event_type, id_boite, payload)
+                VALUES
+                    (:idx, :prev, :hash, :ts, :type, :id, CAST(:payload AS jsonb))
+            """), {
+                "idx": index,
+                "prev": prev_hash,
+                "hash": new_hash,
+                "ts": ts,
+                "type": event_type,
+                "id": id_boite,
+                "payload": json.dumps(payload_clean),
+            })
         db.session.commit()
 
-        external_anchor = _anchor_to_remote_blockchain(index, prev_hash, new_hash, event_type, id_boite, payload)
+        external_anchor = _anchor_to_remote_blockchain(
+            index, prev_hash, new_hash, event_type, id_boite, payload_clean
+        )
         if external_anchor:
             db.session.execute(text(
                 "UPDATE blockchain_argos SET external_anchor = :anchor, anchor_status = 'anchored' WHERE block_index = :idx"
@@ -116,7 +125,7 @@ def _sceller_evenement(event_type, id_boite, payload):
             db.session.commit()
     except Exception as e:
         db.session.rollback()
-        print(f"Erreur lors du scellage blockchain : {e}")
+        print(f"[BLOCKCHAIN ERROR] {e}")
 
 # Alias : `seal_block` est le nom historique utilisé dans certains blueprints.
 seal_block = _sceller_evenement

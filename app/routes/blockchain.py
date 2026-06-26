@@ -34,8 +34,7 @@ def _append_boites_filter(query, params, boites):
 
 @blockchain_bp.route("/api/blockchain/events", methods=["GET"])
 def get_blockchain_events():
-    role = request.args.get("role", "")
-    user_id = request.args.get("user_id", "")
+    role, user_id = get_caller_identity()
     
     # SÉCURITÉ : Chauffeurs et Clients n'ont pas accès à la Blockchain
     if role in ["driver", "client"]:
@@ -86,8 +85,7 @@ def get_blockchain_events():
 
 @blockchain_bp.route("/api/blockchain/stats", methods=["GET"])
 def blockchain_stats(): # type: ignore
-    role = request.args.get("role", "")
-    user_id = request.args.get("user_id", "")
+    role, user_id = get_caller_identity()
     query = "FROM blockchain_argos WHERE 1=1"
     params = {}
     query, allowed = _append_boites_filter(query, params, _visible_boites_for(role, user_id))
@@ -111,9 +109,13 @@ def verify_blockchain():
         prev = rows[i - 1]
         p = r[4]
         if isinstance(p, str):
-            try: p = json.loads(p)
-            except: p = {}
-        expected = _hash_block(r[0], prev[2], str(r[3]), p)
+            try:
+                p = json.loads(p)
+            except Exception:
+                p = {}
+        p_clean = json.loads(json.dumps(p or {}, default=str)) if isinstance(p, dict) else {}
+        ts_str = r[3].isoformat() if hasattr(r[3], "isoformat") else str(r[3])
+        expected = _hash_block(r[0], prev[2], ts_str, p_clean)
         if expected != r[2]:
             errors.append({"block": r[0], "issue": "hash_mismatch"})
     return jsonify({"valid": len(errors) == 0, "total_blocks": len(rows), "errors": errors})

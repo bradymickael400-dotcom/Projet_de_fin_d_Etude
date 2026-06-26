@@ -103,8 +103,7 @@ def get_dashboard_stats():
     try:
         period  = request.args.get("period", "7d")
         boite   = request.args.get("boite")
-        role    = request.args.get("role", "")
-        user_id = request.args.get("user_id")
+        role, user_id = get_caller_identity()
 
         # Restriction boites
         if role in ["driver", "client"]:

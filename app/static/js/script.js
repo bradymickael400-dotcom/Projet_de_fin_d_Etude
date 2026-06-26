@@ -89,19 +89,53 @@ function escapeHTML(value) {
     });
 }
 
+function validateContainerNumber(value) {
+    const ISO_VALUES = {
+        A:10,B:12,C:13,D:14,E:15,F:16,G:17,H:18,I:19,J:20,K:21,
+        L:23,M:24,N:25,O:26,P:27,Q:28,R:29,S:30,T:31,U:32,V:34,
+        W:35,X:36,Y:37,Z:38
+    };
+    const cid = String(value || '').toUpperCase().replace(/[\s-]/g, '');
+    if (cid.length !== 11) return { valid: false, msg: `${cid.length}/11 caractères` };
+    if (!/^[A-Z]{4}\d{6}\d$/.test(cid)) return { valid: false, msg: 'Format : OOOUDDDDDDX' };
+    let total = 0;
+    for (let i = 0; i < 10; i++) {
+        const c = cid[i];
+        const val = /[A-Z]/.test(c) ? ISO_VALUES[c] : parseInt(c, 10);
+        total += val * Math.pow(2, i);
+    }
+    const rem = total % 11;
+    const expected = rem === 10 ? 0 : rem;
+    const check = parseInt(cid[10], 10);
+    return check === expected
+        ? { valid: true, msg: 'Numéro ISO 6346 valide' }
+        : { valid: false, msg: `Chiffre contrôle invalide (attendu: ${expected})` };
+}
+
+function updateIsoFeedback(input, feedbackId) {
+  const feedback = document.getElementById(feedbackId);
+  if(!feedback) return;
+  if(!input.value.trim()) {
+    input.style.borderColor = '';
+    feedback.textContent = '';
+    return;
+  }
+  const result = validateContainerNumber(input.value);
+  input.style.borderColor = result.valid ? 'var(--green)' : 'var(--amber)';
+  feedback.style.color = result.valid ? 'var(--green)' : 'var(--amber)';
+  feedback.textContent = result.msg;
+}
+
 // ── SECURE API WRAPPER (ZERO-TRUST PROXY) ─────────────────
 async function secureApiFetch(endpoint, options = {}) {
     const role = localStorage.getItem('currentRole') || '';
     const userId = localStorage.getItem('currentUserId') || '';
-
-    let url = endpoint;
-    // Injection systématique des identifiants de session pour les requêtes de lecture GET
-    if (!options.method || options.method.toUpperCase() === 'GET') {
-        const separator = url.includes('?') ? '&' : '?';
-        url += `${separator}role=${encodeURIComponent(role)}&user_id=${encodeURIComponent(userId)}`;
-    }
-
-    return await fetch(url, options);
+    options.headers = {
+        ...(options.headers || {}),
+        'X-Role': role,
+        'X-User-Id': userId,
+    };
+    return await fetch(endpoint, options);
 }
 
 // Audio
@@ -164,6 +198,13 @@ const NAV = {
     {id:'map',       icon:'fa-solid fa-map',        label:'Suivi'},
     {id:'events',    icon:'fa-solid fa-triangle-exclamation', label:'Événements'},
     {id:'settings',  icon:'fa-solid fa-gear',       label:'Paramètres'},
+  ],
+  port_authority:[
+    {id:'dashboard', icon:'fa-solid fa-anchor', label:'Vue Portuaire'},
+    {id:'containers',icon:'fa-solid fa-box', label:'Conteneurs Port'},
+    {id:'events', icon:'fa-solid fa-triangle-exclamation', label:'Alertes'},
+    {id:'blockchain',icon:'fa-solid fa-link', label:'Données Scellées'},
+    {id:'settings', icon:'fa-solid fa-gear', label:'Paramètres'},
   ],
 };
 
@@ -248,8 +289,10 @@ function changeRefreshRate(v) {
 // ══════════════════════════════════════════════════════
 function initApp(){
   const roleLabels = {superadmin:'SUPER ADMIN', owner:'PROPRIÉTAIRE BB',
-                      driver:'CHAUFFEUR', client:'CLIENT', company:'ENTREPRISE'};
-  const roleInit   = {superadmin:'SA', owner:'PB', driver:'CH', client:'CL', company:'AG'};
+                      driver:'CHAUFFEUR', client:'CLIENT', company:'ENTREPRISE',
+                      port_authority:'AUTORITÉ PORTUAIRE'};
+  const roleInit   = {superadmin:'SA', owner:'PB', driver:'CH', client:'CL', company:'AG',
+                      port_authority:'AP'};
   
   const saved = localStorage.getItem('theme');
   document.body.classList.toggle('theme-light', saved === 'light');
@@ -623,17 +666,17 @@ function renderBlockchainTable(data){
     return;
   }
   tbody.innerHTML = data.blocks.map(b => {
-    const payload = b.data || {};
+    const payload = (b.payload || b.data || {});
     const payStr  = JSON.stringify(payload).substring(0, 80) + (JSON.stringify(payload).length > 80 ? '…' : '');
     const typeColor = b.event_type === 'GENESIS' ? 'var(--text3)'
                     : b.event_type === 'ALERTE_CRITIQUE' ? 'var(--red)'
                     : b.event_type === 'VENTE_ATTRIBUTION' ? 'var(--cyan)'
                     : 'var(--amber)';
     return `<tr>
-      <td style="font-family:var(--mono);font-size:11px">#${b.index}</td>
+      <td style="font-family:var(--mono);font-size:11px">#${b.block_index}</td>
       <td><span style="color:${typeColor};font-weight:600;font-size:12px">${b.event_type}</span></td>
       <td><span class="badge badge-info">${b.id_boite || '—'}</span></td>
-      <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${b.timestamp ? new Date(b.timestamp).toLocaleString('fr-FR') : '—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${b.horodatage ? new Date(b.horodatage).toLocaleString('fr-FR') : '—'}</td>
       <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${payStr}</td>
       <td>
         <button class="btn-icon" style="font-size:11px" onclick="showBlockDetail(${JSON.stringify(b).replace(/"/g,'&quot;')})">
@@ -656,17 +699,17 @@ function renderBlockchainTable(data){
 }
 
 function showBlockDetail(block){
-  const d = block.data || {};
+  const d = (block.payload || block.data || {});
   const html = `
     <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
       <div class="modal" style="max-width:640px">
         <div class="modal-header">
-          <div class="modal-title"><i class="fas fa-link" style="color:var(--cyan)"></i> Bloc #${block.index} — ${block.event_type}</div>
+          <div class="modal-title"><i class="fas fa-link" style="color:var(--cyan)"></i> Bloc #${block.block_index} — ${block.event_type}</div>
           <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
           <div class="grid-2" style="margin-bottom:16px">
-            <div class="stat-card" style="--accent:var(--cyan)"><div class="stat-label">Index</div><div class="stat-value" style="font-size:20px">#${block.index}</div></div>
+            <div class="stat-card" style="--accent:var(--cyan)"><div class="stat-label">Index</div><div class="stat-value" style="font-size:20px">#${block.block_index}</div></div>
             <div class="stat-card" style="--accent:var(--green)"><div class="stat-label">Boîte</div><div class="stat-value" style="font-size:18px">${block.id_boite || '—'}</div></div>
           </div>
           <div style="background:var(--bg3);border-radius:var(--radius);padding:12px;margin-bottom:12px">
@@ -678,7 +721,7 @@ function showBlockDetail(block){
             <div style="font-family:var(--mono);font-size:10px;word-break:break-all;color:var(--text3)">${block.previous_hash}</div>
           </div>
           <div style="font-size:11px;color:var(--text3);margin-bottom:4px">HORODATAGE</div>
-          <div style="font-family:var(--mono);font-size:12px;margin-bottom:12px">${block.timestamp ? new Date(block.timestamp).toLocaleString('fr-FR') : '—'}</div>
+          <div style="font-family:var(--mono);font-size:12px;margin-bottom:12px">${block.horodatage ? new Date(block.horodatage).toLocaleString('fr-FR') : '—'}</div>
           <div style="font-size:11px;color:var(--text3);margin-bottom:4px">DONNÉES SCELLÉES</div>
           <pre style="background:var(--bg3);border-radius:var(--radius);padding:12px;font-size:11px;overflow-x:auto;max-height:200px;color:var(--green)">${JSON.stringify(d, null, 2)}</pre>
         </div>
@@ -1419,7 +1462,7 @@ async function showContainerDetailDB(id){
           <button class="btn-secondary" onclick="closeModal()">Fermer</button>
           <button class="btn-secondary" onclick="openChangeContainerModal('${c.id_boite||c.id}')"><i class="fas fa-exchange-alt"></i> Changer</button>
           <button class="btn-primary" style="background:var(--red)" onclick="viderContainer('${c.id_boite}')">
-              <i class="fas fa-trash-alt"></i> Vider
+              <i class="fas fa-trash-alt"></i> Destockage
           </button>
           <button class="btn-primary" style="width:auto" onclick="closeModal();navigateTo('map')"><i class="fas fa-map-marker-alt"></i> Voir Carte</button>
           <button class="btn-primary" style="width:auto" onclick="closeModal();navigateTo('events')"><i class="fas fa-list"></i> Événements</button>
@@ -3346,7 +3389,12 @@ function updateContainerIdFields(){
       inp.placeholder = `ID Conteneur ${i+1} (ex: CONT-${String(i+1).padStart(3,'0')})`;
       inp.className = 'container-id-input';
       inp.id = `sell-container-id-${i}`;
+      inp.oninput = () => updateIsoFeedback(inp, `iso-feedback-${i}`);
       wrap.appendChild(inp);
+      const fb = document.createElement('small');
+      fb.id = `iso-feedback-${i}`;
+      fb.style.cssText = 'display:block;margin-top:4px;color:var(--text3);font-size:11px';
+      wrap.appendChild(fb);
       section.appendChild(wrap);
     }
   }

@@ -5,9 +5,9 @@ import json
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash
 from app.utils import (
-    _hash_block, _sceller_evenement, seal_block,
+    _hash_block, _sceller_evenement,
     get_boite_for_client, get_boite_for_driver, get_boites_for_owner,
-    get_boites_for_agency,
+    get_boites_for_agency, get_caller_identity,
 )
 from sqlalchemy import text # type: ignore
 from app import db
@@ -20,8 +20,7 @@ cnt_bp = Blueprint("containers", __name__)
 # ═══════════════════════════════════════════════════════════
 @cnt_bp.route("/api/containers/all", methods=["GET"])
 def get_all_containers():
-    role    = request.args.get("role")
-    user_id = request.args.get("user_id")
+    role, user_id = get_caller_identity()
 
     # 1. CORRECTION : On ne bloque pas si user_id est vide (car le superadmin n'en a pas toujours un)
     # On vérifie seulement que le rôle existe.
@@ -113,8 +112,7 @@ def get_all_containers():
 @cnt_bp.route("/api/containers/available", methods=["GET"])
 @cnt_bp.route("/api/containers/disponibles", methods=["GET"])  # alias utilisé par le frontend
 def get_available_containers():
-    role = request.args.get('role', '')
-    user_id = request.args.get('user_id', '')
+    role, user_id = get_caller_identity()
     if role == 'owner' and user_id:
         rows = db.session.execute(text("""
             SELECT c.id_conteneurs, b.id_boite
@@ -133,8 +131,8 @@ def get_available_containers():
 
 @cnt_bp.route("/api/containers/positions", methods=["GET"])
 def get_positions():
-    role    = request.args.get("role", "superadmin")
-    user_id = request.args.get("user_id")
+    role, user_id = get_caller_identity()
+    role = role or "superadmin"
     boites_filter = None
     if role == "owner":   boites_filter = get_boites_for_owner(user_id)
     elif role == "company": boites_filter = get_boites_for_agency(user_id)
@@ -255,8 +253,8 @@ def api_sell_containers():
 @cnt_bp.route("/api/notifications", methods=["GET"])
 def get_notifications():
     """Récupère les notifications selon le rôle et l'ID de l'utilisateur."""
-    role = request.args.get("role", "guest")
-    user_id = request.args.get("user_id", "")
+    role, user_id = get_caller_identity()
+    role = role or "guest"
     try:
         sql = """
             SELECT * FROM notifications 

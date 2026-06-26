@@ -187,8 +187,8 @@ def data_api():
 
 @tel_bp.route("/api/events")
 def get_events():
-    role      = request.args.get("role") or "superadmin"
-    user_id   = request.args.get("user_id")
+    role, user_id = get_caller_identity()
+    role = role or "superadmin"
     container = request.args.get("container")
     severity  = request.args.get("severity")
     period    = request.args.get("period")

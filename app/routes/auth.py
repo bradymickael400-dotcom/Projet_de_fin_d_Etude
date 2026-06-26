@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy import text # type: ignore
 from werkzeug.security import check_password_hash
-from app import db
+from app import db, limiter
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -9,6 +9,7 @@ auth_bp = Blueprint("auth", __name__)
 #  AUTH
 # ═══════════════════════════════════════════════════════════
 @auth_bp.route("/api/login", methods=["POST", "OPTIONS"])
+@limiter.limit("10/minute")
 def api_login():
     if request.method == "OPTIONS":
         return jsonify({"status": "CORS_OK"}), 200
@@ -29,6 +30,7 @@ def api_login():
             ("client", "id_cni", "client", ["login", "id_cni"]),
             ("transporteur", "id_cni", "driver", ["login", "id_cni"]),
             ("agence_utilisatrice", "niu", "company", ["login", "niu"]),
+            ("port_authority_user", "id", "port_authority", ["login"]),
         ]
 
         def verify_password(raw_password, stored_password):

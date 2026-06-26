@@ -8,6 +8,22 @@ from app.config import Config
 # Helpers de la blockchain — source unique de vérité dans app.utils
 from app.utils import init_blockchain, seal_block  # noqa: F401  (réexportés pour `from app import db, seal_block`)
 
+try:
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+    limiter = Limiter(key_func=get_remote_address, default_limits=["200/day"])
+except Exception:
+    class _NoopLimiter:
+        def init_app(self, app):
+            return None
+
+        def limit(self, *_args, **_kwargs):
+            def decorator(func):
+                return func
+            return decorator
+
+    limiter = _NoopLimiter()
+
 
 def create_app():
     app = Flask(__name__)
@@ -29,11 +45,12 @@ def create_app():
     CORS(app, resources={r"/api/*": {
         "origins": "*",
         "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"],
+        "allow_headers": ["Content-Type", "Authorization", "X-Role", "X-User-Id"],
     }})
 
     # ── 3. Extensions ─────────────────────────────────────────────────
     db.init_app(app)
+    limiter.init_app(app)
 
     # ── 4. Blueprints (source canonique des routes) ───────────────────
     from app.routes.auth import auth_bp
@@ -43,6 +60,7 @@ def create_app():
     from app.routes.blockchain import blockchain_bp
     from app.routes.users import users_bp
     from app.routes.publications import pub_bp
+    from app.routes.maritime import maritime_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(cnt_bp)
@@ -51,6 +69,7 @@ def create_app():
     app.register_blueprint(blockchain_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(pub_bp)
+    app.register_blueprint(maritime_bp)
 
     # ── 5. Initialisation paresseuse de la blockchain (une seule fois) ─
     @app.before_request
