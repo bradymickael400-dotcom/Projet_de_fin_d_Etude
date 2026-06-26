@@ -7,6 +7,7 @@ from werkzeug.security import generate_password_hash
 from app.utils import (
     _hash_block, _sceller_evenement, seal_block,
     get_boite_for_client, get_boite_for_driver, get_boites_for_owner,
+    get_boites_for_agency,
 )
 from sqlalchemy import text # type: ignore
 from app import db
@@ -31,6 +32,8 @@ def get_all_containers():
     boites_filter = None
     if role == "owner":
         boites_filter = get_boites_for_owner(user_id)
+    elif role == "company":
+        boites_filter = get_boites_for_agency(user_id)
     elif role == "client":
         boites_filter = get_boite_for_client(user_id)
     elif role == "driver":
@@ -134,6 +137,7 @@ def get_positions():
     user_id = request.args.get("user_id")
     boites_filter = None
     if role == "owner":   boites_filter = get_boites_for_owner(user_id)
+    elif role == "company": boites_filter = get_boites_for_agency(user_id)
     elif role == "client": boites_filter = get_boite_for_client(user_id)
     elif role == "driver": boites_filter = get_boite_for_driver(user_id)
 

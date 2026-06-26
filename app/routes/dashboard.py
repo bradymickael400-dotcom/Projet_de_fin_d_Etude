@@ -11,6 +11,76 @@ from google.ai.generativelanguage import GenerativeServiceClient, GenerateConten
 
 dash_bp = Blueprint("dashboard", __name__)
 
+MONTH_NAMES = {
+    '01': 'Jan', '02': 'Fév', '03': 'Mar', '04': 'Avr',
+    '05': 'Mai', '06': 'Juin', '07': 'Juil', '08': 'Août',
+    '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Déc'
+}
+
+
+def _visible_boites_for(role, user_id):
+    """None = accès global superadmin, [] = aucun accès, liste = boîtes autorisées."""
+    if role in (None, "", "superadmin"):
+        return None
+    if not user_id:
+        return []
+    if role == "owner":
+        return get_boites_for_owner(user_id)
+    if role == "company":
+        return get_boites_for_agency(user_id)
+    if role == "client":
+        return get_boite_for_client(user_id)
+    if role == "driver":
+        return get_boite_for_driver(user_id)
+    return []
+
+
+def _append_boites_filter(parts, params, boites, column="id_boite", prefix="bf"):
+    if boites is None:
+        return True
+    if not boites:
+        return False
+    placeholders = ",".join([f":{prefix}{i}" for i in range(len(boites))])
+    parts.append(f"{column} IN ({placeholders})")
+    params.update({f"{prefix}{i}": v for i, v in enumerate(boites)})
+    return True
+
+
+def _monthly_subscriptions_chart(boites=None):
+    parts = ["LOWER(COALESCE(status,'')) = 'actif'"]
+    params = {}
+    if not _append_boites_filter(parts, params, boites, "id_boite", "ab"):
+        return {"labels": [], "data": []}
+
+    rows = db.session.execute(text(f"""
+        WITH monthly AS (
+            SELECT TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') AS mois_annee,
+                   COUNT(*) AS total
+            FROM abonner
+            WHERE {" AND ".join(parts)}
+            GROUP BY DATE_TRUNC('month', created_at)
+        )
+        SELECT mois_annee, total
+        FROM monthly
+        ORDER BY mois_annee
+    """), params).fetchall()
+
+    return {
+        "labels": [f"{MONTH_NAMES.get(r[0].split('-')[1], r[0].split('-')[1])} {r[0].split('-')[0]}" for r in rows],
+        "data": [int(r[1] or 0) for r in rows],
+    }
+
+
+def _active_subscriptions_count(boites=None):
+    parts = ["LOWER(COALESCE(status,'')) = 'actif'"]
+    params = {}
+    if not _append_boites_filter(parts, params, boites, "id_boite", "asb"):
+        return 0
+    return db.session.execute(text(f"""
+        SELECT COUNT(*) FROM abonner
+        WHERE {" AND ".join(parts)}
+    """), params).scalar() or 0
+
 
 
 # ═══════════════════════════════════════════════════════════
@@ -40,12 +110,7 @@ def get_dashboard_stats():
         if role in ["driver", "client"]:
             return jsonify({"status": "error", "message": "Accès refusé"}), 403
         
-        boites_filter = None
-        if role == "owner":   boites_filter = get_boites_for_owner(user_id)
-        elif role == "company": # <-- AJOUT CRUCIAL ICI
-            boites_filter = get_boites_for_agency(user_id)
-        elif role == "client": boites_filter = get_boite_for_client(user_id)
-        elif role == "driver": boites_filter = get_boite_for_driver(user_id)
+        boites_filter = _visible_boites_for(role, user_id)
 
         interval = "day"
         t_filter = ""
@@ -58,16 +123,14 @@ def get_dashboard_stats():
         parts, params = [], {}
         if t_filter: parts.append(t_filter)
         if boite:    parts.append("id_boite=:boite"); params["boite"] = boite
-        if boites_filter is not None:
-            if not boites_filter:
-                return jsonify({"status": "success",
-                    "kpi": {"avg_temp":0,"avg_hum":0,"avg_press":0,"avg_speed":0,
-                            "total_events":0,"total_shocks":0,"total_alertes":0,"fiabilite":100},
-                    "charts": {"labels":[],"temp":[],"hum":[],"press":[],"speed":[],"shocks":[],"alerts_dist":[0,0,0,0,0]}
-                })
-            placeholders = ",".join([f":bff{i}" for i in range(len(boites_filter))])
-            parts.append(f"id_boite IN ({placeholders})")
-            params.update({f"bff{i}": v for i, v in enumerate(boites_filter)})
+        if not _append_boites_filter(parts, params, boites_filter, "id_boite", "bff"):
+            return jsonify({"status": "success",
+                "kpi": {"avg_temp":0,"avg_hum":0,"avg_press":0,"avg_speed":0,
+                        "total_events":0,"total_shocks":0,"total_alertes":0,"fiabilite":100,
+                        "total_abonnes": 0},
+                "charts": {"labels":[],"temp":[],"hum":[],"press":[],"speed":[],"shocks":[],
+                           "alerts_dist":[0,0,0,0,0], "abonnements": {"labels": [], "data": []}}
+            })
 
         wh = ("WHERE " + " AND ".join(parts)) if parts else ""
 
@@ -76,7 +139,8 @@ def get_dashboard_stats():
                    COALESCE(AVG(pressions),0),  COALESCE(AVG(vitesse),0),
                    COUNT(*),
                    SUM(CASE WHEN chocs > 0 THEN 1 ELSE 0 END),
-                   SUM(CASE WHEN notif IS NOT NULL AND notif!='[]' THEN 1 ELSE 0 END)
+                   SUM(CASE WHEN NULLIF(TRIM(COALESCE(notif,'')), '') IS NOT NULL
+                             AND TRIM(notif) != '[]' THEN 1 ELSE 0 END)
             FROM evenement_save {wh}
         """), params).fetchone()
 
@@ -95,11 +159,11 @@ def get_dashboard_stats():
         """), params).fetchall()
 
         dist = db.session.execute(text(f"""
-            SELECT SUM(CASE WHEN notif ILIKE '%choc%'    THEN 1 ELSE 0 END),
-                   SUM(CASE WHEN notif ILIKE '%temp%'    THEN 1 ELSE 0 END),
-                   SUM(CASE WHEN notif ILIKE '%humid%'   THEN 1 ELSE 0 END),
-                   SUM(CASE WHEN notif ILIKE '%vitesse%' THEN 1 ELSE 0 END),
-                   SUM(CASE WHEN notif ILIKE '%press%'   THEN 1 ELSE 0 END)
+            SELECT SUM(CASE WHEN COALESCE(notif,'') ILIKE '%choc%'    THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN COALESCE(notif,'') ILIKE '%temp%'    THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN COALESCE(notif,'') ILIKE '%humid%'   THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN COALESCE(notif,'') ILIKE '%vitesse%' THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN COALESCE(notif,'') ILIKE '%press%'   THEN 1 ELSE 0 END)
             FROM evenement_save {wh}
         """), params).fetchone()
 
@@ -114,6 +178,7 @@ def get_dashboard_stats():
                 "total_shocks":  int(kpi[5] or 0), # type: ignore
                 "total_alertes": int(kpi[6] or 0), # type: ignore
                 "fiabilite":     fiabilite,
+                "total_abonnes": _active_subscriptions_count(boites_filter),
             },
             "charts": {
                 "labels":      [r[0] for r in ts],
@@ -123,6 +188,7 @@ def get_dashboard_stats():
                 "speed":       [round(float(r[4]), 1) for r in ts],
                 "shocks":      [round(float(r[5]), 1) for r in ts],
                 "alerts_dist": [int(dist[i] or 0) for i in range(5)], # type: ignore
+                "abonnements":  _monthly_subscriptions_chart(boites_filter),
             }
         }), 200
     except Exception as e:
@@ -136,9 +202,9 @@ def get_dashboard_stats():
 def get_sa_dashboard():
     try:
         tot_ent    = db.session.execute(text("SELECT COUNT(*) FROM proprietaire_conteneur")).scalar() or 0
-        tot_abs    = db.session.execute(text("SELECT COUNT(*) FROM abonner WHERE status='Actif'")).scalar() or 0
+        tot_abs    = _active_subscriptions_count()
         tot_alerts = db.session.execute(text(
-            "SELECT COUNT(*) FROM evenement_save WHERE notif IS NOT NULL AND notif!='[]'"
+            "SELECT COUNT(*) FROM evenement_save WHERE NULLIF(TRIM(COALESCE(notif,'')), '') IS NOT NULL AND TRIM(notif) != '[]'"
         )).scalar() or 0
         tot_clients= db.session.execute(text("SELECT COUNT(*) FROM client")).scalar() or 0
         tot_boites = db.session.execute(text("SELECT COUNT(*) FROM boite_noir")).scalar() or 0
@@ -146,7 +212,7 @@ def get_sa_dashboard():
         recent = db.session.execute(text("""
             SELECT horodatage, id_boite, notif, log_action, temperature, chocs
             FROM evenement_save
-            WHERE notif IS NOT NULL AND notif!='[]'
+            WHERE NULLIF(TRIM(COALESCE(notif,'')), '') IS NOT NULL AND TRIM(notif) != '[]'
             ORDER BY horodatage DESC LIMIT 10
         """)).fetchall()
         alertes_recentes = []
@@ -163,7 +229,7 @@ def get_sa_dashboard():
 
         crit = db.session.execute(text("""
             SELECT id_boite, COUNT(*) c FROM evenement_save
-            WHERE notif IS NOT NULL AND notif!='[]'
+            WHERE NULLIF(TRIM(COALESCE(notif,'')), '') IS NOT NULL AND TRIM(notif) != '[]'
             GROUP BY id_boite ORDER BY c DESC LIMIT 5
         """)).fetchall()
 
@@ -173,51 +239,22 @@ def get_sa_dashboard():
                    COUNT(DISTINCT a.numero_a) AS nbcl
             FROM proprietaire_conteneur p
             LEFT JOIN boite_noir b ON b.id_proprietaire = p.id
-            LEFT JOIN abonner a ON a.id_boite = b.id_boite
+            LEFT JOIN abonner a ON a.id_boite = b.id_boite AND LOWER(COALESCE(a.status,'')) = 'actif'
             GROUP BY p.id,p.nom_agence,p.nbr_boite,p.addresse_mail,
                      p.lieu_residence,p.lat,p.lon
             ORDER BY p.id DESC LIMIT 5
         """)).fetchall()
 
         dist = db.session.execute(text("""
-            SELECT SUM(CASE WHEN notif ILIKE '%choc%'    THEN 1 ELSE 0 END),
-                   SUM(CASE WHEN notif ILIKE '%temp%'    THEN 1 ELSE 0 END),
-                   SUM(CASE WHEN notif ILIKE '%humid%'   THEN 1 ELSE 0 END),
-                   SUM(CASE WHEN notif ILIKE '%vitesse%' THEN 1 ELSE 0 END),
-                   SUM(CASE WHEN notif ILIKE '%press%'   THEN 1 ELSE 0 END)
+            SELECT SUM(CASE WHEN COALESCE(notif,'') ILIKE '%choc%'    THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN COALESCE(notif,'') ILIKE '%temp%'    THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN COALESCE(notif,'') ILIKE '%humid%'   THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN COALESCE(notif,'') ILIKE '%vitesse%' THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN COALESCE(notif,'') ILIKE '%press%'   THEN 1 ELSE 0 END)
             FROM evenement_save
         """)).fetchone()
 
-        # [AJOUT : Calcul de l'évolution des abonnements pour le graphique]
-        query_total_entreprises = text("""
-            WITH MonthlyCounts AS (
-                SELECT 
-                    TO_CHAR(created_at, 'YYYY-MM') as mois_annee,
-                    COUNT(*) as nouveaux_comptes
-                FROM agence_utilisatrice
-                WHERE created_at IS NOT NULL
-                GROUP BY TO_CHAR(created_at, 'YYYY-MM')
-            )
-            SELECT 
-                mois_annee,
-                SUM(nouveaux_comptes) OVER (ORDER BY mois_annee ASC) as total_cumule
-            FROM MonthlyCounts
-            ORDER BY mois_annee ASC
-        """)
-        
-        resultats_totaux = db.session.execute(query_total_entreprises).fetchall()
-        labels_mois = []
-        data_comptes = []
-        noms_mois = {'01': 'Jan', '02': 'Fév', '03': 'Mar', '04': 'Avr', '05': 'Mai', '06': 'Juin', '07': 'Juil', '08': 'Août', '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Déc'}
-        
-        if not resultats_totaux:
-            labels_mois = ['Ce mois']
-            data_comptes = [0]
-        else:
-            for row in resultats_totaux:
-                annee, mois_num = row[0].split('-')
-                labels_mois.append(f"{noms_mois.get(mois_num, mois_num)} {annee}")
-                data_comptes.append(row[1])
+        abonnements_chart = _monthly_subscriptions_chart()
 
         # Modifiez la clé "charts" dans votre return jsonify final :
         return jsonify({
@@ -233,7 +270,7 @@ def get_sa_dashboard():
             } for r in top_ent],
             "charts": {
                 "alerts_dist": [int(dist[i] or 0) for i in range(5)], # type: ignore
-                "abonnements": {"labels": labels_mois, "data": data_comptes} # <-- AJOUT ICI
+                "abonnements": abonnements_chart
             },
         })
     except Exception as e:
@@ -281,7 +318,8 @@ def get_owner_dashboard():
 
         kpi_row = db.session.execute(text("""
             SELECT COALESCE(AVG(temperature),0), COUNT(*),
-                SUM(CASE WHEN notif IS NOT NULL AND notif!='[]' THEN 1 ELSE 0 END)
+                SUM(CASE WHEN NULLIF(TRIM(COALESCE(notif,'')), '') IS NOT NULL
+                          AND TRIM(notif) != '[]' THEN 1 ELSE 0 END)
             FROM evenement_save e
             JOIN boite_noir b ON b.id_boite = e.id_boite
             JOIN proprietaire_conteneur p ON p.id = b.id_proprietaire -- CORRECTION ICI

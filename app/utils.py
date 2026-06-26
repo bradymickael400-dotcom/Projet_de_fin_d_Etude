@@ -198,11 +198,19 @@ def get_boites_for_agency(agency_id):
     """Récupère TOUTES les boîtes auxquelles une agence est abonnée"""
     from app import db
     from sqlalchemy import text
-    # On cherche dans la nouvelle table de liaison
-    rows = db.session.execute(text(
-        "SELECT id_boite FROM agence_abonnement WHERE id_agence = :aid AND status = 'actif'"
-    ), {"aid": agency_id}).fetchall()
-    return [r[0] for r in rows]
+    if not agency_id:
+        return []
+    try:
+        rows = db.session.execute(text("""
+            SELECT id_boite
+            FROM agence_abonnement
+            WHERE CAST(id_agence AS TEXT) = :aid
+              AND LOWER(COALESCE(status, '')) = 'actif'
+        """), {"aid": str(agency_id)}).fetchall()
+        return [r[0] for r in rows]
+    except Exception:
+        db.session.rollback()
+        return []
 
 def get_boite_for_driver(cni):
     from app import db

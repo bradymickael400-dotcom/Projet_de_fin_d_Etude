@@ -8,9 +8,34 @@ from app.utils import *
 
 blockchain_bp = Blueprint("blockchain", __name__)
 
+def _visible_boites_for(role, user_id):
+    if role in (None, "", "superadmin"):
+        return None
+    if not user_id:
+        return []
+    if role == "owner":
+        return get_boites_for_owner(user_id)
+    if role == "company":
+        return get_boites_for_agency(user_id)
+    if role == "client":
+        return get_boite_for_client(user_id)
+    if role == "driver":
+        return get_boite_for_driver(user_id)
+    return []
+
+def _append_boites_filter(query, params, boites):
+    if boites is None:
+        return query, True
+    if not boites:
+        return query, False
+    placeholders = ",".join([f":b{i}" for i in range(len(boites))])
+    params.update({f"b{i}": v for i, v in enumerate(boites)})
+    return f"{query} AND id_boite IN ({placeholders})", True
+
 @blockchain_bp.route("/api/blockchain/events", methods=["GET"])
 def get_blockchain_events():
     role = request.args.get("role", "")
+    user_id = request.args.get("user_id", "")
     
     # SÉCURITÉ : Chauffeurs et Clients n'ont pas accès à la Blockchain
     if role in ["driver", "client"]:
@@ -25,6 +50,9 @@ def get_blockchain_events():
     try:
         query = "SELECT * FROM blockchain_argos WHERE 1=1"
         params = {}
+        query, allowed = _append_boites_filter(query, params, _visible_boites_for(role, user_id))
+        if not allowed:
+            return jsonify({"blocks": [], "total": 0, "page": page, "per_page": per_page})
         if etype:
             query += " AND event_type = :type"
             params["type"] = etype
@@ -39,6 +67,7 @@ def get_blockchain_events():
         rows = db.session.execute(text(query), params).fetchall()
         
         total_query = "SELECT COUNT(*) FROM blockchain_argos WHERE 1=1"
+        total_query, _ = _append_boites_filter(total_query, params, _visible_boites_for(role, user_id))
         if etype: total_query += " AND event_type = :type"
         if boite: total_query += " AND id_boite = :boite"
         
@@ -57,10 +86,17 @@ def get_blockchain_events():
 
 @blockchain_bp.route("/api/blockchain/stats", methods=["GET"])
 def blockchain_stats(): # type: ignore
-    total = db.session.execute(text("SELECT COUNT(*) FROM blockchain_argos")).scalar() or 0
+    role = request.args.get("role", "")
+    user_id = request.args.get("user_id", "")
+    query = "FROM blockchain_argos WHERE 1=1"
+    params = {}
+    query, allowed = _append_boites_filter(query, params, _visible_boites_for(role, user_id))
+    if not allowed:
+        return jsonify({"total_blocks": 0, "by_type": {}})
+    total = db.session.execute(text(f"SELECT COUNT(*) {query}"), params).scalar() or 0
     by_type = db.session.execute(text(
-        "SELECT event_type, COUNT(*) FROM blockchain_argos GROUP BY event_type"
-    )).fetchall()
+        f"SELECT event_type, COUNT(*) {query} GROUP BY event_type"
+    ), params).fetchall()
     return jsonify({"total_blocks": total, "by_type": {r[0]: r[1] for r in by_type}})
 
 @blockchain_bp.route("/api/blockchain/verify", methods=["GET"])

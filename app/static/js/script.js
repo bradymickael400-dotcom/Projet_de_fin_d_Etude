@@ -1830,9 +1830,9 @@ function buildClientsPage(){
         <label>Photo CNI</label>
         <div class="upload-zone" onclick="document.getElementById('client-cni').click()">
           <div class="upload-icon"><i class="fas fa-id-card"></i></div>
-          <div class="upload-text">Photo CNI / Inventaire</div>
+          <div class="upload-text">Inventaire</div>
         </div>
-        <input type="file" id="client-cni" accept="image/*" style="display:none" onchange="previewFile(this,'client-cni-preview')">
+        <input type="file" id="client-cni" accept="image/*, application/pdf" style="display:none" onchange="previewFile(this,'client-cni-preview')">
         <div id="client-cni-preview"></div>
       </div>
       <button class="btn-primary" onclick="addNewClient()"><i class="fas fa-check"></i> Créer le Compte Client</button>
@@ -2006,7 +2006,7 @@ function buildStatsPage(){
         <div class="chart-wrap" style="height:200px"><canvas id="chart-subs"></canvas></div></div>
     </div>
     <div class="card">
-      <div class="card-header"><span class="card-title">Totals Abonnement mensuel</span>
+      <div class="card-header"><span class="card-title">Abonnements actifs mensuels</span>
         <button class="export-btn" onclick="showToast('Export CSV','info')"><i class="fas fa-file-csv"></i> CSV</button></div>
       <div class="chart-wrap" style="height:180px"><canvas id="chart-revenue"></canvas></div>
     </div>
@@ -2026,7 +2026,13 @@ async function loadDynamicStats(period='7d'){
     const res  = await secureApiFetch(url);
     const data = await res.json();
     
-    if(data.status !== 'success') return;
+    if(!res.ok || data.status !== 'success') {
+      ['dyn-stat-temp','dyn-stat-alerts','dyn-stat-shocks','dyn-stat-fiability'].forEach(id=>{
+        const el = document.getElementById(id);
+        if(el) el.textContent = '—';
+      });
+      return;
+    }
     
     const kpi = data.kpi;
     const labels = {'24h':'Sur 24h','7d':'Sur 7 jours','30d':'Ce mois','3m':'Ce trimestre','all':'Depuis toujours'};
@@ -2052,9 +2058,17 @@ async function loadDynamicStats(period='7d'){
     updateChart('chart-speed', cd.labels, cd.speed);
     updateChart('chart-shock', cd.labels, cd.shocks);
     if(charts['chart-subs']){ charts['chart-subs'].data.datasets[0].data = cd.alerts_dist; charts['chart-subs'].update(); }
-  } catch(e){ 
-      // Le back-end renverra une erreur 403 (Accès refusé) pour les clients/chauffeurs, on l'intercepte silencieusement
-      console.warn('Accès aux statistiques restreint ou erreur réseau.'); 
+    if(charts['chart-revenue'] && cd.abonnements){
+      charts['chart-revenue'].data.labels = cd.abonnements.labels || [];
+      charts['chart-revenue'].data.datasets[0].data = cd.abonnements.data || [];
+      charts['chart-revenue'].update();
+    }
+  } catch(e){
+      console.warn('Accès aux statistiques restreint ou erreur réseau.', e);
+      ['dyn-stat-temp','dyn-stat-alerts','dyn-stat-shocks','dyn-stat-fiability'].forEach(id=>{
+        const el = document.getElementById(id);
+        if(el) el.textContent = '—';
+      });
   }
 }
 
@@ -2177,7 +2191,7 @@ async function refreshEventTable(){
     }
 
     tbody.innerHTML = events.map(e=>{
-      const isAlert = e.notif && e.notif !== '[]';
+      const isAlert = e.notif && String(e.notif).trim() !== '[]';
       const safeNotif = typeof e.notif === 'string' ? e.notif : null;
       let msgs = [];
       if (safeNotif) {
@@ -2190,8 +2204,12 @@ async function refreshEventTable(){
         ? `<audio controls src="${e.media_1_url}" style="height:24px;width:110px"></audio>`
         : '<span style="color:var(--text3);font-size:11px">—</span>';
       const sensorStr = `T:${e.temperature ?? '—'}°C H:${e.humidite ?? '—'}% V:${e.vitesse ?? '—'} km/h G:${e.chocs ?? '—'}`;
+      const eventDate = e.horodatage ? new Date(e.horodatage) : null;
+      const formattedDate = eventDate && !Number.isNaN(eventDate.getTime())
+        ? eventDate.toLocaleString('fr-FR')
+        : '—';
       return `<tr>
-        <td style="font-family:var(--mono);font-size:11px">${new Date(e.horodatage).toLocaleString('fr-FR')}</td>
+        <td style="font-family:var(--mono);font-size:11px">${formattedDate}</td>
         <td><span class="badge badge-info">${escapeHTML(e.id_boite ?? '—')}</span></td>
         <td><span class="tag">${typeTag}</span></td>
         <td><span class="badge badge-${severityValue}">${severityValue.toUpperCase()}</span></td>
@@ -2203,7 +2221,11 @@ async function refreshEventTable(){
         <td><button class="btn-icon" onclick="showContainerDetailDB('${escapeHTML(e.id_boite || e.id || '')}')"><i class="fas fa-box"></i> Ouvrir</button></td>
       </tr>`;
     }).join('');
-  } catch(e){ console.error('refreshEventTable', e); }
+  } catch(e){
+    console.error('refreshEventTable', e);
+    const tbody = document.getElementById('events-tbody');
+    if(tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3)">Erreur de chargement des événements</td></tr>';
+  }
 }
 
 let liveEventInterval = null;
@@ -2787,10 +2809,10 @@ function initCharts(page){
   mkChart('chart-shock', 'bar',  [], [{label:'Chocs (G)',         data:[], backgroundColor:'#ffab00', borderRadius:4}]);
   mkChart('chart-press', 'line', [], [{label:'Pression (hPa)',    data:[], borderColor:'#b44dff', backgroundColor:'rgba(180,77,255,.08)', borderWidth:2, fill:true, tension:.4, pointRadius:2}]);
   mkChart('chart-speed', 'line', [], [{label:'Vitesse (km/h)',    data:[], borderColor:'#00e676', borderWidth:2, fill:false, tension:.4, pointRadius:2}]);
-// Graphique de l'évolution du total des entreprises ARGOS
+  // Graphique mensuel des abonnements issus de la base.
   mkChart('chart-revenue', 'line', [],
     [{
-      label: 'Total entreprises enregistrées', 
+      label: 'Abonnements actifs créés',
       data: [],
       backgroundColor: 'rgba(0, 212, 255, 0.1)', // Fond bleuté transparent
       borderColor: 'var(--cyan)', 
@@ -3079,7 +3101,7 @@ async function loadSADashboardData(){
 
     // Blocs blockchain count
     try {
-      const bcRes = await fetch('/api/blockchain/stats');
+      const bcRes = await secureApiFetch('/api/blockchain/stats');
       const bcD   = await bcRes.json();
       const el = document.getElementById('dash-bc-count');
       if(el) el.textContent = bcD.total_blocks || 0;
@@ -3184,7 +3206,7 @@ async function loadOwnerDashboardData(){
 
     // bc count
     try {
-      const bcRes = await fetch('/api/blockchain/stats');
+      const bcRes = await secureApiFetch('/api/blockchain/stats');
       const bcD   = await bcRes.json();
       const el = document.getElementById('ow-bc');
       if(el) el.textContent = bcD.total_blocks;
@@ -3251,11 +3273,12 @@ async function populateContainerSelect(selectId) {
     const sel = document.getElementById(selectId);
     if (!sel) return;
     try {
-        const url = `/api/containers/all?user_id=${currentUserId}&role=${currentRole}`;
-        const res = await fetch(url);
+        const res = await secureApiFetch('/api/containers/all');
         const data = await res.json();
-        const opts = data.map(c => `<option value="${c.id_boite || c.id}">${c.id_boite || c.id}${c.type_conteneurs ? ' — ' + c.type_conteneurs : ''}</option>`).join('');
-        sel.innerHTML = '<option value="">Choisir un conteneur…</option>' + opts;
+        const list = Array.isArray(data) ? data : [];
+        const opts = list.map(c => `<option value="${escapeHTML(c.id_boite || c.id)}">${escapeHTML(c.id_boite || c.id)}${c.type_conteneurs ? ' — ' + escapeHTML(c.type_conteneurs) : ''}</option>`).join('');
+        const defaultLabel = selectId === 'container-select' ? 'Tous conteneurs' : 'Choisir un conteneur…';
+        sel.innerHTML = `<option value="">${defaultLabel}</option>` + opts;
         const tsel = document.getElementById('threshold-container-select');
         if (tsel) tsel.innerHTML = '<option value="">Sélectionner…</option>' + opts;
         const ssel = document.getElementById('stats-boite-select');

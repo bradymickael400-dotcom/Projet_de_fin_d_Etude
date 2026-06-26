@@ -187,28 +187,35 @@ def data_api():
 
 @tel_bp.route("/api/events")
 def get_events():
-    role      = request.args.get("role")
+    role      = request.args.get("role") or "superadmin"
     user_id   = request.args.get("user_id")
     container = request.args.get("container")
     severity  = request.args.get("severity")
     period    = request.args.get("period")
-    limit     = int(request.args.get("limit", 100))
+    try:
+        limit = min(max(int(request.args.get("limit", 100)), 1), 500)
+    except (TypeError, ValueError):
+        limit = 100
 
     # Restriction boites
     boites_filter = None
-    if role == "owner":   boites_filter = get_boites_for_owner(user_id)
+    if role in ("superadmin", ""):
+        boites_filter = None
+    elif role == "owner":   boites_filter = get_boites_for_owner(user_id)
     elif role == "client": boites_filter = get_boite_for_client(user_id)
-    elif role == "company": # <-- AJOUT CRUCIAL ICI
+    elif role == "company":
         boites_filter = get_boites_for_agency(user_id)
     elif role == "driver": boites_filter = get_boite_for_driver(user_id)
+    else:
+        boites_filter = []
 
     where, params = [], {"limit": limit}
     if container:
         where.append("id_boite = :cid"); params["cid"] = container # type: ignore
     if severity == "alert":
-        where.append("notif IS NOT NULL AND notif != '[]'")
+        where.append("NULLIF(TRIM(COALESCE(notif,'')), '') IS NOT NULL AND TRIM(notif) != '[]'")
     elif severity == "normal":
-        where.append("(notif IS NULL OR notif = '[]')")
+        where.append("(NULLIF(TRIM(COALESCE(notif,'')), '') IS NULL OR TRIM(notif) = '[]')")
     if boites_filter is not None:
         if not boites_filter:
             return jsonify([])
@@ -229,11 +236,12 @@ def get_events():
 
     wh = ("WHERE " + " AND ".join(where)) if where else ""
     rows = db.session.execute(text(f"""
-        SELECT id_eventinit, horodatage, id_boite, media_1_url, media_2_url,
+        SELECT id_eventinit, COALESCE(horodatage, created_at) AS horodatage,
+               id_boite, media_1_url, media_2_url,
                temperature, humidite, pressions, lat, lon, created_at,
                log_action, vitesse, notif, chocs
         FROM evenement_save {wh}
-        ORDER BY horodatage DESC LIMIT :limit
+        ORDER BY COALESCE(horodatage, created_at) DESC LIMIT :limit
     """), params).fetchall()
     return jsonify([dict(r._mapping) for r in rows])
 
