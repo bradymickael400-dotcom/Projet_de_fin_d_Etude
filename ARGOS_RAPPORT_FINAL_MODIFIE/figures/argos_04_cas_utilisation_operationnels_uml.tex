@@ -1,0 +1,103 @@
+% Diagramme des cas d'utilisation opérationnels — ARGOS (Police géante >= Titre)
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\Huge\bfseries,
+  uc/.style={draw=argosmid,ellipse,align=center,text width=7.2cm,
+    minimum width=7.8cm,minimum height=2.2cm,fill=white,line width=2.2pt},
+  link/.style={draw=argosgray,line width=2.2pt},
+  inherit/.style={draw=argosnavy,line width=2.2pt,-{Triangle[open,length=6mm]}},
+  boundary/.style={draw=argosnavy,rounded corners=12pt,inner sep=20mm,line width=2.5pt},
+  actorfont/.style={font=\sffamily\Huge\bfseries,align=center,text=argosnavy},
+  sysactor/.style={draw=argosnavy,rounded corners=6pt,fill=argospale,
+    minimum width=7.5cm,minimum height=2.0cm,align=center,line width=2.2pt,font=\sffamily\Huge\bfseries}
+]
+
+% -----------------------------------------------------------------
+% COMMANDE TIKZ POUR DESSINER UN BONSHOMME UML
+% -----------------------------------------------------------------
+\newcommand{\drawstickman}[3]{ % #1: name, #2: (x,y), #3: label
+  \coordinate (center) at #2;
+  \draw[draw=argosnavy,line width=2.2pt,fill=argospale] ($(center)+(0,1.5)$) circle (0.7cm);
+  \draw[draw=argosnavy,line width=2.2pt] ($(center)+(0,0.8)$) -- ($(center)+(0,-0.7)$);
+  \draw[draw=argosnavy,line width=2.2pt] ($(center)+(-0.9,0.4)$) -- ($(center)+(0.9,0.4)$);
+  \draw[draw=argosnavy,line width=2.2pt] ($(center)+(0,-0.7)$) -- ($(center)+(-0.7,-1.8)$);
+  \draw[draw=argosnavy,line width=2.2pt] ($(center)+(0,-0.7)$) -- ($(center)+(0.7,-1.8)$);
+  \node[actorfont,anchor=north] at ($(center)+(0,-2.0)$) {#3};
+  \node[rectangle,inner sep=4pt,minimum width=6.0cm,minimum height=5.0cm] (#1) at ($(center)+(0,0.1)$) {};
+}
+
+% -----------------------------------------------------------------
+% ACTEURS HUMAINS ET HÉRITAGE (GAUCHE)
+% -----------------------------------------------------------------
+\drawstickman{driver}{(-26.0, 5.2)}{Transporteur};
+\drawstickman{client}{(-26.0, 15.6)}{Client};
+
+% Lien d'héritage
+\draw[inherit] (client.south) -- node[right,font=\Huge\bfseries]{hérite} (driver.north);
+
+% -----------------------------------------------------------------
+% ACTEURS SYSTÈMES ET MATÉRIELS (DROITE)
+% -----------------------------------------------------------------
+\node[sysactor] (esp) at (26.0, 0.0) {Dispositif ESP32};
+\node[sysactor] (maritime) at (26.0, -5.2) {Fournisseur maritime / BIC};
+\node[sysactor] (messaging) at (26.0, -10.4) {Service de courrier\\électronique};
+
+% -----------------------------------------------------------------
+% CAS D'UTILISATION ESPACÉS (GRILLE 13.5cm x 5.2cm)
+% -----------------------------------------------------------------
+% Ligne 1 (Y = 15.6)
+\node[uc] (docs) at (0.0, 15.6) {Consulter les documents autorisés};
+
+% Ligne 2 (Y = 10.4)
+\node[uc] (auth) at (-13.5, 10.4) {S'authentifier};
+\node[uc] (track) at (0.0, 10.4) {Suivre le conteneur sur la carte};
+\node[uc] (consult) at (13.5, 10.4) {Consulter mesures et état de la boîte};
+
+% Ligne 3 (Y = 5.2)
+\node[uc] (mission) at (-13.5, 5.2) {Consulter la mission de transport};
+\node[uc] (alerts) at (0.0, 5.2) {Consulter alertes et événements};
+\node[uc] (destock) at (13.5, 5.2) {Demander ou voter un déstockage};
+
+% Ligne 4 (Y = 0.0)
+\node[uc] (requestpos) at (-13.5, 0.0) {Demander une position};
+\node[uc] (telemetry) at (0.0, 0.0) {Émettre télémétrie, position et qualité};
+\node[uc] (commands) at (13.5, 0.0) {Interroger et exécuter commandes};
+
+% Ligne 5 (Y = -5.2)
+\node[uc] (enroll) at (-13.5, -5.2) {S'enrôler avec jeton temporaire};
+\node[uc] (voyage) at (0.0, -5.2) {Valider BIC et enrichir suivi maritime};
+\node[uc] (audio) at (13.5, -5.2) {Téléverser un enregistrement audio};
+
+% Ligne 6 (Y = -10.4)
+\node[uc] (notify) at (0.0, -10.4) {Recevoir une notification d'alerte};
+
+% Cadre de la plateforme
+\node[boundary,fit=(auth)(track)(consult)(docs)(mission)(alerts)(destock)(requestpos)(telemetry)(commands)(enroll)(voyage)(audio)(notify),
+  label={[font=\fontsize{32pt}{38pt}\selectfont\bfseries\color{argosnavy}]above:PLATEFORME ARGOS — CAS OPÉRATIONNELS}] {};
+
+% -----------------------------------------------------------------
+% ASSOCIATIONS DIRECTES ET HÉRITÉES
+% -----------------------------------------------------------------
+% Transporteur (et hérité par Client)
+\draw[link] (driver.east) -- (auth.west);
+\draw[link] (driver.east) -- (track.west);
+\draw[link] (driver.east) -- (consult.west);
+\draw[link] (driver.east) -- (mission.west);
+\draw[link] (driver.east) -- (alerts.west);
+\draw[link] (driver.east) -- (destock.west);
+
+% Client
+\draw[link] (client.east) -- (docs.west);
+
+% Dispositif ESP32
+\draw[link] (esp.west) -- (telemetry.east);
+\draw[link] (esp.west) -- (commands.east);
+\draw[link] (esp.west) -- (enroll.east);
+\draw[link] (esp.west) -- (audio.east);
+
+% Services externes
+\draw[link] (maritime.west) -- (voyage.east);
+\draw[link] (messaging.west) -- (notify.east);
+
+\end{tikzpicture}%
+}

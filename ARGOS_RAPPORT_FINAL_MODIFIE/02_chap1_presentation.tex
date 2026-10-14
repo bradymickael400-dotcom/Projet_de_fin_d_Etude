@@ -1,0 +1,335 @@
+\chapter{Présentation du projet}
+\label{chap-presentation}
+
+Avant de concevoir les circuits électroniques, de coder les algorithmes ou d’établir le budget, il faut poser des bases solides. Ce chapitre pose le cadre du projet ARGOS : pourquoi il est nécessaire, en quoi il consiste et à qui il s’adresse. Tout ceci à travers le contexte et la justification du projet, l’analyse du problème, puis les parties prenantes concernées.
+
+\section{Contexte et justification}
+
+Cette section pose les bases du projet ARGOS en situant son environnement d'apparition. Elle présente d'abord le contexte général dans lequel le projet s'inscrit, à savoir les mutations technologiques et réglementaires que connaît la logistique maritime, avant de se resserrer sur la réalité régionale de l'Afrique centrale et du Cameroun. Elle expose ensuite les raisons qui justifient la mise en place d'ARGOS, en articulant cette justification autour de quatre axes complémentaires : technique, économique, réglementaire et stratégique. L'objectif est de montrer que le projet ne répond pas à un besoin isolé, mais à une nécessité clairement ancrée dans son époque et son territoire.
+
+\subsection{Contexte}
+
+La logistique maritime mondiale traverse actuellement l’une des mutations les plus profondes de son histoire, marquant le passage de l’ère de la manutention purement physique à celle de la « Supply Chain 4.0 ». Si le conteneur standardisé a révolutionné les échanges mondiaux au XXe siècle, son modèle passif atteint aujourd’hui ses limites. À l’heure où les technologies de l’information, le Big Data et l’Internet des Objets Industriel (IoT) redéfinissent les standards de performance, la marchandise ne peut plus se contenter d’être transportée ; elle doit désormais être « connectée ». L’industrie évolue vers un paradigme où l’information sur le statut du fret possède autant de valeur, voire plus, que le fret lui-même. En 2025, le volume des échanges conteneurisés a atteint un niveau historique de près de 192,9 millions d’EVP (Équivalent Vingt Pieds), selon Container Trades Statistics\cite{cts2025}, porté par une croissance constante. Cette dynamique repose sur le conteneur maritime dont le marché mondial devrait croître de 4,1\,\% par an jusqu’en 2035\cite{gmi2025}.
+
+Cette évolution vers le tout connecté s’accélère sous l’effet d’un changement réglementaire majeur. Depuis le 1er janvier 2026, l’entrée en vigueur des nouveaux amendements aux conventions SOLAS et MARPOL de l’Organisation Maritime Internationale (OMI) impose une obligation stricte de signalement rapide en cas de perte de conteneurs en mer, révélant un besoin plus large de télémétrie et de suivi proactif que l’industrie doit désormais anticiper\cite{omi2026}. Le « Smart Container » s’impose dès lors comme la norme de demain, un marché technologique émergent où tout reste à concevoir et à optimiser.
+
+Au niveau régional, l’Afrique centrale se trouve à la croisée des chemins de cette révolution. L’opérationnalisation progressive de la Zone de Libre-Échange Continentale Africaine (ZLECAf) devrait, selon les projections de la Banque mondiale, augmenter les échanges intra-africains de plus de 52\,\%\cite{banquemondiale2025}, créant un potentiel de croissance majeur pour les flux logistiques régionaux. Le Cameroun, véritable poumon économique de la CEMAC, se positionne en première ligne avec 42,1\,\% du PIB de la CEMAC\cite{tresor2025}\ ; cette position dominante se maintient en 2025-2026\cite{cemac2025}. Ses plateformes portuaires (le Port Autonome de Douala (PAD) et le complexe industrialo-portuaire de Kribi (PAK)) traitent des volumes massifs, irriguant non seulement le marché national, mais servant également de ligne de vie logistique pour l’hinterland (Tchad, République Centrafricaine)\cite{cncc2025}.
+
+Cependant, les infrastructures de communication et de suivi sur ces corridors de transit terrestres et maritimes accusent un retard technologique\cite{agenceecofin}. L’interopérabilité des réseaux, la persistance des zones de non-couverture cellulaire, et la complexité des protocoles d’échange de données dans des environnements métalliques confinés freinent l’adoption des standards internationaux. Pour sécuriser ces flux et garantir la compétitivité de ses corridors, le Cameroun ne peut se contenter d’importer des solutions technologiques génériques souvent inadaptées à ses contraintes climatiques et réseau. L’avenir du transit régional repose sur l’ingénierie d’une souveraineté technologique locale, capable d’hybrider les télécommunications modernes pour transformer chaque conteneur en un agent actif et communicant de la chaîne logistique. C’est précisément dans cette dynamique de modernisation incontournable que s’inscrit le projet ARGOS.
+
+\subsection{Justification}
+
+Le déploiement du projet ARGOS répond à des enjeux majeurs à la fois techniques, économiques, réglementaires et stratégiques. Ces quatre dimensions guident la conception d'une solution embarquée sur mesure, dont l'objectif est d'accompagner l'Afrique centrale dans sa transition vers la Supply Chain~4.0.
+
+\subsubsection*{Justification technique}
+La maturité de l’Internet des Objets Industriel, des protocoles cellulaires (LTE-M, NB-IoT) et de la microélectronique basse consommation permet de transformer ce \enquote{géant aveugle} en un nœud d’information actif et communicant\footnote{MEKKI, Kais, BAJIC, Eddy, CHAXEL, Frédéric, \textit{et al.} \enquote{A comparative study of LPWAN technologies for large-scale IoT deployment}. \textit{ICT Express}, 2019, vol. 5, n\textsuperscript{o} 1, p. 1-7. (consulter le 8 sept 2026)}. Articulée autour d’un microcontrôleur ESP32, d’un module de communication hybride SIM7000G et d’un GPS NEO-M8U à estimation de position par inertie, l’architecture d’ARGOS assure une acquisition ininterrompue des données environnementales (température, humidité, chocs). 
+
+Ce choix architectural répond précisément aux impératifs de traçabilité en milieu contraint\footnote{BECHA, Hanane, \textit{et al.} \textit{UN/CEFACT Smart Container Business Requirements Specification (BRS) (consulter le 8 sept 2026)}. Livre blanc, Centre des Nations Unies pour la facilitation du commerce et les transactions électroniques, 2020.}. En effet, les travaux du CEFACT-ONU sur les conteneurs intelligents, dirigés par le D\textsuperscript{r} Hanane Becha, soulignent que pour garantir une visibilité de bout en bout, le dispositif doit s'affranchir de l'intermittence des réseaux. Le standard recommande ainsi de coupler des protocoles à faible consommation avec une intelligence embarquée capable de sauvegarder les données hors ligne, condition essentielle pour préserver l'intégrité de l'information en haute mer ou dans les zones non couvertes.
+
+En parfaite adéquation avec cette logique de \textit{store-and-forward} (stockage et retransmission) prônée par l'industrie, les données acquises par ARGOS sont stockées localement en zone aveugle et retransmises automatiquement dès la reconnexion au réseau, assurant ainsi une résilience technique totale sur 90 jours d’autonomie.
+
+
+\subsubsection*{Justification économique}
+Le manque de visibilité constitue un centre de coûts majeur : les données du Conseil National des Chargeurs du Cameroun (CNCC) illustrent la vulnérabilité des PME locales face aux avaries sur facultés, aux vols et aux litiges prolongés, qu'ARGOS adresse directement en permettant, grâce à l'horodatage précis d'un dommage, d'identifier formellement le tiers responsable et d'accélérer les indemnisations\cite{cncc2025}.
+
+\subsubsection*{Justification réglementaire}
+
+L'entrée en vigueur des récents amendements SOLAS et MARPOL de l'Organisation Maritime Internationale (OMI) impose aux opérateurs maritimes des obligations strictes de déclaration immédiate en cas d'incident ou de perte de conteneurs\cite{omi2026}. Sans dispositif IoT embarqué, le respect de cette exigence s'avère d'une grande complexité opérationnelle et juridique. 
+
+Cette difficulté est particulièrement mise en lumière par Mikael Lind et Richard T. Watson, chercheurs de référence et co-auteurs de l'ouvrage fondamental \textit{Maritime Informatics}\footnote{LIND, Mikael, WATSON, Richard T., \textit{et al.} \textit{Maritime Informatics}. Springer, 2021. Cet ouvrage démontre comment la télématique embarquée est devenue une solution incontournable pour répondre aux obligations environnementales et sécuritaires contemporaines.}. Les auteurs démontrent en effet que l'opacité inhérente aux chaînes de transport maritime traditionnelles rend la détection et la notification instantanées des sinistres en mer très difficiles. Selon leurs travaux, l'intégration de dispositifs télématiques autonomes est désormais nécessaire pour transformer le conteneur physique en un agent de conformité réglementaire, capable d'enregistrer et de transmettre les événements avec la promptitude exigée par les autorités.
+
+C'est précisément pour pallier cette carence que les données générées par ARGOS , rigoureusement horodatées par GPS, sécurisées par contrôle de redondance cyclique (CRC) et archivables sur trois ans , prennent tout leur sens. En automatisant la remontée d'informations fiables, elles constituent une preuve numérique inaltérable et directement opposable devant les juridictions commerciales en cas de contentieux.
+
+\subsubsection*{Justification stratégique}
+Enfin, conçu par des ingénieurs de SUP'PTIC, ARGOS prouve la capacité du Cameroun à développer une ingénierie de pointe calibrée pour ses propres réalités climatiques et infrastructurelles, affranchissant le pays d'une dépendance aux solutions occidentales inadaptées, tout en sécurisant les flux vitaux de la sous-région CEMAC et en consolidant sa position de hub logistique régional.
+
+\medskip
+\section{Analyse du problème}
+
+Cette partie a pour rôle d'identifier et de formuler avec précision la difficulté centrale à laquelle le projet ARGOS entend répondre. Elle décrit le problème principal, puis en explique les causes et les conséquences concrètes pour les différents acteurs concernés. Cette analyse constitue une étape essentielle avant toute proposition de solution, car elle permet de comprendre en profondeur la nature du besoin auquel le projet doit répondre.
+
+\subsection{Problème central}
+Le problème majeur identifié est l'\textbf{opacité opérationnelle du transport conteneurisé et l'insuffisance de moyens technologiques autonomes pour horodater, localiser et documenter les sinistres tout au long de la chaîne logistique}. 
+Cette opacité entrave considérablement l'attribution précise des responsabilités en cas de dommage. Pour expliquer cette dynamique, les travaux de Gho Mary Soledad Chifu sur le contentieux logistique dans la zone CEMAC démontrent que le manque de visibilité continue engendre inévitablement une zone d'ombre juridique.
+En laissant ainsi les acteurs sans moyens de prévention ni de preuve objective, cette situation favorise les litiges prolongés. Elle entraîne en cascade des pertes de marchandises, des détériorations évitables, et une dégradation globale des performances de la chaîne logistique.
+
+\subsection{Identification des causes}
+
+Plusieurs facteurs structurels expliquent cette fracture entre le flux physique des marchandises et leur suivi informationnel. Elles se regroupent en quatre catégories de causes a savoir :
+
+\subsubsection*{a) Causes techniques et technologiques}
+
+  sur le plan technique et technologique, ces causes sont alimentées par les contraintes suivantes :
+\begin{itemize}[label=\textcolor{argosblue}{\textbf{>}}]
+\item \textbf{Limitation des solutions d'enregistrement}~: si des dispositifs de traçabilité existent pour des cargaisons spécifiques (frigorifiques ou haute valeur), la grande majorité des conteneurs standard circulent sans aucun enregistrement embarqué des conditions internes (chocs, humidité, intrusion).
+\item \textbf{Contraintes de connectivité}~: la structure métallique du conteneur (effet cage de Faraday) et les zones de couverture réseau défaillantes sur les corridors terrestres et maritimes limitent drastiquement la remontée d'informations en temps réel.
+\item \textbf{Déficit d'interopérabilité}~: l'absence d'un langage de données commun empêche les systèmes d'information des ports, des transporteurs et des clients de communiquer entre eux de manière fluide.
+\end{itemize}
+
+\subsubsection*{b) Causes organisationnelles et opérationnelles}
+  sur le plan organisationnelles et opérationnelles, ces causes sont alimentées par les contraintes suivantes :
+\begin{itemize}
+\item \textbf{Fragmentation de l'information (silos)}~: les données sont cloisonnées entre les différents intervenants (transitaires, autorités portuaires, armateurs), empêchant une vision globale du transit intermodal.
+\item \textbf{Prédominance des processus manuels}~: la gestion administrative repose encore largement sur des supports papier ou des saisies décalées, créant une latence décisionnelle préjudiciable en cas d'anomalie.
+\end{itemize}
+
+\subsubsection*{c) Causes réglementaires}
+   
+  sur le plan réglementaires, ces causes sont alimentées par les contraintes suivantes :
+\begin{itemize}
+\item \textbf{Non-respect des exigences de l’OMI}~: les opérateurs continuent de fonctionner avec des méthodes de suivi manuelles, discontinues ou reposant uniquement sur des systèmes de traçabilité géographique globale sans capacité de surveiller en continu l'état interne du conteneur.
+\item \textbf{Complexité et lourdeurs des procédures douanières régionales}~: les régimes de transit exigent déjà des balises GPS obligatoires, mais sans standard technique harmonisé entre pays voisins, ce qui complique l’interopérabilité des données et la conformité transfrontalière.
+\end{itemize}
+
+\subsubsection*{d) Causes sécuritaires}
+
+  sur le plan sécuritaires, ces causes sont alimentées par les contraintes suivantes :
+\begin{itemize}
+\item \textbf{Risques de manutention et de sécurité}~: les chocs lors des transbordements multimodaux et les risques d’intrusions frauduleuses dans les ports sont des menaces permanentes, souvent détectées trop tardivement pour être endiguées.
+\end{itemize}
+
+\subsection{Identification des conséquences}
+
+Les effets de cette rupture de traçabilité se font ressentir sur plusieurs plans critiques a savoir:
+\begin{itemize}
+\item \textbf{Conséquences économiques}~: pertes financières directes estimées à des milliards de dollars en avaries de marchandises non indemnisables, faute de preuves d’origine du sinistre.
+\item \textbf{Conséquences juridiques}~: litiges longs et coûteux entre partenaires commerciaux (6 à 18 mois), faute d’un historique numérique fiable, car sans preuve l’assurance ne rembourse pas.
+\item \textbf{Conséquences stratégiques}~: avaries des marchandises, produits périmés, produits endommagés ce qui entraîne une mauvaise satisfaction des clients et une mauvaise réputation.
+\item \textbf{Conséquences réglementaires}~: une image de marque dégradée pour les corridors de transit, qui peinent à attirer des investissements internationaux faute de transparence opérationnelle comparable aux standards de la Supply Chain~4.0.
+\end{itemize}
+
+L'arbre à problèmes de la \cref{fig-arbre-probleme} formalise la chaîne causale et les causes du défaut de traçabilité. Il se lit du bas vers le haut : les causes profondes alimentent les causes directes, lesquelles produisent le problème central ; celui-ci engendre ensuite des effets immédiats puis des impacts finaux.
+
+\begin{figure}
+    \centering
+    \input{figures/argos_arbre_problemes_niveaux.tex}
+    \caption{Arbre à problèmes d'ARGOS structuré par niveaux causaux}
+    \label{fig-arbre-probleme}
+\end{figure}
+\tablesourcepromoteurs
+
+\section{Analyse des objectifs}
+
+Cette section traduit le problème identifié précédemment en objectifs concrets à atteindre. Elle présente d'abord l'objectif général du projet, puis le décline en objectifs spécifiques, chacun correspondant à une dimension particulière du problème. Elle précise également les résultats attendus au terme du projet ainsi que les différentes parties prenantes concernées par sa réalisation. Cette partie sert ainsi de lien entre le constat établi et les solutions qui seront développées dans la suite du document.
+
+\subsection{Objectif général}
+
+L'analyse du problème et du contexte réglementaire ayant révélé un déficit structurel de visibilité sur l'état et la localisation des conteneurs en transit, ce travail s'articule autour d'un objectif général unique : concevoir et mettre en place un dispositif autonome de type « boîte noire » pour assurer la traçabilité, la surveillance et l'enregistrement intégral des opérations d'un conteneur maritime, du scellage à la livraison, afin de garantir la conformité aux exigences de l’OMI et de réduire les pertes liées aux avaries et litiges.
+Cet objectif traduit directement les trois dimensions du problème identifiées précédemment :
+\begin{itemize}
+  \item L'absence de suivi technique en temps réel; 
+  \item L'exposition financière des chargeurs face aux avaries non documentées, 
+  \item Et l'incapacité opérationnelle actuelle à se conformer aux nouvelles obligations réglementaires internationales.
+\end{itemize}
+
+Il se décline en trois objectifs spécifiques, chacun répondant à l'une de ces causes.
+
+\subsection{Objectifs spécifiques}
+
+Pour atteindre cet objectifs, le projet se décline en trois grands pilier a savoir :
+
+\begin{itemize}[label=\textcolor{argosblue}{\textbf{>}}]
+\item \textbf{Assurer la traçabilité et la sécurité du conteneur en temps réel~:}
+Cette démarche consiste à doter chaque unité d'un système intelligent capable de collecter en continu des paramètres critiques, la position géographique, la température, l'humidité, les chocs et ouvertures. Ces données sont ensuite transmises via une hybridation des réseaux cellulaires et satellitaires, garantissant une continuité de service y compris dans les zones blanches ou en haute mer.
+
+\item \textbf{Réduire les pertes financières liées aux avaries et litiges~:}
+Il s'agit de s'affranchir de l'opacité logistique habituelle qui paralyse l'identification des responsabilités en cas de sinistre. En fournissant un historique horodaté et irréfutable de l'état de la cargaison tout au long du trajet, la solution permet d'accélérer significativement les procédures d'indemnisation auprès des assureurs et de sécuriser les acteurs économiques.
+
+\item \textbf{Garantir l'enregistrement et la preuve de conformité aux normes OMI~:}
+Cette exigence vise à assurer l'intégrité, la sécurisation contre toute altération (via des mécanismes de hachage ou de contrôle) et l'archivage pérenne des données collectées. Celles-ci constituent ainsi un dossier de preuve numérique rigoureusement conforme aux réglementations maritimes internationales en vigueur.
+\end{itemize}
+
+\subsection{Résultats attendus}
+
+Pour matérialiser l'atteinte de ces objectifs, le projet ARGOS ambitionne de livrer un dispositif embarqué performant, caractérisé par les livrables et performances opérationnelles suivants :
+
+\begin{itemize}[label=\textcolor{argosblue}{\textbf{>}}]
+\item \textbf{Autonomie énergétique prolongée}~: 
+Déploiement d'un système matériel totalement autonome, capable d'assurer un fonctionnement ininterrompu pendant 90 jours grâce à une gestion optimisée de l'énergie sur batterie.
+
+\item \textbf{Réactivité et alertes en temps réel}~: 
+Détection instantanée et transmission d'une alerte en moins de 5 minutes en cas d'ouverture non autorisée du conteneur ou de détection d'un choc mécanique supérieur à 3G hors des zones de tolérance géographiques.
+
+\item \textbf{Disponibilité permanente de la télémétrie}~: 
+Accès continu et sécurisé aux données de géolocalisation et aux indicateurs environnementaux du conteneur, disponibles 24h/24 et 7j/7 via une interface de suivi dédiée (plateforme web).
+\end{itemize}
+
+\section{Analyse des parties prenantes}
+
+Une partie prenante désigne tout acteur, personne physique ou morale, susceptible d’être concerné directement ou indirectement par le projet ARGOS, de contribuer à sa mise en œuvre ou d’influencer son développement. L’identification des parties prenantes permet de mieux comprendre leur rôle, leurs intérêts, leur niveau d’influence et leurs attentes, conformément aux principes de gouvernance et de gestion des parties prenantes d’un projet\cite{iso21502}.
+
+Dans le cadre du projet ARGOS, l’analyse retient trois catégories adaptées à son organisation : les parties prenantes primaires décisionnelles, les parties prenantes primaires non décisionnelles et les parties prenantes secondaires non décisionnelles. Cette classification résulte du croisement entre le niveau d’influence, la proximité opérationnelle et le pouvoir de décision.
+
+\subsection{Parties prenantes décisionnelles}
+
+Les parties prenantes primaires décisionnelles sont les acteurs directement responsables de l’orientation et des décisions fondamentales relatives au projet ARGOS. Elles disposent d’un pouvoir important sur sa conception, son développement et ses choix stratégiques.
+
+\paragraph{Les promoteurs du projet ARGOS}
+Les promoteurs du projet ARGOS sont les initiateurs et porteurs du projet. Ils assurent la conception, la planification et la coordination de l’ensemble des activités nécessaires à la réalisation et au déploiement de la solution.
+
+\begin{xltabular}{\linewidth}{@{}
+>{\hsize=0.80\hsize\linewidth=\hsize\raggedright\arraybackslash}X
+>{\hsize=1.00\hsize\linewidth=\hsize\raggedright\arraybackslash}X
+>{\hsize=1.05\hsize\linewidth=\hsize\raggedright\arraybackslash}X
+>{\hsize=0.90\hsize\linewidth=\hsize\raggedright\arraybackslash}X
+>{\hsize=1.25\hsize\linewidth=\hsize\raggedright\arraybackslash}X@{}}
+\caption{Parties prenantes primaires décisionnelles}\label{tab-parties-prenantes-decisionnelles}\\
+\tableheadrow 
+\thc{Partie prenante} & \thc{Rôle principal} & \thc{Intérêts stratégiques} & \thc{Influence} & \thc{Attentes clés} \\
+\tablebottomrule
+\endfirsthead
+\tableheadrow 
+\thc{Partie prenante} & \thc{Rôle principal} & \thc{Intérêts stratégiques} & \thc{Influence} & \thc{Attentes clés} \\
+\tablebottomrule
+\endhead
+
+Promoteurs du projet ARGOS & 
+Concevoir la boîte noire, assurer le développement matériel, logiciel et réseau, intégrer les différentes composantes et coordonner le projet. & 
+Fiabilité du dispositif, viabilité technique et économique, maîtrise de la technologie, souveraineté des données et potentiel d’industrialisation. & 
+Directe et très forte : ils définissent les orientations techniques, commerciales et stratégiques du projet. & 
+Disposer d’une solution fiable, performante et industrialisable, répondant aux besoins de sécurisation et de traçabilité des conteneurs. \\
+\hline
+\end{xltabular}
+\tablesourcepromoteurs
+
+
+\subsection{Parties prenantes primaires non décisionnelles}
+
+Les parties prenantes primaires non décisionnelles sont les acteurs qui participent directement à l’environnement de développement, de validation, de financement, d’intégration ou d’utilisation de la solution ARGOS. Bien qu’elles ne prennent pas les décisions fondamentales du projet, leur participation est indispensable à sa mise en œuvre et à son fonctionnement.
+
+\begin{xltabular}{\linewidth}{@{}
+>{\hsize=0.80\hsize\linewidth=\hsize\raggedright\arraybackslash}X
+>{\hsize=1.00\hsize\linewidth=\hsize\raggedright\arraybackslash}X
+>{\hsize=1.05\hsize\linewidth=\hsize\raggedright\arraybackslash}X
+>{\hsize=0.90\hsize\linewidth=\hsize\raggedright\arraybackslash}X
+>{\hsize=1.25\hsize\linewidth=\hsize\raggedright\arraybackslash}X@{}}
+\caption{Parties prenantes primaires non décisionnelles}\label{tab-parties-prenantes-primaires}\\
+\tableheadrow 
+\thc{Partie prenante} & \thc{Rôle principal} & \thc{Intérêts stratégiques} & \thc{Influence} & \thc{Attentes clés} \\
+\tablebottomrule
+\endfirsthead
+\tableheadrow 
+\thc{Partie prenante} & \thc{Rôle principal} & \thc{Intérêts stratégiques} & \thc{Influence} & \thc{Attentes clés} \\
+\tablebottomrule
+\endhead
+
+Ministère des Transports (MINT) & 
+Définition des politiques et orientations relatives au transport et à la modernisation des corridors. & 
+Modernisation du secteur, amélioration de la sécurité, réduction des pertes et des incidents et amélioration de la fluidité des corridors. & 
+Très forte : il peut orienter et encadrer le déploiement de la solution dans le secteur des transports. & 
+Une solution fiable, conforme aux exigences applicables et contribuant à la modernisation, à la sécurité et à la traçabilité du transport. \\
+
+Organisation Maritime Internationale (OMI)\cite{omi2026} & 
+Élaboration et suivi des normes et instruments internationaux applicables au transport maritime. & 
+Sécurité maritime, harmonisation des pratiques et respect des normes internationales. & 
+Normative : ses normes et recommandations constituent un cadre de référence pour le secteur maritime. & 
+Des solutions compatibles avec les normes internationales et contribuant à renforcer la sécurité, la traçabilité et le suivi des incidents. \\
+
+Conseil National des Chargeurs du Cameroun (CNCC)\cite{cncc_missions} & 
+Protection des intérêts des chargeurs, facilitation et amélioration de l’organisation du transport. & 
+Sécurisation des marchandises, réduction des pertes, amélioration de la traçabilité et facilitation du commerce. & 
+Forte : il peut favoriser l’adoption de la solution auprès des chargeurs et des acteurs logistiques. & 
+Une solution fiable permettant de sécuriser les marchandises, d’améliorer leur traçabilité et de réduire les risques liés au transport. \\
+
+Autorité Portuaire Nationale (APN)\cite{apn_missions} & 
+Régulation et coordination des activités portuaires. & 
+Modernisation du système portuaire, amélioration de la sécurité et optimisation des flux logistiques. & 
+Forte : elle peut faciliter l’intégration de la solution dans l’environnement portuaire. & 
+Une solution fiable permettant d’améliorer la surveillance, la traçabilité et l’efficacité des opérations portuaires. \\
+
+Direction Générale des Douanes (DGD) & 
+Contrôle du fret et des marchandises, surveillance des frontières, contrôle du transit et lutte contre la fraude et la contrebande. & 
+Sécurisation des flux, amélioration de la traçabilité et renforcement du contrôle des marchandises. & 
+Critique : les données ARGOS peuvent faciliter les contrôles et la surveillance des mouvements de conteneurs. & 
+Un outil numérique fournissant des données fiables et permettant de mieux suivre les mouvements des conteneurs et de lutter contre les irrégularités. \\
+
+Port Autonome de Douala / Port Autonome de Kribi (PAD / PAK)\cite{pad2025,pak2026} & 
+Gestion, exploitation et sécurisation des activités portuaires sur leurs plateformes respectives. & 
+Fluidité des opérations, réduction des incidents, sécurisation des conteneurs et amélioration de la performance portuaire. & 
+Déterminante : ils peuvent faciliter l’expérimentation et l’intégration de la solution dans les ports. & 
+Des indicateurs fiables et une solution permettant d’améliorer la sécurité, la traçabilité et la performance des plateformes. \\
+
+Investisseurs / financeurs & 
+Financement du développement, de la production et du déploiement commercial de la solution. & 
+Rentabilité, potentiel de croissance et positionnement sur le marché des solutions de sécurisation des conteneurs. & 
+Élevée : le niveau de financement conditionne le rythme et l’ampleur du développement. & 
+Un plan de déploiement réaliste, une bonne maîtrise des coûts et un retour sur investissement satisfaisant. \\
+
+Fournisseurs électroniques & 
+Approvisionnement en microcontrôleurs, modules GPS/GNSS, capteurs, composants de communication et autres équipements électroniques. & 
+Développement des ventes, sécurisation des commandes et établissement de partenariats commerciaux durables. & 
+Directe : ils influencent les coûts, les délais d’approvisionnement et la disponibilité des composants. & 
+Des cahiers des charges précis, des commandes régulières, des relations commerciales stables et des paiements dans les délais. \\
+
+Opérateurs de télécommunications\cite{loi2010_tel} & 
+Fourniture de la connectivité réseau nécessaire à la transmission des données du dispositif. & 
+Développement de nouveaux usages des réseaux, valorisation des services connectés et positionnement dans la logistique connectée. & 
+Majeure : la couverture et la qualité du réseau conditionnent la continuité de transmission des données. & 
+Des contrats de connectivité durables, des volumes importants et une utilisation régulière de leurs réseaux. \\
+
+Bureaux de classification\cite{iso2018} & 
+Évaluation de la conformité technique et de la sécurité du dispositif selon les référentiels applicables. & 
+Sécurité et conformité des équipements destinés à l’environnement maritime. & 
+Importante : leur évaluation peut conditionner la validation ou la certification du dispositif. & 
+Un équipement fiable, documenté et conforme aux référentiels techniques applicables. \\
+
+Cabinets d’homologation au Cameroun\cite{art} & 
+Accompagnement des démarches d’homologation et de conformité du dispositif. & 
+Accompagnement des projets technologiques et réalisation des procédures réglementaires. & 
+Importante : ils facilitent l’obtention des validations et autorisations nécessaires au déploiement. & 
+Un dossier technique complet, des équipements conformes et une collaboration efficace avec les promoteurs. \\
+
+Assureurs / experts & 
+Évaluation des sinistres, analyse des incidents et appui à la gestion des indemnisations. & 
+Réduction de l’incertitude dans l’analyse des sinistres et amélioration de l’évaluation des risques. & 
+Significative : ils peuvent exploiter les données ARGOS pour analyser les incidents et les responsabilités. & 
+Des données horodatées, fiables, sécurisées et des rapports d’incidents facilement exploitables. \\
+\hline
+\end{xltabular}
+\tablesourcepromoteurs
+
+
+\subsection{Parties prenantes secondaires non décisionnelles}
+
+Les parties prenantes secondaires non décisionnelles sont les acteurs qui ne participent pas directement à la conception ou au déploiement technique de la solution, mais dont les actions, les perceptions ou l’utilisation peuvent influencer sa visibilité, son acceptation et sa réussite commerciale.
+
+\begin{xltabular}{\linewidth}{@{}
+>{\hsize=0.80\hsize\linewidth=\hsize\raggedright\arraybackslash}X
+>{\hsize=1.00\hsize\linewidth=\hsize\raggedright\arraybackslash}X
+>{\hsize=1.05\hsize\linewidth=\hsize\raggedright\arraybackslash}X
+>{\hsize=0.90\hsize\linewidth=\hsize\raggedright\arraybackslash}X
+>{\hsize=1.25\hsize\linewidth=\hsize\raggedright\arraybackslash}X@{}}
+\caption{Parties prenantes secondaires non décisionnelles}\label{tab-parties-prenantes-secondaires}\\
+\tableheadrow 
+\thc{Partie prenante} & \thc{Rôle principal} & \thc{Intérêts stratégiques} & \thc{Influence} & \thc{Attentes clés} \\
+\tablebottomrule
+\endfirsthead
+\tableheadrow 
+\thc{Partie prenante} & \thc{Rôle principal} & \thc{Intérêts stratégiques} & \thc{Influence} & \thc{Attentes clés} \\
+\tablebottomrule
+\endhead
+
+Médias & 
+Couverture journalistique et vulgarisation de la solution et de ses résultats. & 
+Valorisation de l’innovation technologique locale et visibilité des solutions contribuant à la modernisation du secteur logistique. & 
+Indirecte : leur couverture peut renforcer la notoriété et la crédibilité du projet. & 
+Des informations fiables, des résultats concrets et des contenus vérifiables à diffuser auprès du public. \\
+
+Clients : chargeurs, armateurs, importateurs, exportateurs et transporteurs\cite{cncc_missions} & 
+Utilisation de la solution pour suivre, sécuriser et surveiller les conteneurs pendant leur transport. & 
+Réduction des vols, pertes et avaries, amélioration de la visibilité sur les trajets et résolution plus rapide des litiges. & 
+Très forte : leur adoption et leur satisfaction conditionnent directement la réussite commerciale du projet. & 
+Une solution robuste, fiable, simple à utiliser, abordable et compatible avec leurs systèmes de gestion. \\
+
+Transitaires / commissionnaires &
+Organisation des opérations de transport et accompagnement des clients dans le suivi et l’acheminement des marchandises. & 
+Réduction des délais de suivi, amélioration de la visibilité sur les opérations et amélioration de la qualité du service. & 
+Significative : ils peuvent favoriser la diffusion de la solution auprès de leurs clients. & 
+Un accès rapide à des informations fiables sur la localisation et l’état des conteneurs afin de mieux informer leurs clients. \\
+\hline
+\end{xltabular}
+\tablesourcepromoteurs
+
+L’écosystème du projet ARGOS repose ainsi sur trois niveaux complémentaires. Les promoteurs constituent les parties prenantes primaires décisionnelles, car ils portent les décisions fondamentales relatives au projet. Les parties prenantes primaires non décisionnelles interviennent directement dans l’environnement réglementaire, technique, financier, portuaire et opérationnel nécessaire au développement et au déploiement de la solution. Enfin, les parties prenantes secondaires non décisionnelles, notamment les médias, les clients et les intermédiaires logistiques, influencent principalement l’adoption, la visibilité et la réussite commerciale d’ARGOS. Cette cartographie devra être réévaluée à chaque phase du projet, puisque l’influence et les attentes des acteurs évoluent entre la conception, l’expérimentation et l’industrialisation\cite{iso21502}.
+
+\par Ce premier chapitre a permis de poser les fondations essentielles du projet ARGOS. Face à la mutation de la logistique mondiale vers la Supply Chain~4.0 et aux failles structurelles de traçabilité des corridors de transit, le développement d'une « boîte noire » connectée apparaît non seulement comme une réponse technologique, mais aussi comme une urgence économique et réglementaire. L'analyse approfondie du problème a mis en évidence la nécessité de transformer le conteneur passif en un nœud d'information actif pour réduire les litiges, sécuriser les marchandises et se conformer aux nouvelles exigences de l'OMI. Par ailleurs, la cartographie détaillée de l'écosystème a permis d'identifier les acteurs clés dont l'implication est déterminante pour la réussite du déploiement. Ce cadre opératoire étant désormais clairement défini, il convient à présent d'évaluer la pertinence commerciale de cette solution à travers une étude de marché approfondie, objet du chapitre suivant

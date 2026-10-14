@@ -1,0 +1,58 @@
+% Connexion directe : lecture locale immédiate, puis synchronisation FIFO.
+\resizebox{!}{0.82\textheight}{%
+\begin{tikzpicture}[
+  font=\sffamily\scriptsize,
+  participant/.style={draw=argosnavy,rounded corners=2pt,fill=argoslight,
+    minimum width=3.05cm,minimum height=.88cm,align=center,line width=.85pt},
+  life/.style={draw=argosrule,dashed,line width=.7pt},
+  call/.style={draw=argosgray,line width=.85pt,-{Stealth[length=2.2mm]}},
+  reply/.style={draw=argosgray,dashed,line width=.75pt,-{Stealth[length=2.2mm]}},
+  async/.style={draw=argosmid,dashed,line width=.85pt,-{Stealth[length=2.2mm]}},
+  note/.style={draw=argosrule,rounded corners=2pt,fill=argospale,
+    align=left,inner sep=4pt,text width=5cm},
+  msg/.style={font=\sffamily\scriptsize,fill=white,inner sep=1.2pt,align=center}
+]
+\node[participant] (manager) at (-12.6,8.3) {Gestionnaire\\autorisé};
+\node[participant] (browser) at (-8.4,8.3) {Navigateur ARGOS\\pont direct};
+\node[participant] (esp) at (-4.2,8.3) {ESP32-S3 AP\\\texttt{192.168.4.1}};
+\node[participant] (fifo) at (0,8.3) {\texttt{localStorage}\\FIFO, max. 300};
+\node[participant] (api) at (4.2,8.3) {API ARGOS\\Bearer};
+\node[participant] (iot) at (8.4,8.3) {Pipeline IoT\\commun};
+\node[participant] (stores) at (12.6,8.3) {Redis puis\\PostgreSQL};
+\foreach \p in {manager,browser,esp,fifo,api,iot,stores}
+  \draw[life] (\p.south) -- ++(0,-17.7);
+
+\node[note,anchor=west,text width=7.2cm] at (-12.5,6.9)
+  {Préconditions : session ARGOS valide ; rôle \texttt{superadmin}, \texttt{owner} ou \texttt{company} ; boîte enregistrée avec un \texttt{deviceUid}. Depuis une page HTTPS, le navigateur bloque l'AP HTTP : utiliser l'URL locale HTTP d'ARGOS.};
+\draw[call] (-12.6,5.15) -- node[msg,above]{1. choisir la boîte et « Identifier et recevoir »} (-8.4,5.15);
+\draw[call] (-8.4,4.25) -- node[msg,above]{2. GET \texttt{/api/device/info} + clé locale} (-4.2,4.25);
+\draw[reply] (-4.2,3.45) -- node[msg,above]{\texttt{deviceUid}, modes et endpoints} (-8.4,3.45);
+\node[note,anchor=west,text width=5.2cm] at (-8.0,2.35)
+  {3. Refuser si l'UID détecté diffère de celui de la boîte sélectionnée.};
+\draw[call] (-8.4,1.15) -- node[msg,above]{4. POST \texttt{/direct-session}} (4.2,1.15);
+\draw[reply] (4.2,.35) -- node[msg,above]{lien partagé + annonce anti-doublon (5 min)} (-8.4,.35);
+
+\draw[call] (-8.4,-.65) -- node[msg,above]{5. GET \texttt{/api/v1/telemetry} toutes les 1--30 s} (-4.2,-.65);
+\draw[reply] (-4.2,-1.45) -- node[msg,above]{snapshot identifié par son UID et sa séquence} (-8.4,-1.45);
+\node[note,anchor=west,text width=5.8cm] at (-8.0,-2.65)
+  {6. Normaliser UUID et heure. Si GPS = (0,0), utiliser la géolocalisation seulement si elle est déjà autorisée ; sinon laisser le serveur chercher son dernier repli.};
+\draw[reply] (-8.4,-4.15) -- node[msg,above]{7. afficher immédiatement mesures, carte, boîte et stats locales} (-12.6,-4.15);
+\draw[call] (-8.4,-5.05) -- node[msg,above]{8. enfiler chaque couple \texttt{messageId:sequence} inédit} (0,-5.05);
+
+\draw[call] (0,-6.15) -- node[msg,above]{9. envoyer la tête : POST \texttt{/direct-telemetry}} (4.2,-6.15);
+\draw[call] (4.2,-6.95) -- node[msg,above]{10. rôle, propriété, UID, liaison et séquence} (8.4,-6.95);
+\draw[call] (8.4,-7.75) -- node[msg,above]{11. qualité + seuils ; cache, puis transaction} (12.6,-7.75);
+\draw[reply] (12.6,-8.55) -- node[msg,above]{succès durable} (8.4,-8.55);
+\draw[reply] (8.4,-9.35) -- (4.2,-9.35);
+\draw[reply] (4.2,-10.15) -- node[msg,above]{201 / doublon 200} (0,-10.15);
+\draw[call] (0,-10.95) -- node[msg,above]{12. retirer la tête, puis vider dans l'ordre} (-8.4,-10.95);
+
+\node[note,anchor=west,text width=7.1cm] at (-8.0,-12.35)
+  {Sans accès simultané à l'AP et à Internet, l'affichage local continue mais l'API distante est injoignable. Les mesures restent alors dans la FIFO et repartent après reconnexion. Les erreurs 401/403/408/425/429, les erreurs serveur et les coupures conservent la file.};
+
+\draw[call] (-12.6,-14.15) -- node[msg,above]{13. activer ou désactiver la sécurité} (-8.4,-14.15);
+\draw[call] (-8.4,-14.95) -- node[msg,above]{POST local \texttt{/api/v1/security}} (-4.2,-14.95);
+\draw[call] (-8.4,-15.75) -- node[msg,above]{POST audit \texttt{/commands/security}} (4.2,-15.75);
+\draw[call] (4.2,-16.55) -- node[msg,above]{événement : auteur, rôle, date, heure, position ; notification} (12.6,-16.55);
+\end{tikzpicture}%
+}

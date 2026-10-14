@@ -1,0 +1,317 @@
+% Dictionnaire généré à partir du catalogue PostgreSQL actif (schéma brady).
+% État contrôlé le 7 août 2026 : 48 tables et 559 colonnes.
+\subsection{Dictionnaire exhaustif du schéma relationnel actif}
+\label{subsec-dictionnaire-schema-actif}
+
+Le présent dictionnaire est issu du catalogue PostgreSQL effectivement déployé dans le schéma \code{argos}. Il recense exactement \textbf{48 tables et 559 colonnes}. Les mentions \textbf{PK}, \textbf{FK}, \textbf{UQ} et \textbf{NN} désignent respectivement une clé primaire, une clé étrangère matérialisée, une unicité matérialisée et une colonne non nulle. Une \emph{relation logique} est exploitée par le code applicatif, mais n'est pas imposée par une contrainte de clé étrangère dans la base. Les types sont ceux retournés par \code{format\_type} dans le catalogue PostgreSQL; les colonnes de type \code{serial} ou \code{bigserial} y apparaissent donc comme \code{integer} ou \code{bigint}.
+
+\begingroup
+\scriptsize
+\setlength{\LTleft}{0pt}
+\setlength{\LTright}{0pt}
+\setlength{\tabcolsep}{4pt}
+
+\subsubsection{Identités, accès et abonnements}
+
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.46\textwidth}@{}}
+\caption{Table \nolinkurl{abonner}}\label{tab-schema-abonner}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\textit{Suite du tableau \thetable}}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\textit{Suite à la page suivante}}\\
+\endfoot
+\tablebottomrule
+\endlastfoot
+\nolinkurl{numero_a} & \texttt{integer} & \textbf{PK}; \textbf{NN} \\
+\nolinkurl{id_cni} & \texttt{character varying(80)} & FK $\rightarrow$ \nolinkurl{client(id_cni)}; suppression CASCADE \\
+\nolinkurl{id_boite} & \texttt{integer} & FK $\rightarrow$ \nolinkurl{boite_noir(id_boite)}; suppression CASCADE \\
+\nolinkurl{type_abonnement} & \texttt{character varying(100)} & --- \\
+\nolinkurl{status} & \texttt{character varying(50)} & --- \\
+\nolinkurl{fin_a} & \texttt{timestamp with time zone} & --- \\
+\nolinkurl{created_at} & \texttt{timestamp with time zone} & --- \\
+\end{longtable}
+
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.46\textwidth}@{}}
+\caption{Table \nolinkurl{agence_abonnement}}\label{tab-schema-agence_abonnement}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\textit{Suite du tableau \thetable}}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\textit{Suite à la page suivante}}\\
+\endfoot
+\tablebottomrule
+\endlastfoot
+\nolinkurl{id} & \texttt{integer} & \textbf{PK}; \textbf{NN} \\
+\nolinkurl{id_agence} & \texttt{character varying(80)} & relation logique $\rightarrow$ \nolinkurl{agence_utilisatrice(niu)} (FK non matérialisée) \\
+\nolinkurl{id_boite} & \texttt{integer} & FK $\rightarrow$ \nolinkurl{boite_noir(id_boite)} \\
+\nolinkurl{status} & \texttt{character varying(30)} & --- \\
+\nolinkurl{created_at} & \texttt{timestamp with time zone} & --- \\
+\end{longtable}
+
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.46\textwidth}@{}}
+\caption{Table \nolinkurl{agence_utilisatrice}}\label{tab-schema-agence_utilisatrice}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\textit{Suite du tableau \thetable}}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\textit{Suite à la page suivante}}\\
+\endfoot
+\tablebottomrule
+\endlastfoot
+\nolinkurl{niu} & \texttt{character varying(80)} & \textbf{PK}; \textbf{NN} \\
+\nolinkurl{nom_agence} & \texttt{character varying(255)} & \textbf{NN} \\
+\nolinkurl{login} & \texttt{character varying(100)} & \textbf{NN}; \textbf{UQ} \\
+\nolinkurl{password} & \texttt{text} & \textbf{NN} \\
+\nolinkurl{addresse_mail} & \texttt{character varying(255)} & --- \\
+\nolinkurl{created_by} & \texttt{text} & relation logique $\rightarrow$ \nolinkurl{identity_registry(actor_role, actor_id)} (auteur polymorphe) \\
+\nolinkurl{wifi_name} & \texttt{text} & --- \\
+\nolinkurl{wifi_password} & \texttt{text} & --- \\
+\nolinkurl{created_at} & \texttt{timestamp with time zone} & --- \\
+\end{longtable}
+
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.46\textwidth}@{}}
+\caption{Table \nolinkurl{client}}\label{tab-schema-client}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\textit{Suite du tableau \thetable}}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\textit{Suite à la page suivante}}\\
+\endfoot
+\tablebottomrule
+\endlastfoot
+\nolinkurl{id_cni} & \texttt{character varying(80)} & \textbf{PK}; \textbf{NN} \\
+\nolinkurl{login} & \texttt{character varying(100)} & \textbf{NN}; \textbf{UQ} \\
+\nolinkurl{password} & \texttt{text} & \textbf{NN} \\
+\nolinkurl{nom} & \texttt{character varying(150)} & --- \\
+\nolinkurl{prenom} & \texttt{character varying(150)} & --- \\
+\nolinkurl{address_mail} & \texttt{character varying(255)} & --- \\
+\nolinkurl{cni_file} & \texttt{text} & --- \\
+\nolinkurl{created_by} & \texttt{text} & relation logique $\rightarrow$ \nolinkurl{identity_registry(actor_role, actor_id)} (auteur polymorphe) \\
+\nolinkurl{wifi_name} & \texttt{text} & --- \\
+\nolinkurl{wifi_password} & \texttt{text} & --- \\
+\nolinkurl{created_at} & \texttt{timestamp with time zone} & --- \\
+\nolinkurl{deleted_at} & \texttt{timestamp with time zone} & --- \\
+\nolinkurl{deleted_by} & \texttt{text} & relation logique $\rightarrow$ \nolinkurl{identity_registry(actor_role, actor_id)} (auteur polymorphe) \\
+\nolinkurl{delete_reason} & \texttt{text} & --- \\
+\end{longtable}
+
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.46\textwidth}@{}}
+\caption{Table \nolinkurl{driver_messages}}\label{tab-schema-driver_messages}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\textit{Suite du tableau \thetable}}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\textit{Suite à la page suivante}}\\
+\endfoot
+\tablebottomrule
+\endlastfoot
+\nolinkurl{id} & \texttt{bigint} & \textbf{PK}; \textbf{NN} \\
+\nolinkurl{id_cni} & \texttt{text} & \textbf{NN}; relation logique $\rightarrow$ \nolinkurl{transporteur(id_cni)} (FK non matérialisée) \\
+\nolinkurl{message} & \texttt{text} & \textbf{NN} \\
+\nolinkurl{created_at} & \texttt{timestamp with time zone} & --- \\
+\end{longtable}
+
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.46\textwidth}@{}}
+\caption{Table \nolinkurl{identity_registry}}\label{tab-schema-identity_registry}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\textit{Suite du tableau \thetable}}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\textit{Suite à la page suivante}}\\
+\endfoot
+\tablebottomrule
+\endlastfoot
+\nolinkurl{id} & \texttt{bigint} & \textbf{PK}; \textbf{NN} \\
+\nolinkurl{login_normalized} & \texttt{character varying(160)} & \textbf{NN}; \textbf{UQ} \\
+\nolinkurl{actor_role} & \texttt{character varying(40)} & \textbf{NN}; \textbf{UQ composite} (\nolinkurl{actor_role, actor_id}); relation logique $\rightarrow$ \nolinkurl{tables de comptes historiques} (discriminateur polymorphe) \\
+\nolinkurl{actor_id} & \texttt{character varying(120)} & \textbf{NN}; \textbf{UQ composite} (\nolinkurl{actor_role, actor_id}); relation logique $\rightarrow$ \nolinkurl{tables de comptes historiques} (identifiant polymorphe) \\
+\nolinkurl{display_name} & \texttt{character varying(200)} & --- \\
+\nolinkurl{must_change_password} & \texttt{boolean} & \textbf{NN} \\
+\nolinkurl{terms_accepted_at} & \texttt{timestamp with time zone} & --- \\
+\nolinkurl{disabled_at} & \texttt{timestamp with time zone} & --- \\
+\nolinkurl{created_at} & \texttt{timestamp with time zone} & \textbf{NN} \\
+\nolinkurl{updated_at} & \texttt{timestamp with time zone} & \textbf{NN} \\
+\nolinkurl{token_version} & \texttt{integer} & \textbf{NN} \\
+\end{longtable}
+
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.46\textwidth}@{}}
+\caption{Table \nolinkurl{port_authority_user}}\label{tab-schema-port_authority_user}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\textit{Suite du tableau \thetable}}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\textit{Suite à la page suivante}}\\
+\endfoot
+\tablebottomrule
+\endlastfoot
+\nolinkurl{id} & \texttt{integer} & \textbf{PK}; \textbf{NN} \\
+\nolinkurl{login} & \texttt{character varying(100)} & \textbf{NN}; \textbf{UQ} \\
+\nolinkurl{password} & \texttt{text} & \textbf{NN} \\
+\nolinkurl{full_name} & \texttt{text} & --- \\
+\nolinkurl{port_locode} & \texttt{character varying(10)} & FK $\rightarrow$ \nolinkurl{port(locode)} \\
+\nolinkurl{authority_type} & \texttt{character varying(80)} & --- \\
+\nolinkurl{permissions} & \texttt{text[]} & --- \\
+\nolinkurl{wifi_name} & \texttt{text} & --- \\
+\nolinkurl{wifi_password} & \texttt{text} & --- \\
+\nolinkurl{created_at} & \texttt{timestamp with time zone} & --- \\
+\end{longtable}
+
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.46\textwidth}@{}}
+\caption{Table \nolinkurl{proprietaire_conteneur}}\label{tab-schema-proprietaire_conteneur}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\textit{Suite du tableau \thetable}}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\textit{Suite à la page suivante}}\\
+\endfoot
+\tablebottomrule
+\endlastfoot
+\nolinkurl{id} & \texttt{integer} & \textbf{PK}; \textbf{NN} \\
+\nolinkurl{niu} & \texttt{character varying(80)} & \textbf{UQ} \\
+\nolinkurl{nom_agence} & \texttt{character varying(255)} & \textbf{NN} \\
+\nolinkurl{login} & \texttt{character varying(100)} & \textbf{NN}; \textbf{UQ} \\
+\nolinkurl{password} & \texttt{text} & \textbf{NN} \\
+\nolinkurl{addresse_mail} & \texttt{character varying(255)} & --- \\
+\nolinkurl{lieu_residence} & \texttt{character varying(255)} & --- \\
+\nolinkurl{lat} & \texttt{double precision} & --- \\
+\nolinkurl{lon} & \texttt{double precision} & --- \\
+\nolinkurl{nbr_boite} & \texttt{integer} & --- \\
+\nolinkurl{wifi_name} & \texttt{text} & --- \\
+\nolinkurl{wifi_password} & \texttt{text} & --- \\
+\nolinkurl{created_at} & \texttt{timestamp with time zone} & --- \\
+\nolinkurl{deleted_at} & \texttt{timestamp with time zone} & --- \\
+\nolinkurl{deleted_by} & \texttt{text} & relation logique $\rightarrow$ \nolinkurl{identity_registry(actor_role, actor_id)} (auteur polymorphe) \\
+\nolinkurl{delete_reason} & \texttt{text} & --- \\
+\end{longtable}
+
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.46\textwidth}@{}}
+\caption{Table \nolinkurl{superadmin}}\label{tab-schema-superadmin}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\textit{Suite du tableau \thetable}}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\textit{Suite à la page suivante}}\\
+\endfoot
+\tablebottomrule
+\endlastfoot
+\nolinkurl{id} & \texttt{integer} & \textbf{PK}; \textbf{NN} \\
+\nolinkurl{login} & \texttt{character varying(100)} & \textbf{NN}; \textbf{UQ} \\
+\nolinkurl{password} & \texttt{text} & \textbf{NN} \\
+\nolinkurl{created_at} & \texttt{timestamp with time zone} & --- \\
+\nolinkurl{wifi_name} & \texttt{text} & --- \\
+\nolinkurl{wifi_password} & \texttt{text} & --- \\
+\end{longtable}
+
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.25\textwidth}
+                        >{\raggedright\arraybackslash}p{0.46\textwidth}@{}}
+\caption{Table \nolinkurl{transporteur}}\label{tab-schema-transporteur}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\textit{Suite du tableau \thetable}}\\
+\tableheadrow
+\thc{Champ} & \thc{Type PostgreSQL} & \thc{Contraintes et relations} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\textit{Suite à la page suivante}}\\
+\endfoot
+\tablebottomrule
+\endlastfoot
+\nolinkurl{id_cni} & \texttt{character varying(80)} & \textbf{PK}; \textbf{NN} \\
+\nolinkurl{login} & \texttt{character varying(100)} & \textbf{NN}; \textbf{UQ} \\
+\nolinkurl{password} & \texttt{text} & \textbf{NN} \\
+\nolinkurl{nom} & \texttt{character varying(150)} & --- \\
+\nolinkurl{prenom} & \texttt{character varying(150)} & --- \\
+\nolinkurl{nom_chauffeurs} & \texttt{character varying(255)} & --- \\
+\nolinkurl{contact} & \texttt{character varying(80)} & --- \\
+\nolinkurl{moyen_transport} & \texttt{character varying(120)} & --- \\
+\nolinkurl{id_boite} & \texttt{text} & relation logique $\rightarrow$ \nolinkurl{boite_noir(id_boite)} (identifiant historique sérialisé) \\
+\nolinkurl{id_boites} & \texttt{text} & relation logique $\rightarrow$ \nolinkurl{boite_noir(id_boite)} (liste JSON stockée en texte) \\
+\nolinkurl{blocked} & \texttt{boolean} & --- \\
+\nolinkurl{cni_file} & \texttt{text} & --- \\
+\nolinkurl{wifi_name} & \texttt{text} & --- \\
+\nolinkurl{wifi_password} & \texttt{text} & --- \\
+\nolinkurl{created_at} & \texttt{timestamp with time zone} & --- \\
+\nolinkurl{deleted_at} & \texttt{timestamp with time zone} & --- \\
+\nolinkurl{deleted_by} & \texttt{text} & relation logique $\rightarrow$ \nolinkurl{identity_registry(actor_role, actor_id)} (auteur polymorphe) \\
+\nolinkurl{delete_reason} & \texttt{text} & --- \\
+\end{longtable}
+
+\paragraph{Total de contrôle.}
+La somme des six groupes ci-dessus est de \textbf{48 tables} et \textbf{559 colonnes}. Ce total inclut la table technique \code{schema\_migrations}.

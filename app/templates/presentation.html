@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>ARGOS — Plateforme de surveillance maritime intelligente</title>
+  <meta name="description" content="ARGOS connecte votre flotte de conteneurs maritimes à une plateforme de surveillance temps réel, alertes automatiques et traçabilité blockchain." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+  <style>
+    :root {
+      --navy-0: #020C16;
+      --navy-1: #071525;
+      --navy-2: #0C1E30;
+      --navy-3: #112538;
+      --cyan: #00D4FF;
+      --cyan-dim: #00A8CC;
+      --cyan-ghost: rgba(0, 212, 255, 0.08);
+      --cyan-mid: rgba(0, 212, 255, 0.18);
+      --blue: #1A6FE8;
+      --gold: #FFB800;
+      --green: #4ADE80;
+      --text-1: #E8F4F8;
+      --text-2: #7EAACC;
+      --text-3: #3E6880;
+      --border: rgba(0, 212, 255, 0.12);
+      --border-s: rgba(0, 212, 255, 0.28);
+      --disp: 'Space Grotesk', sans-serif;
+      --body: 'Inter', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+      --r: 12px;
+      --rl: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+
+    body {
+      font-family: var(--body);
+      background: var(--navy-0);
+      color: var(--text-1);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      cursor: default;
+    }
+
+    @media (hover: none), (pointer: coarse) {
+      body { cursor: auto; }
+      .satellite-cursor { display: none; }
+    }
+
+    a { -webkit-tap-highlight-color: transparent; }
+    svg.icon { width: 22px; height: 22px; display: block; }
+
+    /* ─── CUSTOM CURSOR ─── */
+    .satellite-cursor { position: fixed; width: 28px; height: 28px; pointer-events: none; z-index: 9999; top: 0; left: 0; will-change: transform; }
+    .satellite-cursor::before {
+      content: ''; position: absolute; width: 100%; height: 100%;
+      background: radial-gradient(circle at 30% 30%, rgba(0, 212, 255, 0.9), rgba(26, 111, 232, 0.6));
+      border-radius: 50%; box-shadow: 0 0 20px rgba(0, 212, 255, 0.6), inset -2px -2px 10px rgba(0, 0, 0, 0.5);
+      animation: satellitePulse 2s ease-in-out infinite;
+    }
+    .satellite-cursor::after {
+      content: ''; position: absolute; width: 18px; height: 18px; border: 2px solid var(--cyan); border-radius: 50%;
+      top: 50%; left: 50%; transform: translate(-50%, -50%); animation: satelliteOrbit 3s linear infinite;
+    }
+    .satellite-cursor.hovering::before { background: radial-gradient(circle at 30% 30%, rgba(255, 184, 0, 0.95), rgba(255, 107, 0, 0.7)); box-shadow: 0 0 26px rgba(255, 184, 0, 0.7), inset -2px -2px 10px rgba(0, 0, 0, 0.5); }
+    .satellite-cursor.hovering::after { border-color: var(--gold); width: 26px; height: 26px; }
+    .cursor-label {
+      position: fixed; top: 0; left: 0; z-index: 9998; font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--navy-0); background: var(--cyan); padding: 4px 9px; border-radius: 5px;
+      pointer-events: none; opacity: 0; white-space: nowrap; transform: translate(18px, 18px); transition: opacity 0.15s;
+    }
+    @keyframes satellitePulse { 0%, 100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.15); filter: brightness(1.3); } }
+    @keyframes satelliteOrbit { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+
+    /* ─── GLOBE SCENE ─── */
+    #globe-scene { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 0; }
+    #globe-scene::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 0%, var(--navy-0) 100%); pointer-events: none; opacity: 0.6; }
+    .globe-tooltip {
+      position: fixed; z-index: 40; font-family: var(--mono); font-size: 11px; color: var(--text-1);
+      background: rgba(7, 21, 37, 0.94); border: 1px solid var(--border-s); padding: 9px 13px; border-radius: 8px;
+      pointer-events: none; opacity: 0; transform: translate(-50%, -135%); transition: opacity 0.15s; backdrop-filter: blur(10px); white-space: nowrap;
+    }
+    .globe-tooltip b { color: var(--cyan); display:block; font-family: var(--disp); font-size: 12.5px; margin-bottom:2px; }
+
+    /* ─── NAV ─── */
+    nav { position: fixed; inset: 0 0 auto; z-index: 999; height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 48px; background: rgba(2, 12, 22, 0.5); backdrop-filter: blur(22px); border-bottom: 1px solid var(--border); transition: background 0.35s, border-color 0.35s; }
+    nav.scrolled { background: rgba(2, 12, 22, 0.96); border-bottom-color: var(--border-s); }
+    .nav-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .logo-box { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--cyan), var(--blue)); display: flex; align-items: center; justify-content: center; font-family: var(--disp); font-weight: 800; font-size: 13px; color: #fff; letter-spacing: -0.5px; flex-shrink: 0; }
+    .logo-name { font-family: var(--disp); font-weight: 800; font-size: 19px; color: var(--text-1); letter-spacing: 3px; }
+    .logo-name em { color: var(--cyan); font-style: normal; }
+    .nav-links { display: flex; align-items: center; gap: 34px; list-style: none; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: var(--text-2); text-decoration: none; letter-spacing: 0.4px; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--cyan); }
+    body.custom-cursor-active, body.custom-cursor-active a, body.custom-cursor-active button { cursor: none; }
+    .nav-contact { border: 1px solid var(--border-s); border-radius: 8px; padding: 8px 15px; color: var(--text-1) !important; }
+    .nav-contact:hover { border-color: var(--cyan); background: var(--cyan-ghost); }
+    section[id], header[id] { scroll-margin-top: 86px; }
+    a:focus-visible, button:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
+    .nav-cta { background: linear-gradient(135deg, var(--cyan), var(--blue)) !important; color: #fff !important; padding: 9px 22px; border-radius: 8px; font-weight: 600 !important; transition: transform 0.2s, box-shadow 0.2s !important; }
+    .nav-cta:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 28px rgba(0, 212, 255, 0.35) !important; }
+    .menu-toggle { display: none; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--border-s); background: var(--cyan-ghost); flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+    .menu-toggle span { width: 18px; height: 2px; background: var(--cyan); border-radius: 2px; transition: transform 0.25s, opacity 0.25s; }
+    .menu-toggle.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+    .menu-toggle.open span:nth-child(2) { opacity: 0; }
+    .menu-toggle.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+    .mobile-menu { position: fixed; inset: 70px 0 0 0; z-index: 998; background: rgba(2, 12, 22, 0.98); backdrop-filter: blur(20px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; transform: translateY(-12px); opacity: 0; pointer-events: none; transition: opacity 0.3s, transform 0.3s; }
+    .mobile-menu.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .mobile-menu a { font-family: var(--disp); font-size: 22px; font-weight: 600; color: var(--text-1); text-decoration: none; }
+    .mobile-menu a.nav-cta { color: #fff !important; }
+    .mobile-menu a.nav-contact { font-size: 18px; }
+
+    /* ─── HERO ─── */
+    .hero { position: relative; height: 100vh; min-height: 680px; overflow: hidden; display: flex; align-items: center; z-index: 1; }
+    .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(2, 12, 22, 0.88) 0%, rgba(7, 21, 37, 0.62) 45%, rgba(0, 60, 100, 0.28) 100%); z-index: 1; }
+    .hero-body { position: relative; z-index: 2; max-width: 1220px; margin: 0 auto; padding: 0 48px; padding-top: 70px; width: 100%; }
+    .hero-eyebrow { display: inline-flex; align-items: center; gap: 10px; background: var(--cyan-ghost); border: 1px solid var(--border-s); border-radius: 100px; padding: 7px 18px; margin-bottom: 32px; backdrop-filter: blur(8px); }
+    .hero-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); animation: dot-pulse 2s infinite; }
+    @keyframes dot-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.75); } }
+    .hero-eyebrow span { font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--cyan); letter-spacing: 2.5px; text-transform: uppercase; }
+    .hero-h { font-family: var(--disp); font-size: clamp(38px, 5.6vw, 76px); font-weight: 800; line-height: 1.03; letter-spacing: -2.5px; margin-bottom: 28px; max-width: 900px; min-height: 100px; }
+    .hero-h-line { display: inline-block; min-height: 1.2em; }
+    .char { display: inline-block; opacity: 0; will-change: transform, opacity; }
+    .line-g { background: linear-gradient(90deg, var(--cyan) 0%, var(--blue) 60%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero-sub { font-size: 18px; font-weight: 400; color: var(--text-2); max-width: 600px; line-height: 1.72; margin-bottom: 44px; }
+    .hero-ctas { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 60px; }
+    .btn-primary, .btn-ghost { display: inline-flex; align-items: center; gap: 10px; font-family: var(--disp); font-weight: 600; font-size: 15px; padding: 15px 34px; border-radius: 10px; text-decoration: none; border: none; transition: transform 0.22s, box-shadow 0.22s, background 0.22s, border-color 0.22s; will-change: transform; }
+    .btn-primary { background: linear-gradient(135deg, var(--cyan), var(--blue)); color: #fff; box-shadow: 0 4px 28px rgba(0, 212, 255, 0.22); }
+    .btn-primary:hover { box-shadow: 0 10px 42px rgba(0, 212, 255, 0.42); }
+    .btn-ghost { background: transparent; color: var(--text-1); border: 1px solid var(--border-s); backdrop-filter: blur(8px); padding: 15px 30px; }
+    .btn-ghost:hover { background: var(--cyan-ghost); border-color: var(--cyan); }
+    .hero-stats { display: flex; gap: 52px; flex-wrap: wrap; }
+    .hstat-val, .hstat-suf { font-family: var(--disp); font-weight: 800; background: linear-gradient(90deg, var(--cyan), var(--blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+    .hstat-val { font-size: 38px; } .hstat-suf { font-size: 22px; }
+    .hstat-lbl { font-size: 11.5px; font-weight: 500; color: var(--text-3); margin-top: 7px; text-transform: uppercase; letter-spacing: 1.2px; font-family: var(--mono); }
+    .scroll-cue { position: absolute; bottom: 28px; left: 48px; z-index: 2; display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-3); opacity: 0; }
+    .scroll-cue .line { width: 1px; height: 34px; background: linear-gradient(var(--cyan), transparent); position: relative; overflow: hidden; }
+    .scroll-cue .line::after { content:''; position:absolute; top:-100%; left:0; width:100%; height:100%; background: var(--cyan); animation: cueDrop 1.8s ease-in-out infinite; }
+    @keyframes cueDrop { 0% { top: -100%; } 100% { top: 100%; } }
+
+    /* ─── TICKER ─── */
+    .ticker-wrap { background: var(--cyan-ghost); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 14px 0; overflow: hidden; position: relative; z-index: 2; backdrop-filter: blur(8px); }
+    .ticker { display: flex; white-space: nowrap; animation: tick 36s linear infinite; }
+    .ticker:hover { animation-play-state: paused; }
+    .t-item { display: inline-flex; align-items: center; gap: 12px; padding: 0 36px; font-family: var(--mono); font-size: 11.5px; font-weight: 500; color: var(--cyan-dim); text-transform: uppercase; letter-spacing: 1.5px; }
+    .t-sep { color: var(--text-3); font-size: 14px; }
+    @keyframes tick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    /* ─── CONTENT WRAPPER ─── */
+    .cw { max-width: 1220px; margin: 0 auto; padding: 100px 48px; position: relative; z-index: 2; }
+    .divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border-s), transparent); max-width: 1220px; margin: 0 auto; position: relative; z-index: 2; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--cyan); text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 18px; }
+    .eyebrow::before { content: ''; display: block; width: 22px; height: 1px; background: var(--cyan); }
+    .eyebrow.centered { justify-content: center; } .eyebrow.centered::before { display: none; }
+    h2.sh { font-family: var(--disp); font-size: clamp(30px, 4vw, 52px); font-weight: 800; line-height: 1.08; letter-spacing: -1.5px; margin-bottom: 18px; }
+    h2.sh .acc { color: var(--cyan); }
+    p.sb { font-size: 17px; color: var(--text-2); line-height: 1.72; max-width: 660px; }
+    .rev { opacity: 0; transform: translateY(32px); transition: opacity 0.75s ease, transform 0.75s ease; }
+    .rev.vis { opacity: 1; transform: translateY(0); }
+    .d1 { transition-delay: 0.1s; } .d2 { transition-delay: 0.2s; } .d3 { transition-delay: 0.3s; } .d4 { transition-delay: 0.4s; }
+    .card-glass { background: rgba(12, 30, 48, 0.4); border: 1px solid rgba(0, 212, 255, 0.15); border-radius: var(--rl); padding: 32px; backdrop-filter: blur(20px); transition: background 0.3s, border-color 0.3s, transform 0.15s; }
+    .card-glass:hover { background: rgba(12, 30, 48, 0.6); border-color: rgba(0, 212, 255, 0.35); }
+
+    /* ─── FEATURES ─── */
+    #features { background: linear-gradient(135deg, rgba(7, 21, 37, 0.8), rgba(17, 37, 56, 0.6)); position: relative; z-index: 2; }
+    .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 56px; }
+    .feat-card { background: rgba(12, 30, 48, 0.5); border: 1px solid rgba(0, 212, 255, 0.12); border-radius: var(--rl); padding: 34px; position: relative; overflow: hidden; transition: border-color 0.3s, transform 0.15s, box-shadow 0.3s; backdrop-filter: blur(15px); transform-style: preserve-3d; will-change: transform; }
+    .feat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--cyan), var(--blue)); opacity: 0; transition: opacity 0.3s; }
+    .feat-card:hover { border-color: rgba(0, 212, 255, 0.35); box-shadow: 0 22px 60px rgba(0, 212, 255, 0.1); }
+    .feat-card:hover::before { opacity: 1; }
+    .feat-icon { width: 50px; height: 50px; border-radius: 13px; display: flex; align-items: center; justify-content: center; margin-bottom: 22px; background: rgba(0, 212, 255, 0.08); color: var(--cyan); }
+    .feat-title { font-family: var(--disp); font-size: 18.5px; font-weight: 700; margin-bottom: 11px; }
+    .feat-desc { font-size: 13.5px; color: var(--text-2); line-height: 1.65; }
+
+    /* ─── AVANTAGES ─── */
+    #avantages { position: relative; z-index: 2; }
+    .adv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 56px; }
+    .adv-card { background: rgba(12, 30, 48, 0.45); border: 1px solid var(--border-s); border-radius: var(--rl); padding: 40px; backdrop-filter: blur(20px); }
+    .adv-card-head { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+    .adv-card-head .adv-icon-badge { width: 46px; height: 46px; border-radius: 12px; background: linear-gradient(135deg, var(--cyan), var(--blue)); display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+    .adv-card-title { font-family: var(--disp); font-weight: 700; font-size: 20px; }
+    .adv-card-sub { font-family: var(--mono); font-size: 10.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: 1.2px; margin-top: 3px; }
+    .adv-list { display: flex; flex-direction: column; gap: 20px; }
+    .adv-item { display: flex; gap: 14px; align-items: flex-start; }
+    .adv-item .adv-check { width: 20px; height: 20px; color: var(--cyan); flex-shrink: 0; margin-top: 2px; }
+    .adv-item-title { font-family: var(--disp); font-weight: 700; font-size: 14.5px; color: var(--text-1); margin-bottom: 4px; }
+    .adv-item-desc { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+    .adv-banner { margin-top: 26px; display: flex; align-items: center; gap: 20px; background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(26,111,232,0.06)); border: 1px solid var(--border-s); border-radius: var(--rl); padding: 28px 32px; }
+    .adv-banner .adv-icon-badge { width: 52px; height: 52px; border-radius: 14px; background: rgba(0,212,255,0.15); color: var(--cyan); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .adv-banner-title { font-family: var(--disp); font-weight: 700; font-size: 15.5px; margin-bottom: 4px; }
+    .adv-banner-desc { font-size: 13.5px; color: var(--text-2); line-height: 1.6; max-width: 720px; }
+
+    /* ─── ANCHOR / PORTS ─── */
+    #anchor { position: relative; z-index: 2; }
+    .anchor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 56px; }
+    .anchor-card { position: relative; border-radius: var(--rl); overflow: hidden; height: 300px; border: 1px solid var(--border); }
+    .anchor-card img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.6s ease, filter 0.6s ease; filter: saturate(0.9) brightness(0.85); }
+    .anchor-card:hover img { transform: scale(1.08); filter: saturate(1.1) brightness(0.95); }
+    .anchor-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(2,12,22,0.92) 5%, rgba(2,12,22,0.15) 60%, rgba(2,12,22,0.35) 100%); }
+    .anchor-body { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 24px; z-index: 1; }
+    .anchor-tag { font-family: var(--mono); font-size: 10px; color: var(--cyan); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+    .anchor-name { font-family: var(--disp); font-weight: 700; font-size: 19px; }
+    .anchor-desc { font-size: 12px; color: var(--text-2); margin-top: 6px; line-height: 1.5; }
+
+    /* ─── VISION ─── */
+    #vision { position: relative; z-index: 2; }
+    .vision-split { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; margin-top: 56px; }
+    .vision-img-wrap { position: relative; border-radius: var(--rl); overflow: hidden; border: 1px solid var(--border-s); }
+    .vision-img-wrap img { width: 100%; display: block; }
+    .vision-img-wrap::after { content:''; position:absolute; inset:0; background: linear-gradient(160deg, rgba(0,212,255,0.12), transparent 55%); }
+    .vision-list { display: flex; flex-direction: column; gap: 18px; margin-top: 26px; }
+    .vision-item { display: flex; gap: 14px; align-items: flex-start; }
+    .vision-num { font-family: var(--mono); font-size: 12px; color: var(--cyan); border: 1px solid var(--border-s); border-radius: 6px; padding: 3px 8px; margin-top: 2px; }
+    .vision-item p { font-size: 14px; color: var(--text-2); line-height: 1.6; }
+    .vision-item strong { color: var(--text-1); font-family: var(--disp); }
+
+    /* ─── TEAM ─── */
+    #team { background: linear-gradient(180deg, rgba(7, 21, 37, 0.5), rgba(17, 37, 56, 0.8)); }
+    .team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 56px; max-width: 1000px; margin-left: auto; margin-right: auto; }
+    .team-card { background: rgba(12, 30, 48, 0.6); border: 1px solid rgba(0, 212, 255, 0.15); border-radius: var(--rl); padding: 40px 30px; text-align: center; transition: border-color 0.3s, transform 0.15s; backdrop-filter: blur(15px); position: relative; overflow: hidden; }
+    .team-card:hover { border-color: rgba(0, 212, 255, 0.35); }
+    .team-avatar { width: 68px; height: 68px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--disp); font-weight: 800; font-size: 21px; color: #fff; margin: 0 auto 18px; background: linear-gradient(135deg, var(--cyan), var(--blue)); }
+    .team-name { font-family: var(--disp); font-size: 16.5px; font-weight: 700; margin-bottom: 5px; }
+    .team-role { font-family: var(--mono); font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 1.5px; }
+    .team-bio { font-size: 12.5px; color: var(--text-2); line-height: 1.62; margin-top: 14px; }
+
+    /* ─── TECH ─── */
+    .tech-icon-badge { width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #fff; }
+    .tag-chip { padding: 11px 20px; display: inline-block; font-family: var(--mono); font-size: 12px; letter-spacing: 0.4px; color: var(--text-2); }
+    .mini-tile-icon { color: var(--cyan); margin-bottom: 12px; }
+
+    /* ─── FOOTER ─── */
+    footer { max-width: 1220px; margin: 0 auto; padding: 64px 48px; display: grid; grid-template-columns: 2.2fr 1fr 1fr 1fr; gap: 56px; border-top: 1px solid var(--border); position: relative; z-index: 2; }
+    .flogo { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .ftag { font-size: 13px; color: var(--text-3); line-height: 1.68; max-width: 255px; margin-bottom: 22px; }
+    .fcopy { font-size: 11.5px; color: var(--text-3); }
+    .fch { font-family: var(--disp); font-size: 12px; font-weight: 700; color: var(--text-1); margin-bottom: 18px; text-transform: uppercase; letter-spacing: 1.2px; }
+    .flinks { list-style: none; display: flex; flex-direction: column; gap: 11px; }
+    .flinks a { font-size: 13px; color: var(--text-3); text-decoration: none; transition: color 0.2s; }
+    .flinks a:hover { color: var(--cyan); }
+    .fbot { max-width: 1220px; margin: 0 auto; padding: 22px 48px; display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--text-3); border-top: 1px solid var(--border); position: relative; z-index: 2; }
+
+    /* ─── CTA CONTACT ─── */
+    .cta-contacts { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .contact-card { display: inline-flex; align-items: center; gap: 12px; padding: 15px 28px; border-radius: 10px; text-decoration: none; font-family: var(--disp); font-weight: 600; font-size: 14.5px; transition: transform 0.22s, box-shadow 0.22s, border-color 0.22s; }
+    .contact-card.mail { background: linear-gradient(135deg, var(--cyan), var(--blue)); color: #fff; box-shadow: 0 4px 28px rgba(0, 212, 255, 0.22); }
+    .contact-card.mail:hover { box-shadow: 0 10px 42px rgba(0, 212, 255, 0.42); transform: translateY(-2px); }
+    .contact-card.whats { background: transparent; color: var(--text-1); border: 1px solid var(--border-s); }
+    .contact-card.whats:hover { background: var(--cyan-ghost); border-color: var(--cyan); transform: translateY(-2px); }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 960px) {
+      nav { padding: 0 24px; }
+      .nav-links li:not(:last-child) { display: none; }
+      .menu-toggle { display: flex; }
+      .cw { padding: 80px 24px; }
+      .feat-grid { grid-template-columns: 1fr 1fr; }
+      .team-grid, .anchor-grid, .adv-grid { grid-template-columns: 1fr; }
+      .vision-split { grid-template-columns: 1fr; }
+      footer { grid-template-columns: 1fr 1fr; gap: 36px; padding: 48px 24px; }
+      .fbot { padding: 20px 24px; flex-direction: column; gap: 8px; text-align: center; }
+      .hero-body { padding: 0 24px; padding-top: 80px; }
+      .scroll-cue { left: 24px; }
+      .tech-grid { grid-template-columns: 1fr !important; gap: 36px !important; margin-top: 56px !important; }
+    }
+    @media (max-width: 600px) {
+      .feat-grid { grid-template-columns: 1fr; }
+      footer { grid-template-columns: 1fr; }
+      .hero-stats { gap: 28px; }
+      .adv-card { padding: 28px; }
+      #cta { margin: 36px 16px !important; padding: 72px 24px !important; }
+      .tech-tiles { grid-template-columns: 1fr !important; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="globe-scene"></div>
+  <div class="globe-tooltip" id="globeTooltip"><b></b><span></span></div>
+
+  <div class="satellite-cursor" id="satCursor"></div>
+  <div class="cursor-label" id="cursorLabel"></div>
+
+  <!-- Navigation -->
+  <nav id="mainnav">
+    <a class="nav-logo" href="#home">
+      <div class="logo-box">AG</div>
+      <span class="logo-name">AR<em>G</em>OS</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Fonctionnalités</a></li>
+      <li><a href="#avantages">Avantages</a></li>
+      <li><a href="#anchor">Ancrage</a></li>
+      <li><a href="#team">Équipe</a></li>
+      <li><a href="#tech">Technologie</a></li>
+      <li><a href="#cta" class="nav-contact" data-label="Contact">Contact</a></li>
+      <li><a id="connectBtnNav" href="#" class="nav-cta" data-magnetic data-label="Connexion">Connexion</a></li>
+    </ul>
+    <button class="menu-toggle" id="menuToggle" type="button" aria-label="Ouvrir le menu" aria-controls="mobileMenu" aria-expanded="false"><span></span><span></span><span></span></button>
+  </nav>
+
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#features">Fonctionnalités</a>
+    <a href="#avantages">Avantages</a>
+    <a href="#anchor">Ancrage</a>
+    <a href="#team">Équipe</a>
+    <a href="#tech">Technologie</a>
+    <a href="#cta" class="nav-contact">Contact</a>
+    <a id="connectBtnNavMobile" href="#" class="nav-cta" style="margin-top:10px;">Connexion</a>
+  </div>
+
+  <!-- HERO -->
+  <header class="hero" id="home">
+    <div class="hero-body">
+      <div class="hero-eyebrow">
+        <div class="hero-dot"></div>
+        <span>Supply Chain 4.0 · IoT · Blockchain</span>
+      </div>
+
+      <h1 class="hero-h" id="heroTitle"></h1>
+
+      <p class="hero-sub" id="heroSub" style="opacity: 0;">
+        ARGOS connecte vos conteneurs maritimes à une plateforme de surveillance en temps réel : alertes automatiques, traçabilité blockchain et analytiques avancés, accessibles depuis n'importe quel point du globe.
+      </p>
+
+      <div class="hero-ctas" id="heroCtas" style="opacity: 0;">
+        <a id="connectBtn" href="#" class="btn-primary" data-magnetic data-label="Ouvrir l'app">Accéder à la plateforme</a>
+        <a href="#avantages" class="btn-ghost" data-magnetic data-label="Explorer">Découvrir les avantages</a>
+      </div>
+
+      <div class="hero-stats" id="heroStats" style="opacity: 0;">
+        <!-- <div><div><span class="hstat-val counter" data-t="1200">0</span><span class="hstat-suf">+</span></div><div class="hstat-lbl">Conteneurs suivis</div></div> -->
+        <div><div><span class="hstat-val counter" data-t="98">0</span><span class="hstat-suf">%</span></div><div class="hstat-lbl">Fiabilité système</div></div>
+        <div><div><span class="hstat-val counter" data-t="24">0</span><span class="hstat-suf">h</span></div><div class="hstat-lbl">Monitoring continu</div></div>
+        <div><div><span class="hstat-val counter" data-t="5">0</span></div><div class="hstat-lbl">Rôles utilisateurs</div></div>
+      </div>
+    </div>
+    <div class="scroll-cue" id="scrollCue"><div class="line"></div><span>Défiler</span></div>
+  </header>
+
+  <!-- Ticker -->
+  <div class="ticker-wrap">
+    <div class="ticker" id="ticker">
+      <div class="t-item">Surveillance IoT temps réel <span class="t-sep">·</span></div>
+      <div class="t-item">Scellement blockchain SHA-256 <span class="t-sep">·</span></div>
+      <div class="t-item">Flotte Afrique Centrale <span class="t-sep">·</span></div>
+      <div class="t-item">Analytiques avancées <span class="t-sep">·</span></div>
+      <div class="t-item">Alertes e-mail · WhatsApp · push <span class="t-sep">·</span></div>
+      <div class="t-item">Supply Chain 4.0 <span class="t-sep">·</span></div>
+      <div class="t-item">Surveillance IoT temps réel <span class="t-sep">·</span></div>
+      <div class="t-item">Scellement blockchain SHA-256 <span class="t-sep">·</span></div>
+      <div class="t-item">Flotte Afrique Centrale <span class="t-sep">·</span></div>
+    </div>
+  </div>
+
+  <div class="divider" style="margin-top: 0;"></div>
+
+  <!-- FEATURES -->
+  <section class="cw" id="features">
+    <div>
+      <div class="eyebrow">Fonctionnalités</div>
+      <h2 class="sh">Tout ce dont vous avez besoin,<br><span class="acc">rien de superflu</span></h2>
+    </div>
+
+    <div class="feat-grid">
+      <div class="feat-card rev" data-tilt>
+        <div class="feat-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg></div>
+        <div class="feat-title">Monitoring environnemental</div>
+        <p class="feat-desc">Suivi en continu de la température, de l'humidité, des chocs et des vibrations de chaque conteneur, consultable depuis tout appareil connecté.</p>
+      </div>
+
+      <div class="feat-card rev d1" data-tilt>
+        <div class="feat-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3z"/></svg></div>
+        <div class="feat-title">Blockchain immuable</div>
+        <p class="feat-desc">Chaque événement de conteneur est scellé en SHA-256 dans une chaîne en insertion seule. Traçabilité auditable et opposable en cas de litige.</p>
+      </div>
+
+      <div class="feat-card rev d2" data-tilt>
+        <div class="feat-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div>
+        <div class="feat-title">Analytiques avancées</div>
+        <p class="feat-desc">Tableaux de bord temps réel, rapports automatiques et statistiques agrégées sur l'ensemble de la flotte.</p>
+      </div>
+
+      <div class="feat-card rev" data-tilt>
+        <div class="feat-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="feat-title">Gestion multi-rôles</div>
+        <p class="feat-desc">Architecture à cinq rôles — superadmin, propriétaire, client, transporteur, agence — avec isolation stricte des données par compte.</p>
+      </div>
+
+      <div class="feat-card rev d1" data-tilt>
+        <div class="feat-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <div class="feat-title">Alertes multi-canaux</div>
+        <p class="feat-desc">Notifications configurables par rôle via e-mail, WhatsApp et interface in-app, avec seuils personnalisables par conteneur.</p>
+      </div>
+
+      <div class="feat-card rev d2" data-tilt>
+        <div class="feat-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <div class="feat-title">Cartographie en direct</div>
+        <p class="feat-desc">Position GPS de l'ensemble de la flotte sur une carte interactive, avec géofencing et historique de trajectoire.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- AVANTAGES -->
+  <section class="cw" id="avantages">
+    <div>
+      <div class="eyebrow">Bénéfices de la plateforme</div>
+      <h2 class="sh">Une valeur mesurable pour<br><span class="acc">chaque acteur de la chaîne</span></h2>
+      <p class="sb">ARGOS s'adresse à deux publics distincts : les entreprises qui exploitent et administrent leur flotte de conteneurs, et les clients dont les marchandises transitent par cette flotte. Chacun dispose d'un accès et d'outils adaptés à ses besoins.</p>
+    </div>
+
+    <div class="adv-grid">
+      <div class="adv-card rev">
+        <div class="adv-card-head">
+          <div class="adv-icon-badge"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8L12 3 3 8l9 5 9-5z"/><path d="M3 8v9l9 5 9-5V8"/><path d="M12 13v9"/></svg></div>
+          <div><div class="adv-card-title">Entreprises &amp; opérateurs</div><div class="adv-card-sub">Agences, propriétaires, transporteurs</div></div>
+        </div>
+        <div class="adv-list">
+          <div class="adv-item">
+            <svg class="adv-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
+            <div><div class="adv-item-title">Visibilité opérationnelle complète</div><div class="adv-item-desc">Suivi en temps réel de l'intégralité de la flotte depuis un tableau de bord centralisé, quel que soit le nombre d'unités en circulation.</div></div>
+          </div>
+          <div class="adv-item">
+            <svg class="adv-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
+            <div><div class="adv-item-title">Gestion et exploitation des données</div><div class="adv-item-desc">Consolidation, export et analyse des données issues des capteurs IoT pour orienter les décisions opérationnelles.</div></div>
+          </div>
+          <div class="adv-item">
+            <svg class="adv-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
+            <div><div class="adv-item-title">Réduction des pertes et des litiges</div><div class="adv-item-desc">Détection précoce des anomalies (écarts de température, ouverture non autorisée, déviation de trajectoire) permettant une intervention avant aggravation.</div></div>
+          </div>
+          <div class="adv-item">
+            <svg class="adv-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
+            <div><div class="adv-item-title">Preuve légale inaltérable</div><div class="adv-item-desc">Chaque événement significatif est scellé sur une chaîne blockchain en insertion seule, opposable en cas de réclamation commerciale ou d'assurance.</div></div>
+          </div>
+          <div class="adv-item">
+            <svg class="adv-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
+            <div><div class="adv-item-title">Conformité et auditabilité</div><div class="adv-item-desc">Historique complet et consultable à tout moment, facilitant les audits internes et les contrôles réglementaires.</div></div>
+          </div>
+          <div class="adv-item">
+            <svg class="adv-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
+            <div><div class="adv-item-title">Optimisation des coûts d'exploitation</div><div class="adv-item-desc">Analyse des trajectoires et des délais permettant d'identifier les axes d'amélioration logistique.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="adv-card rev d1">
+        <div class="adv-card-head">
+          <div class="adv-icon-badge"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+          <div><div class="adv-card-title">Clients &amp; propriétaires de marchandises</div><div class="adv-card-sub">Suivi de vos transactions</div></div>
+        </div>
+        <div class="adv-list">
+          <div class="adv-item">
+            <svg class="adv-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
+            <div><div class="adv-item-title">Suivi individuel des conteneurs</div><div class="adv-item-desc">Accès en temps réel à la position, à l'état et aux conditions de transport de leurs propres marchandises, sans intermédiaire.</div></div>
+          </div>
+          <div class="adv-item">
+            <svg class="adv-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
+            <div><div class="adv-item-title">Alertes personnalisées</div><div class="adv-item-desc">Notification immédiate par e-mail ou WhatsApp en cas d'anomalie détectée sur un conteneur leur appartenant.</div></div>
+          </div>
+          <div class="adv-item">
+            <svg class="adv-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
+            <div><div class="adv-item-title">Transparence vérifiable</div><div class="adv-item-desc">Consultation de l'historique scellé sur blockchain, garantissant qu'aucune donnée n'a été modifiée après coup.</div></div>
+          </div>
+          <div class="adv-item">
+            <svg class="adv-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
+            <div><div class="adv-item-title">Continuité de visibilité</div><div class="adv-item-desc">Suivi ininterrompu de la marchandise, du point de départ jusqu'à la livraison finale.</div></div>
+          </div>
+          <div class="adv-item">
+            <svg class="adv-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
+            <div><div class="adv-item-title">Interlocuteur unique</div><div class="adv-item-desc">Communication directe avec l'opérateur via une interface dédiée, sans démarche administrative additionnelle.</div></div>
+          </div>
+          <div class="adv-item">
+            <svg class="adv-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
+            <div><div class="adv-item-title">Historique consultable en permanence</div><div class="adv-item-desc">Accès à l'ensemble des événements passés liés à une transaction, à des fins de suivi ou de réclamation.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="adv-banner rev d2">
+      <div class="adv-icon-badge"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8L12 3 3 8l9 5 9-5z"/><path d="M3 8v9l9 5 9-5V8"/><path d="M12 13v9"/></svg></div>
+      <div>
+        <div class="adv-banner-title">Dispositif fourni gracieusement</div>
+        <div class="adv-banner-desc">Le boîtier de télémétrie ARGOS est mis à disposition sans frais auprès de toute entreprise souhaitant intégrer sa flotte à la plateforme. Aucun investissement matériel initial n'est requis.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ANCRAGE -->
+  <section class="cw" id="anchor">
+    <div>
+      <div class="eyebrow">Notre ancrage</div>
+      <h2 class="sh">Conçu depuis <span class="acc">l'Afrique Centrale</span></h2>
+      <p class="sb">ARGOS est bâti par une équipe basée en Afrique Centrale et pensé pour ses ports, ses opérateurs et ses réalités logistiques — avant d'être pensé pour le reste du monde.</p>
+    </div>
+
+    <div class="anchor-grid">
+      <div class="anchor-card rev">
+        <img src="{{url_for('static', filename='img/vue_ha.webp')}}" alt="Port autonome de Douala" loading="lazy" />
+        <div class="anchor-body"><div class="anchor-tag">Cameroun</div><div class="anchor-name">Port Autonome de Douala</div><div class="anchor-desc">Premier hub logistique du pays, point d'entrée pour une large part du fret régional.</div></div>
+      </div>
+      <div class="anchor-card rev d1">
+        <img src="{{url_for('static', filename='img/images (1).jpeg')}}" alt="Port en eau profonde de Kribi" loading="lazy" />
+        <div class="anchor-body"><div class="anchor-tag">Cameroun</div><div class="anchor-name">Port en eau profonde de Kribi</div><div class="anchor-desc">Terminal moderne à conteneurs, vitrine de la nouvelle infrastructure maritime régionale.</div></div>
+      </div>
+      <div class="anchor-card rev d2">
+        <img src="{{url_for('static', filename='img/images.jpeg')}}" alt="Terminal à conteneurs" loading="lazy" />
+        <div class="anchor-body"><div class="anchor-tag">Réseau global</div><div class="anchor-name">Terminaux partenaires</div><div class="anchor-desc">Une couverture qui s'étend aux grands terminaux internationaux connectés à la région.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- VISION -->
+  <section class="cw" id="vision">
+    <div class="vision-split">
+      <div class="vision-img-wrap rev">
+        <img src="{{url_for('static', filename='img/faviron.png')}}" alt="Identité visuelle ARGOS — suivi de flotte maritime mondiale" loading="lazy" />
+      </div>
+      <div class="rev d1">
+        <div class="eyebrow">Notre vision</div>
+        <h2 class="sh">Une souveraineté <span class="acc">logistique</span>, pas seulement un logiciel</h2>
+        <p class="sb">ARGOS donne aux opérateurs maritimes d'Afrique Centrale les mêmes outils de visibilité et de confiance que les plus grands réseaux mondiaux, sans dépendance opaque.</p>
+        <div class="vision-list">
+          <div class="vision-item"><span class="vision-num">01</span><p><strong>Visibilité totale.</strong> Chaque conteneur, chaque capteur, chaque événement, consultable en un instant.</p></div>
+          <div class="vision-item"><span class="vision-num">02</span><p><strong>Confiance vérifiable.</strong> Chaque événement scellé sur une chaîne blockchain en insertion seule.</p></div>
+          <div class="vision-item"><span class="vision-num">03</span><p><strong>Intelligence appliquée.</strong> Des modèles prédictifs qui anticipent les incidents avant qu'ils ne coûtent cher.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- TEAM -->
+  <section class="cw" id="team">
+    <div style="text-align: center; margin-bottom: 60px;">
+      <div class="eyebrow centered">L'équipe</div>
+      <h2 class="sh" style="text-align:center">Les ingénieurs derrière <span class="acc">ARGOS</span></h2>
+    </div>
+
+    <div class="team-grid">
+      <div class="team-card rev">
+        <div class="team-avatar">JB</div>
+        <div class="team-name">Jessica Beltrane</div>
+        <div class="team-role">Lead Architect</div>
+        <p class="team-bio">Architecte principal de la plateforme ARGOS. Conçoit les systèmes distribués, l'infrastructure IoT et l'expérience utilisateur globale.</p>
+      </div>
+      <div class="team-card rev d1">
+        <div class="team-avatar">MB</div>
+        <div class="team-name">Mickael Brady</div>
+        <div class="team-role">Full-Stack Engineer</div>
+        <p class="team-bio">Développeur full-stack en charge du backend Python/Flask, de la base PostgreSQL, de l'intégration blockchain et de la logique métier ARGOS.</p>
+      </div>
+      <div class="team-card rev d2">
+        <div class="team-avatar">AT</div>
+        <div class="team-name">Atangana</div>
+        <div class="team-role">Équipe ARGOS</div>
+        <p class="team-bio">Une communauté d'ingénieurs africains unis par la vision d'une logistique maritime souveraine, intelligente et accessible.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- TECHNOLOGIE -->
+  <section class="cw" id="tech" style="padding-bottom: 80px;">
+    <div>
+      <div class="eyebrow">Technologie</div>
+      <h2 class="sh">Une infrastructure technique<br><span class="acc">robuste et évolutive</span></h2>
+      <p class="sb" style="margin-top: 16px;">ARGOS s'appuie sur des composants technologiques éprouvés pour fournir des analyses prédictives, des recommandations exploitables et une automatisation complète de la chaîne logistique.</p>
+    </div>
+
+    <div class="tech-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; margin-top: 80px;">
+      <div class="rev">
+        <h3 style="font-family: var(--disp); font-size: 24px; font-weight: 700; margin-bottom: 24px;">Piliers technologiques</h3>
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+          <div class="card-glass" data-tilt>
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+              <div class="tech-icon-badge" style="background: linear-gradient(135deg, #00D4FF, #1A6FE8);"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg></div>
+              <div><div style="font-family: var(--disp); font-weight: 700; color: var(--text-1);">Intelligence artificielle</div><div style="font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 1px;">Analyses prédictives</div></div>
+            </div>
+            <p style="font-size: 13.5px; color: var(--text-2); line-height: 1.6;">Des modèles d'intelligence artificielle sont utilisés pour générer des insights prédictifs, analyser les anomalies dans les données de conteneurs et fournir des recommandations automatiques.</p>
+          </div>
+
+          <div class="card-glass" data-tilt>
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+              <div class="tech-icon-badge" style="background: linear-gradient(135deg, #A064FF, #6600CC);"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+              <div><div style="font-family: var(--disp); font-weight: 700; color: var(--text-1);">Infrastructure blockchain</div><div style="font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 1px;">Scellement décentralisé des événements</div></div>
+            </div>
+            <p style="font-size: 13.5px; color: var(--text-2); line-height: 1.6;">Une couche de scellement décentralisée sécurise les événements de la chaîne logistique et garantit l'intégrité complète de l'historique de chaque conteneur.</p>
+          </div>
+
+          <div class="card-glass" data-tilt>
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+              <div class="tech-icon-badge" style="background: linear-gradient(135deg, #1A6FE8, #072B57);"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg></div>
+              <div><div style="font-family: var(--disp); font-weight: 700; color: var(--text-1);">Backend haute performance</div><div style="font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 1px;">Python / Flask · PostgreSQL</div></div>
+            </div>
+            <p style="font-size: 13.5px; color: var(--text-2); line-height: 1.6;">Un backend optimisé en Python/Flask avec PostgreSQL gère un volume élevé d'événements IoT en temps réel, avec une latence minimale et une disponibilité continue.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="rev d2">
+        <div class="tech-tiles" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="card-glass" style="padding: 24px;" data-tilt><svg class="icon mini-tile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><div style="font-family: var(--disp); font-weight: 700; margin-bottom: 8px;">Détection d'anomalies</div><p style="font-size: 12px; color: var(--text-2); line-height: 1.5;">Identification instantanée des comportements anormaux des conteneurs.</p></div>
+          <div class="card-glass" style="padding: 24px;" data-tilt><svg class="icon mini-tile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg><div style="font-family: var(--disp); font-weight: 700; margin-bottom: 8px;">Optimisation logistique</div><p style="font-size: 12px; color: var(--text-2); line-height: 1.5;">Routes et horaires optimisés pour réduire les coûts d'exploitation.</p></div>
+          <div class="card-glass" style="padding: 24px;" data-tilt><svg class="icon mini-tile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg><div style="font-family: var(--disp); font-weight: 700; margin-bottom: 8px;">Rapports automatiques</div><p style="font-size: 12px; color: var(--text-2); line-height: 1.5;">Synthèses générées chaque jour à partir des données de la flotte.</p></div>
+          <div class="card-glass" style="padding: 24px;" data-tilt><svg class="icon mini-tile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg><div style="font-family: var(--disp); font-weight: 700; margin-bottom: 8px;">Traitement temps réel</div><p style="font-size: 12px; color: var(--text-2); line-height: 1.5;">Ingestion et traitement instantanés des flux de capteurs.</p></div>
+          <div class="card-glass" style="padding: 24px;" data-tilt><svg class="icon mini-tile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><div style="font-family: var(--disp); font-weight: 700; margin-bottom: 8px;">Sécurité renforcée</div><p style="font-size: 12px; color: var(--text-2); line-height: 1.5;">Immuabilité des données garantie par le scellement blockchain.</p></div>
+          <div class="card-glass" style="padding: 24px;" data-tilt><svg class="icon mini-tile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div style="font-family: var(--disp); font-weight: 700; margin-bottom: 8px;">Accès différencié</div><p style="font-size: 12px; color: var(--text-2); line-height: 1.5;">Droits d'accès distincts selon le rôle de chaque utilisateur.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 80px; text-align: center;">
+      <h3 style="font-family: var(--disp); font-size: 20px; font-weight: 700; margin-bottom: 32px;">Stack technique</h3>
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; max-width: 900px; margin: 0 auto;">
+        <span class="card-glass tag-chip">Intelligence artificielle</span>
+        <span class="card-glass tag-chip">Blockchain décentralisée</span>
+        <span class="card-glass tag-chip">Python 3.12</span>
+        <span class="card-glass tag-chip">Flask · REST API</span>
+        <span class="card-glass tag-chip">PostgreSQL 15</span>
+        <span class="card-glass tag-chip">React.js</span>
+        <span class="card-glass tag-chip">WebSocket temps réel</span>
+        <span class="card-glass tag-chip">Analytics en direct</span>
+        <span class="card-glass tag-chip">Three.js 3D</span>
+        <span class="card-glass tag-chip">Géolocalisation GPS</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- CTA -->
+  <section class="cw" id="cta" style="text-align: center; padding: 120px 48px; background: linear-gradient(135deg, rgba(7, 21, 37, 0.6), rgba(17, 37, 56, 0.8)); border-radius: 20px; margin: 60px auto; max-width: 900px; position: relative; overflow: hidden;">
+    <img src="{{ url_for('static', filename='img/conteneur.jpg') }}" alt="Conteneurs maritimes" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.12; z-index:0;" />
+    <div style="position:relative; z-index:1;">
+      <h2 class="sh" style="text-align:center; margin-bottom:20px">Prêt à connecter<br><span class="line-g">votre flotte ?</span></h2>
+      <p class="sb" style="text-align:center; margin:0 auto 44px">Rejoignez les opérateurs maritimes d'Afrique Centrale qui pilotent déjà leur flotte avec ARGOS. Le boîtier de télémétrie est fourni gracieusement à chaque entreprise partenaire.</p>
+      <div class="cta-contacts">
+        <a id="connectBtn2" href="#" class="btn-primary" data-magnetic data-label="Ouvrir l'app">Accéder à la plateforme</a>
+        <a id="contactMail" href="#" class="contact-card mail" data-magnetic data-label="E-mail">
+          <svg class="icon" style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>
+          Écrire un e-mail
+        </a>
+        <a id="contactWhats" href="#" class="contact-card whats" target="_blank" rel="noopener" data-magnetic data-label="WhatsApp">
+          <svg class="icon" style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          Contacter sur WhatsApp
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div>
+      <div class="flogo"><div class="logo-box">AG</div><span class="logo-name" style="font-size:17px">AR<em>G</em>OS</span></div>
+      <p class="ftag">La plateforme de gestion des conteneurs maritimes pour l'Afrique Centrale. Supply Chain 4.0.</p>
+      <div class="fcopy">© 2026 ARGOS Platform. Tous droits réservés.<br>Meke Nanilaou · Brady Mickael &amp; Company</div>
+    </div>
+    <div>
+      <div class="fch">Plateforme</div>
+      <ul class="flinks"><li><a href="#">Tableau de bord</a></li><li><a href="#">Conteneurs</a></li><li><a href="#">Blockchain</a></li><li><a href="#">Analytiques</a></li><li><a href="#">Alertes</a></li></ul>
+    </div>
+    <div>
+      <div class="fch">Entreprise</div>
+      <ul class="flinks"><li><a href="#vision">À propos</a></li><li><a href="#team">Équipe</a></li><li><a href="#avantages">Avantages</a></li><li><a href="#cta">Contact</a></li></ul>
+    </div>
+    <div>
+      <div class="fch">Légal</div>
+      <ul class="flinks"><li><a href="#">Conditions d'utilisation</a></li><li><a href="#">Confidentialité</a></li><li><a href="#">Sécurité</a></li><li><a href="#">API</a></li></ul>
+    </div>
+  </footer>
+
+  <div class="fbot">
+    <span>Conçu et développé en Afrique Centrale</span>
+    <span>ARGOS v4.0 · Supply Chain 4.0 · 2026</span>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       CONFIGURATION — connexion & contact
+       ════════════════════════════════════════ -->
+  <script>
+    // ── Lien vers la page d'authentification ──────────────────────
+    const APP_CONFIG = {
+      // Chemin vers la page de connexion de l'application
+      LOGIN_PATH: "/"
+    };
+
+    function resolveAppUrl() {
+      // La vitrine est servie par la même application Flask : conserver
+      // l'origine courante évite une redirection vers un port invalide en production.
+      return new URL(APP_CONFIG.LOGIN_PATH, window.location.origin).href;
+    }
+
+    const appUrl = resolveAppUrl();
+    ["connectBtn", "connectBtn2", "connectBtnNav", "connectBtnNavMobile"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.href = appUrl;
+    });
+
+    // ── Coordonnées de contact ─────────────────────────────────────
+    const CONTACT_CONFIG = {
+      EMAIL: "bradymickael400@gmail.com",
+      // Remplacez par le numéro WhatsApp réel, format international sans "+" ni espaces
+      WHATSAPP_NUMBER: "237659211234"
+    };
+    const contactMail = document.getElementById("contactMail");
+    const contactWhats = document.getElementById("contactWhats");
+    if (contactMail) contactMail.href = `mailto:${CONTACT_CONFIG.EMAIL}?subject=${encodeURIComponent("Demande d'information — ARGOS")}`;
+    if (contactWhats) contactWhats.href = `https://wa.me/${CONTACT_CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent("Bonjour, je souhaite obtenir des informations sur la plateforme ARGOS.")}`;
+  </script>
+
+  <!-- Globe terrestre réel (Three.js) -->
+  <script>
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x020C16, 0);
+    document.getElementById('globe-scene').appendChild(renderer.domElement);
+    camera.position.z = 2.9;
+
+    const globeGroup = new THREE.Group();
+    scene.add(globeGroup);
+
+    // Textures Terre réelles — jeu de textures "three-globe" (blue marble, relief, eau, nuages)
+    const loader = new THREE.TextureLoader();
+    loader.crossOrigin = 'anonymous';
+    const TEX_BASE = 'https://unpkg.com/three-globe@2.31.0/example/img/';
+    const earthMap = loader.load(TEX_BASE + 'earth-blue-marble.jpg');
+    const earthBump = loader.load(TEX_BASE + 'earth-topology.png');
+    const earthSpecular = loader.load(TEX_BASE + 'earth-water.png');
+    const cloudsMap = loader.load(TEX_BASE + 'earth-clouds.png');
+
+    const earthGeo = new THREE.SphereGeometry(1, 64, 64);
+    const earthMat = new THREE.MeshPhongMaterial({
+      map: earthMap,
+      bumpMap: earthBump,
+      bumpScale: 0.025,
+      specularMap: earthSpecular,
+      specular: new THREE.Color(0x333333),
+      shininess: 6
+    });
+    const earth = new THREE.Mesh(earthGeo, earthMat);
+    globeGroup.add(earth);
+
+    const cloudsGeo = new THREE.SphereGeometry(1.01, 64, 64);
+    const cloudsMat = new THREE.MeshPhongMaterial({ map: cloudsMap, transparent: true, opacity: 0.55, depthWrite: false });
+    const clouds = new THREE.Mesh(cloudsGeo, cloudsMat);
+    globeGroup.add(clouds);
+
+    const atmosGeo = new THREE.SphereGeometry(1.06, 48, 48);
+    const atmosMat = new THREE.MeshBasicMaterial({ color: 0x00D4FF, transparent: true, opacity: 0.09, side: THREE.BackSide });
+    const atmosphere = new THREE.Mesh(atmosGeo, atmosMat);
+    scene.add(atmosphere);
+
+    // ── Fond spatial procédural : galaxie + voie lactée + nébuleuses ──
+    function buildGalaxyTexture() {
+      const c = document.createElement('canvas');
+      c.width = 2048; c.height = 1024;
+      const ctx = c.getContext('2d');
+
+      const base = ctx.createRadialGradient(c.width * 0.5, c.height * 0.5, 0, c.width * 0.5, c.height * 0.5, c.width * 0.7);
+      base.addColorStop(0, '#050b18');
+      base.addColorStop(0.55, '#020712');
+      base.addColorStop(1, '#00030a');
+      ctx.fillStyle = base;
+      ctx.fillRect(0, 0, c.width, c.height);
+
+      ctx.save();
+      ctx.translate(c.width * 0.5, c.height * 0.5);
+      ctx.rotate(-0.35);
+      const milky = ctx.createLinearGradient(-c.width * 0.6, 0, c.width * 0.6, 0);
+      milky.addColorStop(0, 'rgba(80,110,180,0)');
+      milky.addColorStop(0.5, 'rgba(140,170,230,0.16)');
+      milky.addColorStop(1, 'rgba(80,110,180,0)');
+      ctx.fillStyle = milky;
+      ctx.fillRect(-c.width * 0.7, -c.height * 0.14, c.width * 1.4, c.height * 0.28);
+      ctx.restore();
+
+      const nebulae = [
+        { x: 0.22, y: 0.32, r: 380, color: '76,60,150' },
+        { x: 0.78, y: 0.62, r: 420, color: '30,90,150' },
+        { x: 0.55, y: 0.18, r: 260, color: '150,70,120' },
+        { x: 0.15, y: 0.75, r: 300, color: '40,120,140' },
+      ];
+      nebulae.forEach(n => {
+        const g = ctx.createRadialGradient(n.x * c.width, n.y * c.height, 0, n.x * c.width, n.y * c.height, n.r);
+        g.addColorStop(0, `rgba(${n.color},0.16)`);
+        g.addColorStop(1, `rgba(${n.color},0)`);
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, c.width, c.height);
+      });
+
+      for (let i = 0; i < 1400; i++) {
+        const x = Math.random() * c.width;
+        const y = Math.random() * c.height;
+        const r = Math.random() * 1.3 + 0.15;
+        const a = Math.random() * 0.8 + 0.15;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${a})`;
+        ctx.fill();
+      }
+      for (let i = 0; i < 45; i++) {
+        const x = Math.random() * c.width;
+        const y = Math.random() * c.height;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, 5);
+        g.addColorStop(0, 'rgba(255,255,255,0.9)');
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    const galaxyTexture = buildGalaxyTexture();
+    const galaxyGeo = new THREE.SphereGeometry(80, 32, 32);
+    const galaxyMat = new THREE.MeshBasicMaterial({ map: galaxyTexture, side: THREE.BackSide, depthWrite: false });
+    const galaxySphere = new THREE.Mesh(galaxyGeo, galaxyMat);
+    scene.add(galaxySphere);
+
+    // Étoiles ponctuelles nettes en avant-plan (parallaxe légère)
+    const starsGeometry = new THREE.BufferGeometry();
+    const starCount = 500;
+    const starPositions = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount * 3; i += 3) {
+      starPositions[i] = (Math.random() - 0.5) * 60;
+      starPositions[i + 1] = (Math.random() - 0.5) * 60;
+      starPositions[i + 2] = (Math.random() - 0.5) * 60 - 10;
+    }
+    starsGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    const starField = new THREE.Points(starsGeometry, new THREE.PointsMaterial({ color: 0xdfeeff, size: 0.09, transparent: true, opacity: 0.85 }));
+    scene.add(starField);
+
+    // Éclairage façon photographie spatiale : soleil directionnel dur + faible lumière d'ambiance
+    scene.add(new THREE.AmbientLight(0x2a4060, 0.35));
+    const sunLight = new THREE.DirectionalLight(0xfff4e0, 1.5);
+    sunLight.position.set(6, 2, 4);
+    scene.add(sunLight);
+    // Lumière de contre-jour bleutée pour détacher le globe du fond
+    const rimLight = new THREE.DirectionalLight(0x3fa9ff, 0.4);
+    rimLight.position.set(-6, -2, -4);
+    scene.add(rimLight);
+
+    // ── Réseau de hubs portuaires (données illustratives) ──
+    function latLonToVector3(lat, lon, radius) {
+      const phi = (90 - lat) * (Math.PI / 180);
+      const theta = (lon + 180) * (Math.PI / 180);
+      return new THREE.Vector3(
+        -radius * Math.sin(phi) * Math.cos(theta),
+        radius * Math.cos(phi),
+        radius * Math.sin(phi) * Math.sin(theta)
+      );
+    }
+
+    const HUBS = [
+      { name: 'Douala', info: 'Hub principal — Cameroun', lat: 4.05, lon: 9.7, hero: true },
+      { name: 'Kribi', info: 'Terminal en eau profonde', lat: 2.95, lon: 9.91, hero: true },
+      { name: 'Rotterdam', info: 'Terminal partenaire — Europe', lat: 51.92, lon: 4.48 },
+      { name: 'Singapour', info: 'Hub trans-pacifique', lat: 1.35, lon: 103.82 },
+      { name: 'Le Havre', info: 'Terminal partenaire — Europe', lat: 49.49, lon: 0.11 },
+      { name: 'Lagos', info: 'Corridor Afrique de l\'Ouest', lat: 6.52, lon: 3.38 },
+    ];
+
+    const markerMeshes = [];
+    HUBS.forEach(h => {
+      const pos = latLonToVector3(h.lat, h.lon, 1.015);
+      const geo = new THREE.SphereGeometry(h.hero ? 0.017 : 0.011, 12, 12);
+      const mat = new THREE.MeshBasicMaterial({ color: h.hero ? 0xFFB800 : 0x00D4FF });
+      const marker = new THREE.Mesh(geo, mat);
+      marker.position.copy(pos);
+      marker.userData = h;
+      globeGroup.add(marker);
+      markerMeshes.push(marker);
+
+      const haloGeo = new THREE.RingGeometry(h.hero ? 0.024 : 0.016, h.hero ? 0.03 : 0.02, 24);
+      const haloMat = new THREE.MeshBasicMaterial({ color: h.hero ? 0xFFB800 : 0x00D4FF, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+      const halo = new THREE.Mesh(haloGeo, haloMat);
+      halo.position.copy(pos);
+      halo.lookAt(pos.clone().multiplyScalar(2));
+      globeGroup.add(halo);
+    });
+
+    // Arcs reliant Douala et Kribi aux terminaux partenaires
+    const origins = HUBS.filter(h => h.hero);
+    const destinations = HUBS.filter(h => !h.hero);
+    origins.forEach(o => {
+      destinations.forEach(d => {
+        const start = latLonToVector3(o.lat, o.lon, 1.015);
+        const end = latLonToVector3(d.lat, d.lon, 1.015);
+        const mid = start.clone().add(end).multiplyScalar(0.5);
+        const liftFactor = 1 + start.distanceTo(end) * 0.28;
+        mid.normalize().multiplyScalar(liftFactor);
+        const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
+        const points = curve.getPoints(48);
+        const geo = new THREE.BufferGeometry().setFromPoints(points);
+        const mat = new THREE.LineBasicMaterial({ color: 0x00D4FF, transparent: true, opacity: 0.35 });
+        globeGroup.add(new THREE.Line(geo, mat));
+      });
+    });
+
+    // Interaction souris — parallax + survol des hubs
+    let targetRotX = 0, targetRotY = 0;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const mouseNDC = new THREE.Vector2(-10, -10);
+    const raycaster = new THREE.Raycaster();
+    const tooltip = document.getElementById('globeTooltip');
+
+    window.addEventListener('mousemove', (e) => {
+      if (!reduceMotion) {
+        targetRotY = (e.clientX / window.innerWidth - 0.5) * 0.35;
+        targetRotX = (e.clientY / window.innerHeight - 0.5) * 0.2;
+      }
+      mouseNDC.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouseNDC.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(mouseNDC, camera);
+      const hits = raycaster.intersectObjects(markerMeshes);
+      if (hits.length > 0) {
+        const h = hits[0].object.userData;
+        tooltip.querySelector('b').textContent = h.name;
+        tooltip.querySelector('span').textContent = h.info;
+        tooltip.style.opacity = 1;
+        tooltip.style.left = e.clientX + 'px';
+        tooltip.style.top = e.clientY + 'px';
+      } else {
+        tooltip.style.opacity = 0;
+      }
+    });
+
+    let baseRotation = 0;
+    function animateGlobe() {
+      requestAnimationFrame(animateGlobe);
+      baseRotation += 0.0004;
+      globeGroup.rotation.y += (baseRotation + targetRotY - globeGroup.rotation.y) * 0.02 + 0.0004;
+      globeGroup.rotation.x += (targetRotX - globeGroup.rotation.x) * 0.02;
+      clouds.rotation.y += 0.00025;
+      atmosphere.rotation.y = globeGroup.rotation.y;
+      atmosphere.rotation.x = globeGroup.rotation.x;
+      renderer.render(scene, camera);
+    }
+    animateGlobe();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+
+  <!-- Interactions d'interface -->
+  <script>
+    const cursor = document.getElementById('satCursor');
+    const cursorLabel = document.getElementById('cursorLabel');
+    const isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+
+    if (!isTouch && window.gsap) {
+      document.body.classList.add('custom-cursor-active');
+      let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+      const quickX = gsap.quickTo(cursor, 'x', { duration: 0.55, ease: 'elastic.out(1, 0.55)' });
+      const quickY = gsap.quickTo(cursor, 'y', { duration: 0.55, ease: 'elastic.out(1, 0.55)' });
+      const labelX = gsap.quickTo(cursorLabel, 'x', { duration: 0.35, ease: 'power3.out' });
+      const labelY = gsap.quickTo(cursorLabel, 'y', { duration: 0.35, ease: 'power3.out' });
+
+      document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX; mouseY = e.clientY;
+        quickX(mouseX - 14); quickY(mouseY - 14);
+        labelX(mouseX); labelY(mouseY);
+      });
+
+      document.querySelectorAll('a, button, input, [data-magnetic]').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+          cursor.classList.add('hovering');
+          const lbl = el.getAttribute('data-label');
+          if (lbl) { cursorLabel.textContent = lbl; cursorLabel.style.opacity = 1; }
+        });
+        el.addEventListener('mouseleave', () => {
+          cursor.classList.remove('hovering');
+          cursorLabel.style.opacity = 0;
+        });
+      });
+
+      document.querySelectorAll('[data-magnetic]').forEach(el => {
+        el.addEventListener('mousemove', (e) => {
+          const r = el.getBoundingClientRect();
+          const relX = e.clientX - (r.left + r.width / 2);
+          const relY = e.clientY - (r.top + r.height / 2);
+          gsap.to(el, { x: relX * 0.18, y: relY * 0.35, duration: 0.4, ease: 'power3.out' });
+        });
+        el.addEventListener('mouseleave', () => gsap.to(el, { x: 0, y: 0, duration: 0.5, ease: 'elastic.out(1, 0.4)' }));
+      });
+
+      document.querySelectorAll('[data-tilt]').forEach(el => {
+        el.addEventListener('mousemove', (e) => {
+          const r = el.getBoundingClientRect();
+          const px = (e.clientX - r.left) / r.width - 0.5;
+          const py = (e.clientY - r.top) / r.height - 0.5;
+          gsap.to(el, { rotateY: px * 8, rotateX: -py * 8, translateY: -6, duration: 0.4, ease: 'power2.out', transformPerspective: 700 });
+        });
+        el.addEventListener('mouseleave', () => gsap.to(el, { rotateY: 0, rotateX: 0, translateY: 0, duration: 0.6, ease: 'power3.out' }));
+      });
+    }
+
+    // Titre en typographie cinétique
+    const title = "La flotte maritime d'Afrique Centrale, sous contrôle total.";
+    const titleEl = document.getElementById('heroTitle');
+    title.split(' ').forEach((word) => {
+      const wordSpan = document.createElement('span');
+      wordSpan.className = 'hero-h-line';
+      word.split('').forEach((char) => {
+        const charSpan = document.createElement('span');
+        charSpan.className = 'char';
+        charSpan.textContent = char;
+        wordSpan.appendChild(charSpan);
+      });
+      titleEl.appendChild(wordSpan);
+      titleEl.appendChild(document.createTextNode(' '));
+    });
+
+    const chars = document.querySelectorAll('.char');
+    if (window.gsap) {
+      const tl = gsap.timeline({ delay: 0.3 });
+      chars.forEach((char, idx) => {
+        const randomX = (Math.random() - 0.5) * 100;
+        const randomY = (Math.random() - 0.5) * 100;
+        const randomRotation = (Math.random() - 0.5) * 180;
+        char.style.opacity = 0;
+        char.style.transform = `translate(${randomX}px, ${randomY}px) rotate(${randomRotation}deg)`;
+        tl.to(char, { duration: 0.6, opacity: 1, x: 0, y: 0, rotation: 0, ease: 'back.out' }, idx * 0.03);
+      });
+      tl.to('#heroSub', { opacity: 1, duration: 0.6 }, '-=0.3');
+      tl.to('#heroCtas', { opacity: 1, duration: 0.6 }, '-=0.3');
+      tl.to('#heroStats', { opacity: 1, duration: 0.6 }, '-=0.3');
+      tl.to('#scrollCue', { opacity: 1, duration: 0.6 }, '-=0.2');
+    } else {
+      chars.forEach(char => { char.style.opacity = 1; });
+      ['heroSub', 'heroCtas', 'heroStats', 'scrollCue'].forEach(id => {
+        document.getElementById(id).style.opacity = 1;
+      });
+    }
+
+    const nav = document.getElementById('mainnav');
+    window.addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 50), { passive: true });
+
+    const menuToggle = document.getElementById('menuToggle');
+    const mobileMenu = document.getElementById('mobileMenu');
+    menuToggle.addEventListener('click', () => {
+      menuToggle.classList.toggle('open');
+      mobileMenu.classList.toggle('open');
+      menuToggle.setAttribute('aria-expanded', mobileMenu.classList.contains('open'));
+    });
+    mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+      menuToggle.classList.remove('open');
+      mobileMenu.classList.remove('open');
+      menuToggle.setAttribute('aria-expanded', 'false');
+    }));
+
+    const revEls = document.querySelectorAll('.rev');
+    const ro = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vis'); ro.unobserve(e.target); } });
+    }, { threshold: 0.1 });
+    revEls.forEach(el => ro.observe(el));
+
+    function animateCounter(el) {
+      const target = +el.dataset.t;
+      const dur = 2000, step = target / (dur / 16);
+      let c = 0;
+      const t = setInterval(() => {
+        c += step;
+        if (c >= target) { c = target; clearInterval(t); }
+        el.textContent = Math.floor(c).toLocaleString('fr-FR');
+      }, 16);
+    }
+    const counters = document.querySelectorAll('.counter');
+    const co = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { animateCounter(e.target); co.unobserve(e.target); } });
+    }, { threshold: 0.5 });
+    counters.forEach(el => co.observe(el));
+
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const href = a.getAttribute('href');
+        if (href === '#' || href === '#home') return;
+        const t = document.querySelector(href);
+        if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      });
+    });
+  </script>
+</body>
+</html>

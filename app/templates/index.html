@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARGOS</title>
+<!-- Favicon SVG ultra-visible (fond bleu nuit + lettre cyan) -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230B1A3A'/%3E%3Ccircle cx='50' cy='50' r='32' fill='none' stroke='%2300D4FF' stroke-width='4' opacity='0.3'/%3E%3Ctext x='50' y='72' font-family='system-ui, -apple-system, sans-serif' font-size='58' font-weight='700' fill='%2300D4FF' text-anchor='middle'%3EA%3C/text%3E%3Cpath d='M30 75 L50 25 L70 75' fill='none' stroke='%2300D4FF' stroke-width='6' stroke-linecap='round' stroke-linejoin='round' opacity='0.5'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<!-- Font Awesome 6 pour icônes professionnelles -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}?v=20260726-stacking-fix">
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-bg">
+    <div id="react-login-hero" class="login-hero-overlay" aria-hidden="true"></div>
+    <div class="login-hero-images" aria-hidden="true">
+      <div class="hero-image"></div>
+      <div class="hero-image"></div>
+      <div class="hero-image"></div>
+    </div>
+    <div class="login-grid"></div>
+    <div class="login-containers-decor" aria-hidden="true"></div>
+  </div>
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="brand">ARGOS</div>
+      <div class="sub">Smart logistics command & container supervision</div>
+    </div>
+    <div class="form-group">
+      <label>Identifiant</label>
+      <br>
+      <input type="text" id="login-username" placeholder="user@argos.io" required value="">
+    </div>
+    <div class="form-group">
+      <label>Mot de passe</label>
+      <input type="password" id="login-password" placeholder="••••••••" required value="">
+    </div>
+    <br>
+    <br>
+    <div class="login-helper-row"><label><input type="checkbox" id="show-password"> Afficher le mot de passe</label></div>
+    <script>
+      function togglePasswordVisibility() {
+        const passwordInput = document.getElementById('login-password');
+        const showPasswordCheckbox = document.getElementById('show-password');
+        if (showPasswordCheckbox.checked) {
+          passwordInput.type = 'text';
+        } else {
+          passwordInput.type = 'password';
+        }
+      }
+      document.getElementById('show-password').addEventListener('change', togglePasswordVisibility);
+    </script>
+    <button class="btn-primary" onclick="doLogin()"><i class="fas fa-lock"></i> Connexion Sécurisée</button>
+    <div class="login-card-meta">
+      <span class="badge badge-info">Dashboard maritime</span>
+      <span class="login-card-annotation">Analytique conteneurs, supervision live, profile image support</span>
+    </div>
+    <!-- <p style="text-align:center;margin-top:12px;font-size:12px;color:var(--text3)">Sélectionnez un rôle pour explorer la plateforme</p> -->
+    <div id="login-error-message" style="color: red; margin-top: 15px; font-weight: bold;"></div>
+
+  </div>
+</div>
+
+<!-- NOTIFICATIONS PANEL -->
+<div class="notif-panel" id="notif-panel">
+  <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+    <span style="font-size:13px;font-weight:600">Notifications</span>
+    <button onclick="closeNotif()" class="btn-icon" style="padding:4px 8px"><i class="fas fa-times"></i></button>
+  </div>
+  <div id="notif-list"></div>
+</div>
+
+<!-- ALERT PANEL -->
+<div id="alert-panel"></div>
+
+<!-- MODAL CONTAINER -->
+<div id="modal-root"></div>
+
+<!-- APP -->
+<div id="app">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <button class="mobile-menu-btn" type="button" aria-label="Ouvrir le menu" aria-controls="sidebar" aria-expanded="false" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    <div class="topbar-brand">ARGOS</div>
+    <div class="topbar-sep"></div>
+    <span class="topbar-role" id="topbar-role-label">SUPER ADMIN</span>
+    <div class="topbar-search">
+      <input type="text" placeholder="Rechercher conteneur, entreprise..." id="global-search" oninput="globalSearch(this.value)">
+    </div>
+    <div class="topbar-actions">
+      <center><div id="live-time" style="font-family:var(--mono);font-size:20px;color:var(--cyan);white-space:nowrap;"></div></center>
+      <button class="notif-btn" onclick="toggleNotif()" id="notif-btn">
+        <i class="fas fa-bell"></i> <span class="notif-badge" id="notif-count">4</span>
+      </button>
+      <button class="btn-icon" id="theme-toggle-btn" onclick="toggleTheme()" title="Basculer thème clair/sombre"><i class="fas fa-adjust"></i></button>
+      <div class="user-avatar" id="user-avatar" onclick="navigateTo('settings')">SA</div>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+      <div id="nav-container"></div>
+    </div>
+
+    <!-- CONTENT AREA -->
+    <div class="content" id="content-area">
+      <div id="pages-container"></div>
+    </div>
+  </div>
+</div>
+  <script src="{{url_for('static', filename='js/script.js')}}?v=20260829-audio-bic-v4"></script>
+  <script>
+    const loginHeroSlides = [
+      {title:'Supervision navale 360°', subtitle:'Routes, alertes et containers visibles en un seul écran.', metric:'8.2ms', label:'Latence IA'},
+      {title:'Pilotez vos boîtes noires', subtitle:'Suivi live, historique de chocs et seuils thermique intégrés.', metric:'24/7', label:'Ops en continu'},
+      {title:'Profiles et documents', subtitle:'Affichez les images CNI ou profils clients directement dans les modales.', metric:'+42%', label:'Visibilité'}
+    ];
+
+    function renderLoginHeroSlide(root, slide) {
+      root.innerHTML = `
+        <div class="login-hero-panel">
+          <div class="login-hero-chip">
+            <div class="hero-chip-dot"></div>
+            <div>ARGOS Command Center</div>
+          </div>
+          <div class="login-hero-copy">
+            <div class="login-hero-title">${slide.title}</div>
+            <div class="login-hero-subtitle">${slide.subtitle}</div>
+          </div>
+          <div class="login-hero-metrics">
+            <div class="hero-metric">
+              <div class="hero-metric-value">${slide.metric}</div>
+              <div class="hero-metric-label">${slide.label}</div>
+            </div>
+            <div class="hero-metric hero-metric-secondary">
+              <div class="hero-metric-value">Conteneurs</div>
+              <div class="hero-metric-label">Gestion premium</div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    const mountLoginHero = () => {
+      const root = document.getElementById('react-login-hero');
+      if(!root) return;
+      renderLoginHeroSlide(root, loginHeroSlides[0]);
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', mountLoginHero);
+    } else {
+      mountLoginHero();
+    }
+  </script>
+</body>
+</html>

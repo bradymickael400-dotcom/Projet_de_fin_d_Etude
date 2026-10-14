@@ -1,0 +1,109 @@
+% Architecture issue du code déployé. Vue volontairement synthétique pour
+% rendre visibles les responsabilités et les stockages sans croiser les flux.
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\Large,
+  client/.style={draw=argosmid,rounded corners=6pt,fill=white,
+    text width=8.0cm,minimum height=2.4cm,align=center,line width=1.5pt},
+  gateway/.style={draw=argosnavy,rounded corners=6pt,fill=argoslight,
+    text width=12.0cm,minimum height=2.8cm,align=center,line width=1.6pt},
+  service/.style={draw=argosmid,rounded corners=6pt,fill=argospale,
+    text width=8.0cm,minimum height=2.8cm,align=center,line width=1.5pt},
+  store/.style={draw=argosnavy,cylinder,shape border rotate=90,aspect=.22,
+    fill=white,text width=8.2cm,minimum height=2.9cm,align=center,line width=1.6pt},
+  worker/.style={draw=argosnavy,rounded corners=6pt,fill=argoslight,
+    text width=8.0cm,minimum height=2.7cm,align=center,line width=1.6pt},
+  external/.style={draw=argosrule,rounded corners=6pt,fill=white,
+    text width=8.0cm,minimum height=2.4cm,align=center,line width=1.5pt},
+  layer/.style={draw=argosrule,rounded corners=8pt,inner sep=10mm,line width=1.5pt},
+  title/.style={font=\sffamily\huge\bfseries,text=argosblue,
+    fill=white,inner sep=5pt},
+  flow/.style={draw=argosgray,line width=1.6pt,-{Stealth[length=4.5mm]}},
+  bidir/.style={draw=argosgray,line width=1.6pt,
+    {Stealth[length=4.5mm]}-{Stealth[length=4.5mm]}},
+  async/.style={draw=argosmid,dashed,line width=1.6pt,-{Stealth[length=4.5mm]}},
+  bus/.style={draw=argosgray,line width=1.6pt},
+  edgeLabel/.style={font=\sffamily\Large\bfseries,fill=white,inner sep=3pt,align=center}
+]
+
+% 1. Canaux d'acquisition.
+\node[client] (web) at (-16.0,16.0)
+  {Navigateur ARGOS\\Jinja, HTML/CSS et JavaScript};
+\node[client] (station) at (0,16.0)
+  {ESP32 en mode station\\HTTP REST + \texttt{X-Device-Key}};
+\node[client] (ap) at (16.0,16.0)
+  {ESP32 en point d'accès\\API locale \texttt{192.168.4.1}};
+\node[layer,fit=(web)(station)(ap)] (clients) {};
+\node[title] at (0,18.3) {CLIENTS ET CANAUX D'ACQUISITION};
+
+% 2. Façades HTTP et contrôles.
+\node[gateway] (webapi) at (-9.5,10.2)
+  {Flask / Gunicorn et 12 blueprints\\API métier, Bearer signé, rôle et périmètre};
+\node[gateway] (iotapi) at (9.5,10.2)
+  {Contrôleurs IoT\\clé technique, enrôlement, télémétrie, audio, commandes et pont direct};
+\node[layer,fit=(webapi)(iotapi)] (gateways) {};
+\node[title] at (0,12.5) {COUCHE HTTP ET CONTRÔLE D'ACCÈS};
+
+% 3. Services du monolithe.
+\node[service] (business) at (-17.5,3.8)
+  {Logistique et comptes\\conteneurs, boîtes, BIC, maritime et workflows};
+\node[service] (iot) at (-5.8,3.8)
+  {Pipeline IoT commun\\validation, liaison, séquence, qualité et seuils};
+\node[service] (projection) at (5.8,3.8)
+  {Projection applicative\\carte, boîtes, statistiques, alertes et événements};
+\node[service] (documents) at (17.5,3.8)
+  {Documents et diffusion\\PDF, QR, notifications internes et e-mail};
+\node[layer,fit=(business)(iot)(projection)(documents)] (services) {};
+\node[title] at (0,6.2) {SERVICES MÉTIER DU MONOLITHE MODULAIRE};
+
+% 4. Données et traitement différé.
+\node[store] (postgres) at (-16.5,-3.5)
+  {PostgreSQL / TimescaleDB\\schéma \texttt{brady} : métier, mesures, positions, événements, audit et tâches};
+\node[worker] (worker) at (-5.5,-3.5)
+  {Worker Python\\verrouille \texttt{background\_jobs} dans PostgreSQL};
+\node[store] (redis) at (6.0,-3.5)
+  {Redis\\DB0 : limitation de débit\\DB1 : \texttt{latest} + stream IoT};
+\node[store] (private) at (17.5,-3.5)
+  {Volume privé persistant\\audio, contrats, inventaires et rapports};
+\node[layer,fit=(postgres)(worker)(redis)(private)] (data) {};
+\node[title] at (0,-0.8) {DONNÉES ET TRAITEMENTS DIFFÉRÉS};
+
+% 5. Adaptateurs externes.
+\node[external] (providers) at (-17.5,-10.5)
+  {BIC BoxTech et fournisseur maritime\\adaptateurs configurables};
+\node[external] (transport) at (-5.8,-10.5)
+  {Transport de commandes\\HTTP ; MQTT/TLS optionnel};
+\node[external] (tunnel) at (5.8,-10.5)
+  {Cloudflare Tunnel\\publication HTTPS distante};
+\node[external] (mail) at (17.5,-10.5)
+  {SMTP / Infobip\\e-mail ; WhatsApp optionnel};
+\node[layer,fit=(providers)(transport)(tunnel)(mail)] (externals) {};
+\node[title] at (0,-8.0) {SYSTÈMES EXTERNES ET ADAPTATEURS};
+
+% Entrées : le point d'accès est lu par le navigateur, jamais par le VPS.
+\draw[flow] (web.south) -- node[edgeLabel,right]{HTTPS / JSON} (webapi.north west);
+\draw[flow] (station.south) -- node[edgeLabel,right]{\texttt{/api/iot/*}} (iotapi.north west);
+\draw[flow] (ap.south) -- ++(0,-0.85) -| node[edgeLabel,pos=.15,below]{lecture locale HTTP} (web.south east);
+\draw[flow] (webapi.east) -- node[edgeLabel,above]{pont direct authentifié} (iotapi.west);
+
+% Les deux façades distribuent vers un bus de services internes.
+\draw[flow] (webapi.south) -- (-9.5,5.6);
+\draw[flow] (iotapi.south) -- (9.5,5.6);
+\draw[bus] (-17.5,5.6) -- (17.5,5.6);
+\draw[flow] (-17.5,5.6) -- (business.north);
+\draw[flow] (-5.8,5.6) -- (iot.north);
+\draw[flow] (5.8,5.6) -- (projection.north);
+\draw[flow] (17.5,5.6) -- (documents.north);
+
+% Persistance et temps réel.
+\draw[bidir] (business.south) -- node[edgeLabel,right]{métier} (postgres.north west);
+\draw[flow] (iot.south west) -- node[edgeLabel,left]{durable} (postgres.north east);
+\draw[bidir] (iot.south east) -- node[edgeLabel,left]{cache + stream} (redis.north west);
+\draw[bidir] (projection.south) -- node[edgeLabel,right]{Redis d'abord} (redis.north);
+\draw[bidir] (documents.south) -- (private.north);
+\draw[bidir] (worker.west) -- node[edgeLabel,above]{\texttt{SKIP LOCKED}} (postgres.east);
+
+\node[font=\sffamily\Large,text=argosgray,align=center] at (0,-13.2)
+  {Figure~\ref{fig-argos-architecture} : architecture logicielle de la solution ARGOS.};
+\end{tikzpicture}%
+}

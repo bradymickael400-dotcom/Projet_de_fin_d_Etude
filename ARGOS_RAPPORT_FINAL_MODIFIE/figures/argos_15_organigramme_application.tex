@@ -1,0 +1,81 @@
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  start/.style={draw=argosnavy,rounded corners=8pt,fill=argoslight,
+    text width=4.8cm,minimum height=1.3cm,align=center,line width=1pt},
+  action/.style={draw=argosmid,rounded corners=4pt,fill=white,
+    text width=4.8cm,minimum height=1.3cm,align=center,line width=.9pt},
+  decision/.style={draw=argosnavy,diamond,aspect=2.2,fill=argospale,
+    text width=3.4cm,minimum height=1.6cm,align=center,line width=1pt},
+  module/.style={draw=argosrule,rounded corners=4pt,fill=argospale,
+    text width=3.8cm,minimum height=1.4cm,align=center,line width=.9pt},
+  api/.style={draw=argosblue,rounded corners=4pt,fill=argoslight,
+    text width=6.5cm,minimum height=1.3cm,align=center,line width=1pt},
+  flow/.style={draw=argosgray,line width=1pt,-{Stealth[length=3mm]}},
+  label/.style={font=\sffamily\scriptsize\bfseries,fill=white,inner sep=2pt}
+]
+
+% 1. Authentification & Connexion
+\node[start] (open) at (0,12.0) {Ouverture de l'application ARGOS};
+\node[decision] (token) at (0,9.5) {Jeton signé valide ?};
+\node[action] (login) at (-7.5,9.5) {Saisir le login et le mot de passe};
+\node[decision] (credentials) at (-7.5,6.8) {Identifiants valides ?};
+\node[action] (reject) at (-13.5,6.8) {Refus, message d'erreur};
+
+% 2. Validation & Chargement du Périmètre
+\node[decision] (contract) at (0,6.8) {Contrat en attente ?};
+\node[action] (accept) at (-6.8,3.8) {Lire, télécharger et décider};
+\node[action] (scope) at (0,3.8) {Charger le rôle et le périmètre\\de ressources autorisées};
+\node[action] (nav) at (0,1.0) {Construire le menu du profil\\et ouvrir le tableau de bord};
+
+% Flux d'authentification
+\draw[flow] (open) -- (token);
+\draw[flow] (token.west) -- node[label,above]{non} (login.east);
+\draw[flow] (login) -- (credentials);
+\draw[flow] (credentials.west) -- node[label,above]{non} (reject.east);
+\draw[flow] (reject.north) |- (login.west);
+\draw[flow] (credentials.east) -- node[label,above]{oui} (contract.west);
+\draw[flow] (token) -- node[label,right]{oui} (contract);
+\draw[flow] (contract.south west) -- node[label,above,sloped]{oui} (accept.north east);
+\draw[flow] (accept.east) -- node[label,above]{accepté} (scope.west);
+\draw[flow] (contract) -- node[label,right]{non} (scope);
+\draw[flow] (scope) -- (nav);
+
+% 3. Modules Applicatifs (Espacement horizontal de 4.4cm)
+\node[module] (dash) at (-11.0,-2.0) {Tableau de bord\\KPI et état du parc};
+\node[module] (map) at (-6.6,-2.0) {Carte et conteneurs\\positions, trajets, détails};
+\node[module] (boxes) at (-2.2,-2.0) {Boîtes noires\\QR, affectation, connexion};
+\node[module] (stats) at (2.2,-2.0) {Statistiques\\filtres et séries temporelles};
+\node[module] (events) at (6.6,-2.0) {Événements et alertes\\tri, lecture, notifications};
+\node[module] (docs) at (11.0,-2.0) {Documents et workflows\\contrats, inventaire, déstockage};
+
+\foreach \target in {dash,map,boxes,stats,events,docs}
+  \draw[flow] (nav.south) -- ++(0,-1.0) -| (\target.north);
+
+% 4. Contrôle de Rôle & Actions Métier
+\node[decision] (manager) at (-5.0,-5.2) {Gestionnaire autorisé ?};
+\node[action] (direct) at (-10.5,-8.2) {Mode direct : vérifier \texttt{deviceUid},\\lire l'AP et synchroniser la file};
+\node[action] (security) at (-5.0,-8.2) {Activer ou bloquer la sécurité\\et auditer l'auteur};
+\node[action] (consult) at (3.5,-8.2) {Consultation filtrée selon\\rôle, boîte et conteneur};
+
+% Flux métiers
+\draw[flow] (boxes.south) |- (manager.north);
+\draw[flow] (manager.south west) -- node[label,above,sloped]{oui} (direct.north east);
+\draw[flow] (manager) -- node[label,right]{oui} (security);
+\draw[flow] (map.south) |- (consult.north);
+\draw[flow] (stats.south) |- (consult.north);
+\draw[flow] (events.south) |- (consult.north);
+\draw[flow] (docs.south) |- (consult.north);
+\draw[flow] (manager.east) -- node[label,above]{non} (consult.west);
+
+% 5. API Backend & Rendu Final
+\node[api] (api) at (0,-11.2) {Appel API avec jeton Bearer\\contrôle rôle + propriété de la ressource};
+\node[action] (data) at (0,-13.8) {Lecture Redis temps réel ou PostgreSQL\\puis rendu carte, boîtes, statistiques et événements};
+
+\draw[flow] (direct.south) |- (api.west);
+\draw[flow] (security.south) -- (api.north west);
+\draw[flow] (consult.south) -- (api.north east);
+\draw[flow] (api) -- (data);
+
+\end{tikzpicture}%
+}

@@ -1,0 +1,81 @@
+% Activation/désactivation du mode sécurité, avec variantes directe et distante.
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  participant/.style={draw=argosnavy,rounded corners=2pt,fill=argoslight,
+    minimum width=3.6cm,minimum height=1.1cm,align=center,line width=.9pt,font=\sffamily\small\bfseries},
+  life/.style={draw=argosrule,dashed,line width=.8pt},
+  call/.style={draw=argosgray,line width=.9pt,-{Stealth[length=2.5mm]}},
+  reply/.style={draw=argosgray,dashed,line width=.85pt,-{Stealth[length=2.5mm]}},
+  async/.style={draw=argosmid,dashed,line width=.9pt,-{Stealth[length=2.5mm]}},
+  note/.style={draw=argosrule,rounded corners=3pt,fill=argospale,
+    align=left,inner sep=5pt,font=\sffamily\small},
+  msg/.style={font=\sffamily\small,fill=white,inner sep=1.8pt,align=center}
+]
+
+% -----------------------------------------------------------------
+% PARTICIPANTS
+% -----------------------------------------------------------------
+\node[participant] (manager) at (-14.0,7.8) {Gestionnaire\\autorisé};
+\node[participant] (browser) at (-9.2,7.8) {Interface web\\ARGOS};
+\node[participant] (esp) at (-4.5,7.8) {ESP32-S3\\local ou distant};
+\node[participant] (api) at (0.2,7.8) {Route sécurité\\Flask};
+\node[participant] (command) at (5.0,7.8) {Service de\\commandes};
+\node[participant] (pg) at (9.8,7.8) {PostgreSQL +\\journal chaîné};
+\node[participant] (parties) at (14.6,7.8) {Parties liées\\application / e-mail};
+
+\foreach \p in {manager,browser,esp,api,command,pg,parties}
+  \draw[life] (\p.south) -- ++(0,-17.0);
+
+% -----------------------------------------------------------------
+% FLUX PRINCIPAL & DÉBUT SESSION
+% -----------------------------------------------------------------
+\draw[call] (-14.0,6.45) -- node[msg,above]{1. basculer « Mode sécurité des portes »} (-9.2,6.45);
+
+\node[note,anchor=west,text width=7.2cm] at (-8.8,5.25)
+  {2. Vérifier la session et le rôle : \texttt{superadmin}, \texttt{owner} ou \texttt{company}. La route contrôle ensuite que la boîte appartient au périmètre du gestionnaire.};
+
+% -----------------------------------------------------------------
+% VARIANTE A — WI-FI DIRECT
+% -----------------------------------------------------------------
+\node[note,anchor=west,text width=5.6cm] at (-13.9,3.65)
+  {\textbf{Variante A} — session Wi-Fi directe active};
+
+\draw[call] (-9.2,2.75) -- node[msg,above]{3A. POST local \texttt{/api/v1/security} \{enabled\}} (-4.5,2.75);
+\draw[reply] (-4.5,2.05) -- node[msg,above]{mode appliqué et mémorisé} (-9.2,2.05);
+\draw[call] (-9.2,1.25) -- node[msg,above]{4A. POST audit, \texttt{delivery=direct}, position autorisée} (0.2,1.25);
+
+% -----------------------------------------------------------------
+% VARIANTE B — COMMANDE DISTANTE
+% -----------------------------------------------------------------
+\node[note,anchor=west,text width=5.6cm] at (-13.9,-0.2)
+  {\textbf{Variante B} — commande distante};
+
+\draw[call] (-9.2,-1.1) -- node[msg,above]{3B. POST \texttt{/commands/security} \{enabled\}} (0.2,-1.1);
+\draw[call] (0.2,-1.9) -- node[msg,above]{4B. créer \texttt{SET\_SECURITY\_MODE}} (5.0,-1.9);
+\draw[call] (5.0,-2.7) -- node[msg,above]{\texttt{PENDING}, publication, puis \texttt{PUBLISHED}} (9.8,-2.7);
+
+\draw[call] (0.2,-3.65) -- node[msg,above,align=center]{5. immédiatement : insérer événement et notification\\UID, auteur, rôle/poste, date, heure et position éventuelle} (9.8,-3.65);
+\draw[reply] (9.8,-4.45) -- node[msg,above]{\texttt{COMMIT} durable} (0.2,-4.45);
+
+\draw[async] (0.2,-5.25) -- node[msg,above]{6. sceller séparément \texttt{SECURITY\_MODE\_CHANGED}} (9.8,-5.25);
+\draw[async] (9.8,-6.05) -- node[msg,above]{7. notification interne ; e-mail si conteneur et adresses liés} (14.6,-6.05);
+
+\draw[reply] (0.2,-6.85) -- node[msg,above]{202 + message et horodatage} (-9.2,-6.85);
+\draw[reply] (-9.2,-7.65) -- node[msg,above]{état affiché et événement visible} (-14.0,-7.65);
+
+% -----------------------------------------------------------------
+% EXECUTION DIFFÉRÉE ESP32
+% -----------------------------------------------------------------
+\draw[async] (5.0,-8.45) -- node[msg,above]{8. plus tard : transport ou interrogation de l'API} (-4.5,-8.45);
+\draw[call] (-4.5,-9.25) -- node[msg,above]{accusé \texttt{SUCCEEDED} ou \texttt{FAILED}} (5.0,-9.25);
+\draw[call] (5.0,-10.05) -- node[msg,above]{9. mettre à jour la commande et ses horodatages} (9.8,-10.05);
+
+% -----------------------------------------------------------------
+% NOTE FINALE
+% -----------------------------------------------------------------
+\node[note,anchor=north,text width=14.5cm] at (0.2,-10.9)
+  {En mode direct, si ARGOS distant est momentanément inaccessible, l'action locale est immédiate mais son audit reste dans la FIFO du navigateur et ne peut être rejoué que par le même compte. En mode distant, l'événement atteste immédiatement la demande du gestionnaire ; l'accusé matériel arrive ensuite et met à jour la commande séparément.};
+
+\end{tikzpicture}%
+}

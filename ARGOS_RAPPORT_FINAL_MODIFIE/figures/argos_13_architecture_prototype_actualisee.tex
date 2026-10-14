@@ -1,0 +1,28 @@
+\resizebox{0.98\linewidth}{!}{%
+\begin{tikzpicture}[font=\sffamily\small,
+ block/.style={draw=argosnavy,rounded corners=2pt,align=center,minimum width=3.5cm,minimum height=1.15cm,fill=argospale},
+ core/.style={block,minimum width=4.4cm,minimum height=1.65cm,fill=argoslight,line width=1.1pt},
+ flow/.style={-{Stealth[length=2.5mm]},draw=argosmid,line width=.9pt},
+ bidir/.style={{Stealth[length=2.5mm]}-{Stealth[length=2.5mm]},draw=argosmid,line width=.9pt}]
+\node[core] (esp) at (0,0) {ESP32\\acquisition, fusion et file locale};
+\node[block] (env) at (-7,3) {DHT22 + BME280\\température, humidité, pression};
+\node[block] (motion) at (-7,1) {MPU-6050\\accélération, choc};
+\node[block] (security) at (-7,-1) {flamme + HC-SR04\\lumière, porte, distance};
+\node[block] (audio) at (-7,-3) {microphone\\niveau sonore et WAV};
+\node[block] (gnss) at (0,3.4) {NEO-6M\\position, vitesse, cap};
+\node[block] (sd) at (0,-3.4) {microSD\\télémétries et audio en attente};
+\node[block] (network) at (7,2) {sélecteur multiréseau\\Wi-Fi / LTE-M / NB-IoT / LoRaWAN};
+\node[block] (sat) at (7,0) {satellite IoT\\secours hors couverture};
+\node[block] (argos) at (7,-2.4) {Plateforme ARGOS\\HTTP REST + MQTT/TLS};
+\draw[flow] (env.east) -- (esp.west);
+\draw[flow] (motion.east) -- (esp.west);
+\draw[flow] (security.east) -- (esp.west);
+\draw[flow] (audio.east) -- (esp.west);
+\draw[bidir] (gnss.south) -- (esp.north);
+\draw[bidir] (sd.north) -- (esp.south);
+\draw[bidir] (esp.east) -- (network.west);
+\draw[bidir] (esp.east) -- (sat.west);
+\draw[bidir] (network.south east) -- (argos.north east);
+\draw[bidir] (sat.south east) -- (argos.north);
+\end{tikzpicture}%
+}

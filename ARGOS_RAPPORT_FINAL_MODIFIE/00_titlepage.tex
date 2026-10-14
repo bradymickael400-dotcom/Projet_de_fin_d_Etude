@@ -1,0 +1,81 @@
+% PAGE DE GARDE — adaptée au modèle SUP'PTIC officiel et sécurisée pour le logo
+\begin{titlepage}
+\newgeometry{left=1.55cm,right=1.55cm,top=1.2cm,bottom=1.2cm}
+\centering
+
+% Cadre décoratif extérieur
+\begin{tikzpicture}[remember picture,overlay]
+  \draw[argosnavy,line width=1.2pt,rounded corners=2pt]
+    ($(current page.north west)+(0.75cm,-0.75cm)$) rectangle
+    ($(current page.south east)+(-0.75cm,0.75cm)$);
+\end{tikzpicture}
+
+% En-tête bilingue avec logo central sécurisé
+\begin{minipage}[t]{0.41\textwidth}\centering\sffamily\tiny\bfseries
+RÉPUBLIQUE DU CAMEROUN\\[-2pt]\mdseries Paix -- Travail -- Patrie\\[3pt]
+ÉCOLE NATIONALE SUPÉRIEURE DES POSTES, DES TÉLÉCOMMUNICATIONS, DES TECHNOLOGIES DE L'INFORMATION ET DE LA COMMUNICATION\\« SUP'PTIC »
+\end{minipage}%
+\begin{minipage}[t]{0.18\textwidth}\centering
+    \IfFileExists{logo_supptic.png}{
+        \includegraphics[width=2cm]{logo_supptic.png}
+    }{
+        % Encadré de secours si le fichier png n'est pas encore dans le dossier
+        \fbox{\begin{minipage}[c][1.5cm][c]{1.8cm}\centering\tiny\sffamily Logo SUP'PTIC\end{minipage}}
+    }
+\end{minipage}%
+\begin{minipage}[t]{0.41\textwidth}\centering\sffamily\tiny\bfseries
+REPUBLIC OF CAMEROON\\[-2pt]\mdseries Peace -- Work -- Fatherland\\[3pt]
+NATIONAL ADVANCED SCHOOL OF POST, TELECOMMUNICATION AND INFORMATION AND COMMUNICATION TECHNOLOGIES\\« SUP'PTIC »
+\end{minipage}
+
+\vspace{6pt}
+{\sffamily\large\bfseries\color{argosblue}PROJET DE FIN D'ÉTUDES\par}
+\vspace{10pt}
+
+% Boîte du titre du projet
+\begin{tikzpicture}\node[draw=argosmid,line width=1.0pt,rounded corners=10pt,inner sep=10pt] {\begin{minipage}{0.82\textwidth}\centering\sffamily\normalsize\bfseries\color{argosnavy}
+CONCEPTION ET RÉALISATION D'UNE BOÎTE NOIRE LOGISTIQUE POUR LA GEOLOCALISATION CONTINUE ET LE CONTROLE DE L'INTEGRITE PHYSIQUE DES CONTENEURS (ARGOS)
+\end{minipage}};\end{tikzpicture}
+
+\vspace{8pt}
+{\sffamily\footnotesize Rédigé et présenté en vue de l'obtention des Diplômes d'Ingénieur des Travaux des Télécommunications\par}
+\vspace{6pt}
+
+{\sffamily\bfseries Par :\par}
+\vspace{4pt}
+
+% Tableau des auteurs
+\noindent\begin{tabular}{|l|l|}
+\hline
+\multicolumn{1}{|c|}{\sffamily\bfseries Nom et Prénoms} & \multicolumn{1}{c|}{\sffamily\bfseries Spécialité} \\ \hline
+ATANGANA NJOH Marius Forlan & Réseaux et Télécommunications \\ \hline
+KENNE METEU Jessica Loganne & Réseaux et Télécommunications \\ \hline
+MAPPOU ZOUA Ashley Dorlette & Management \\ \hline
+MEKE NANILAOU Brady Mickaël & Informatique Des Réseaux \\ \hline
+SIRRI NEH Precious Nche & Comptable \\ \hline
+\end{tabular}
+
+\vspace{6pt}
+{\sffamily\small\bfseries Promotion 2025--2026\par}
+\vspace{4pt}
+\underline{\sffamily\bfseries Sous l'encadrement}\par
+\vspace{6pt}
+
+% Blocs d'encadrement (Académique & Professionnel)
+\noindent\begin{minipage}[t]{0.48\textwidth}\centering\sffamily\footnotesize
+\underline{\textbf{Académique de :}}\\[3pt]
+\textbf{[M. SASSA GIQUEL THERANCE,]}\\[2pt]
+Ingénieur des Télécommunications\\[2pt]
+Enseignant permanent (SUP'PTIC)
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}\centering\sffamily\footnotesize
+\underline{\textbf{Professionnel de :}}\\[3pt]
+\textbf{[M. NOUNBISSI SIMO]}\\[2pt]
+[Votre Maître de Stage / Expert]\\[2pt]
+[Nom de l'Entreprise Partenaire]
+\end{minipage}
+
+\vfill
+\begin{tikzpicture}\node[draw=argosmid,rounded corners=6pt,inner sep=4pt]{\sffamily\bfseries\small Année académique 2025--2026};\end{tikzpicture}
+\end{titlepage}
+\restoregeometry

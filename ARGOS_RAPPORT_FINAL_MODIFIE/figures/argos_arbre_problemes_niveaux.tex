@@ -1,0 +1,108 @@
+% Arbre à problèmes ARGOS — lecture causale ascendante, structurée par niveaux.
+% Ce fragment est inclus depuis 02_chap1_presentation.tex sur une page paysage.
+\resizebox{0.98\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  every node/.style={align=center},
+  leveltag/.style={
+    draw=argosnavy, rounded corners=3pt, fill=argosnavy,
+    text=white, font=\sffamily\bfseries\small,
+    text width=2.7cm, minimum height=0.8cm, inner sep=4pt
+  },
+  impact/.style={
+    draw=orange!75!black, rounded corners=4pt, fill=orange!12,
+    text width=5.2cm, minimum height=1.45cm, inner sep=5pt
+  },
+  directeffect/.style={
+    draw=orange!65!black, rounded corners=4pt, fill=orange!7,
+    text width=5.2cm, minimum height=1.45cm, inner sep=5pt
+  },
+  central/.style={
+    draw=red!75!black, line width=1.3pt, rounded corners=5pt,
+    fill=red!13, text width=17.4cm, minimum height=1.65cm,
+    inner sep=7pt, font=\sffamily\bfseries\large
+  },
+  directcause/.style={
+    draw=argosmid, line width=0.9pt, rounded corners=4pt,
+    fill=argoslight, text width=5.2cm, minimum height=1.55cm,
+    inner sep=5pt, font=\sffamily\bfseries\small
+  },
+  rootcause/.style={
+    draw=argosrule, rounded corners=4pt, fill=argospale,
+    text width=3.35cm, minimum height=2.05cm,
+    inner sep=4pt, font=\sffamily\scriptsize
+  },
+  effectedge/.style={-{Stealth[length=2.7mm]}, line width=1pt,
+    draw=orange!75!black, rounded corners=3pt},
+  causeedge/.style={-{Stealth[length=2.7mm]}, line width=1pt,
+    draw=argosmid, rounded corners=3pt}
+]
+
+% ------------------------- NIVEAU 5 : IMPACTS -------------------------
+\node[leveltag] (tag5) at (-17.4,12.9) {NIVEAU 5\\Impacts finaux};
+\node[impact] (i1) at (-11.7,12.9) {Conséquences économiques :\\Pertes liées aux avaries et\\retards d'indemnisation};
+\node[impact] (i2) at (-3.9,12.9) {Conséquences juridiques :\\Litiges longs et coûteux\\entre les parties prenantes};
+\node[impact] (i3) at (3.9,12.9) {Conséquences stratégiques :\\Marchandises dégradées,\\insatisfaction et réputation affaiblie};
+\node[impact] (i4) at (11.7,12.9) {Conséquences réglementaires :\\Corridors moins attractifs\\pour les investissements};
+
+% --------------------- NIVEAU 4 : EFFETS DIRECTS ----------------------
+\node[leveltag] (tag4) at (-17.4,9.4) {NIVEAU 4\\Effets directs};
+\node[directeffect] (e1) at (-11.7,9.4) {Chocs, intrusions et avaries\\détectés trop tardivement};
+\node[directeffect] (e2) at (-3.9,9.4) {Historique incomplet de l'état\\et de la position du conteneur};
+\node[directeffect] (e3) at (3.9,9.4) {Alertes tardives et décisions\\prises avec des données incomplètes};
+\node[directeffect] (e4) at (11.7,9.4) {Responsabilités difficiles à établir\\après un incident};
+
+% -------------------- NIVEAU 3 : PROBLÈME CENTRAL ---------------------
+\node[leveltag] (tag3) at (-17.4,5.9) {NIVEAU 3\\Problème central};
+\node[central] (p) at (0,5.9) {Opacité opérationnelle du transport conteneurisé et insuffisance de moyens autonomes\\pour horodater, localiser et documenter les sinistres le long de la chaîne logistique};
+
+% ---------------------- NIVEAU 2 : CAUSES DIRECTES --------------------
+\node[leveltag] (tag2) at (-17.4,2.15) {NIVEAU 2\\Causes directes};
+\node[directcause] (c1) at (-11.7,2.15) {Moyens d'enregistrement limités\\et connectivité défaillante};
+\node[directcause] (c2) at (-3.9,2.15) {Données fragmentées\\et processus manuels};
+\node[directcause] (c3) at (3.9,2.15) {Suivi peu conforme aux exigences\\et complexité douanière};
+\node[directcause] (c4) at (11.7,2.15) {Risques de manutention\\et failles de sécurité};
+
+% ---------------------- NIVEAU 1 : CAUSES RACINES ---------------------
+\node[leveltag] (tag1) at (-17.4,-2.2) {NIVEAU 1\\Causes profondes};
+\node[rootcause] (r11) at (-13.3,-2.2) {Capteurs et enregistrements internes\\peu déployés sur les\\conteneurs standard};
+\node[rootcause] (r12) at (-9.5,-2.2) {Effet cage de Faraday et zones\\blanches sur les corridors\\terrestres et maritimes};
+
+\node[rootcause] (r21) at (-5.7,-2.2) {Données cloisonnées en silos\\entre les différents acteurs\\(transitaires, ports, armateurs)};
+\node[rootcause] (r22) at (-1.9,-2.2) {Prédominance des processus\\sur support papier et saisies\\administratives décalées};
+
+\node[rootcause] (r31) at (1.9,-2.2) {Méthodes de suivi manuelles\\et discontinues, centrées sur\\la position géographique};
+\node[rootcause] (r32) at (5.7,-2.2) {Standards techniques hétérogènes\\entre pays voisins\\pour les transits};
+
+\node[rootcause] (r41) at (9.5,-2.2) {Chocs violents lors des\\transbordements multimodaux\\sur les plateformes};
+\node[rootcause] (r42) at (13.3,-2.2) {Intrusions frauduleuses dans\\les ports détectées bien trop\\tardivement};
+
+% Les flèches sont orientées de la cause vers l'effet : lecture de bas en haut.
+\draw[causeedge] (r11.north) -- ++(0,0.45) -| ([xshift=-1.1cm]c1.south);
+\draw[causeedge] (r12.north) -- ++(0,0.65) -| ([xshift=1.1cm]c1.south);
+\draw[causeedge] (r21.north) -- ++(0,0.45) -| ([xshift=-1.1cm]c2.south);
+\draw[causeedge] (r22.north) -- ++(0,0.65) -| ([xshift=1.1cm]c2.south);
+\draw[causeedge] (r31.north) -- ++(0,0.65) -| ([xshift=-1.1cm]c3.south);
+\draw[causeedge] (r32.north) -- ++(0,0.45) -| ([xshift=1.1cm]c3.south);
+\draw[causeedge] (r41.north) -- ++(0,0.65) -| ([xshift=-1.1cm]c4.south);
+\draw[causeedge] (r42.north) -- ++(0,0.45) -| ([xshift=1.1cm]c4.south);
+
+\draw[causeedge] (c1.north) -- ++(0,0.55) -| ([xshift=-6.3cm]p.south);
+\draw[causeedge] (c2.north) -- ++(0,0.75) -| ([xshift=-2.1cm]p.south);
+\draw[causeedge] (c3.north) -- ++(0,0.75) -| ([xshift=2.1cm]p.south);
+\draw[causeedge] (c4.north) -- ++(0,0.55) -| ([xshift=6.3cm]p.south);
+
+\draw[effectedge] ([xshift=-6.3cm]p.north) -- ++(0,0.55) -| (e1.south);
+\draw[effectedge] ([xshift=-2.1cm]p.north) -- ++(0,0.75) -| (e2.south);
+\draw[effectedge] ([xshift=2.1cm]p.north) -- ++(0,0.75) -| (e3.south);
+\draw[effectedge] ([xshift=6.3cm]p.north) -- ++(0,0.55) -| (e4.south);
+
+\draw[effectedge] (e1.north) -- (i1.south);
+\draw[effectedge] (e2.north) -- (i2.south);
+\draw[effectedge] (e3.north) -- (i3.south);
+\draw[effectedge] (e4.north) -- (i4.south);
+
+\node[font=\sffamily\scriptsize\itshape, text=argosgray] at (0,-4.0)
+  {Sens de lecture causal : causes profondes $\longrightarrow$ causes directes $\longrightarrow$ problème central $\longrightarrow$ effets directs $\longrightarrow$ impacts finaux.};
+\end{tikzpicture}%
+}

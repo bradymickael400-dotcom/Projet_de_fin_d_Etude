@@ -1,0 +1,97 @@
+% Diagramme de cas d'utilisation administratifs — ARGOS (Optimisé & Complet)
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\large\bfseries,
+  uc/.style={draw=argosmid,ellipse,align=center,text width=5.5cm,
+    minimum width=6.0cm,minimum height=1.5cm,fill=white,line width=1.4pt},
+  link/.style={draw=argosgray,line width=1.4pt},
+  inherit/.style={draw=argosnavy,line width=1.4pt,-{Triangle[open,length=4.5mm]}},
+  boundary/.style={draw=argosnavy,rounded corners=8pt,inner sep=10mm,line width=1.8pt},
+  actorfont/.style={font=\sffamily\large\bfseries,align=center,text=argosnavy}
+]
+
+% -----------------------------------------------------------------
+% COMMANDE TIKZ POUR DESSINER UN BONSHOMME UML
+% -----------------------------------------------------------------
+\newcommand{\drawstickman}[3]{ % #1: name, #2: (x,y), #3: label
+  \coordinate (center) at #2;
+  \draw[draw=argosnavy,line width=1.5pt,fill=argospale] ($(center)+(0,0.9)$) circle (0.42cm);
+  \draw[draw=argosnavy,line width=1.5pt] ($(center)+(0,0.48)$) -- ($(center)+(0,-0.4)$);
+  \draw[draw=argosnavy,line width=1.5pt] ($(center)+(-0.5,0.25)$) -- ($(center)+(0.5,0.25)$);
+  \draw[draw=argosnavy,line width=1.5pt] ($(center)+(0,-0.4)$) -- ($(center)+(-0.4,-1.0)$);
+  \draw[draw=argosnavy,line width=1.5pt] ($(center)+(0,-0.4)$) -- ($(center)+(0.4,-1.0)$);
+  \node[actorfont,anchor=north] at ($(center)+(0,-1.15)$) {#3};
+  \node[rectangle,inner sep=2pt,minimum width=4.0cm,minimum height=3.0cm] (#1) at ($(center)+(0,0.1)$) {};
+}
+
+% -----------------------------------------------------------------
+% POSITIONNEMENT DES ACTEURS (Echelle Y compacte pour affichage complet)
+% -----------------------------------------------------------------
+% Acteur racine
+\drawstickman{user}{(-15.0, 1.8)}{Utilisateur Authentifié};
+
+% Acteurs intermédiaires
+\drawstickman{company}{(-7.5, 5.5)}{Agence / Entreprise};
+\drawstickman{port}{(-7.5, -2.0)}{Autorité Portuaire};
+
+% Acteur spécialisé
+\drawstickman{owner}{(-15.0, 9.2)}{Propriétaire};
+
+% Acteur suprême
+\drawstickman{admin}{(-15.0, 13.5)}{Superadministrateur};
+
+% -----------------------------------------------------------------
+% LIENS D'HÉRITAGE (Sur les bordures externes)
+% -----------------------------------------------------------------
+\draw[inherit] (company.north west) -- node[above,font=\small\bfseries,sloped]{hérite} (user.north east);
+\draw[inherit] (port.north west) -- node[below,font=\small\bfseries,sloped]{hérite} (user.south east);
+\draw[inherit] (owner.south) -- node[right,font=\small\bfseries]{hérite} (company.north west);
+\draw[inherit] (admin.south) -- node[right,font=\small\bfseries]{hérite} (owner.north);
+
+% -----------------------------------------------------------------
+% CAS D'UTILISATION (Disposition en grille verticale équilibrée)
+% -----------------------------------------------------------------
+% Superadministrateur
+\node[uc] (accounts) at (4.0, 13.5) {Gérer entreprises, comptes et rôles globaux};
+\node[uc] (audit) at (4.0, 11.2) {Consulter et vérifier les données scellées};
+
+% Propriétaire
+\node[uc] (fleet) at (4.0, 9.0) {Administrer le parc, boîtes et enrôlement ESP32};
+\node[uc] (users) at (4.0, 6.8) {Gérer abonnements, clients et chauffeurs};
+
+% Agence / Entreprise
+\node[uc] (direct) at (4.0, 4.6) {Piloter le Systeme de securiter};
+\node[uc] (workflows) at (4.0, 2.4) {Gérer contrats, documents et déstockage};
+
+% Utilisateur Authentifié
+\node[uc] (auth) at (4.0, 0.2) {S'authentifier et gérer sa session};
+\node[uc] (dash) at (4.0, -2.0) {Consulter le tableau de bord};
+\node[uc] (stats) at (4.0, -4.2) {Superviser la télémétrie, alertes et événements};
+
+% Autorité Portuaire
+\node[uc] (customs) at (4.0, -6.4) {Contrôler conteneurs et statut douanier};
+
+% Cadre englobant le système
+\node[boundary,fit=(accounts)(audit)(fleet)(users)(direct)(workflows)(auth)(dash)(stats)(customs),
+  label={[font=\bfseries\Huge\color{argosnavy}]above:PLATEFORME ARGOS — CAS ADMINISTRATIFS}] {};
+
+% -----------------------------------------------------------------
+% ASSOCIATIONS DIRECTES
+% -----------------------------------------------------------------
+\draw[link] (user.east) -- (auth.west);
+\draw[link] (user.east) -- (dash.west);
+\draw[link] (user.east) -- (stats.west);
+
+\draw[link] (company.east) -- (direct.west);
+\draw[link] (company.east) -- (workflows.west);
+
+\draw[link] (port.east) -- (customs.west);
+
+\draw[link] (owner.east) -- (fleet.west);
+\draw[link] (owner.east) -- (users.west);
+
+\draw[link] (admin.east) -- (accounts.west);
+\draw[link] (admin.east) -- (audit.west);
+
+\end{tikzpicture}%
+}

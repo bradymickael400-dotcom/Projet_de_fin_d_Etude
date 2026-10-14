@@ -1,0 +1,28 @@
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{Index}
+\chapter*{Index}
+\markboth{INDEX}{INDEX}
+
+Le présent index répertorie les annexes et illustrations documentaires clés de la solution ARGOS, facilitant leur repérage au sein du rapport.
+
+\begin{itemize}
+    \item textbf{Formulaire d'enquête} \dotfill \pageref{tab:synthese-enquete}
+
+    \clearpage
+    \phantomsection
+    \addcontentsline{toc}{section}{Formulaire d'enquête détaillé}
+
+    % Insère toutes les pages du fichier cc.pdf à partir de la page 1 jusqu'à la fin
+    \includepdf[pages=-, scale=0.85, width=\textwidth, keepaspectratio=true]{figures/cc.pdf}
+
+    \item \textbf{Logo ARGOS} \dotfill \pageref{fig-argos-chaine-valeur}
+
+    \begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.66\textwidth]{figures/logo.jpeg}
+    \caption{Tableau de bord de supervision ARGOS}
+    \label{fig-index-logo-argos}
+    \end{figure}
+
+\end{itemize}
