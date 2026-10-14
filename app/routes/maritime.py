@@ -1,4 +1,8 @@
-"""Routes Flask - Module Maritime ARGOS v4.0."""
+"""Routes Flask du module maritime ARGOS.
+
+Le module couvre la validation de conteneurs, la création de voyages,
+le suivi hybride et la création de litiges associés aux trajets.
+"""
 from datetime import datetime
 from decimal import Decimal
 

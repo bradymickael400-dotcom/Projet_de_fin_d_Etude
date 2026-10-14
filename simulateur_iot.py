@@ -1,128 +1,169 @@
 #!/usr/bin/env python3
-"""
-Simulateur IoT simple : envoie des télémétries à /api/telemetry
-Boucle pendant 30 minutes, envoie des données toutes les 10s pour chaque boîte.
+"""Simulateur ESP32 pour le flux backend IoT ARGOS.
 
-Usage: python simulateur_iot.py --url http://127.0.0.1:5001 --ids 1 2 3
-
-Le script tente de récupérer les boîtes actives depuis la base PostgreSQL si
-les variables d'environnement PGHOST/PGUSER/PGPASSWORD/PGDATABASE sont renseignées.
-Sinon il utilisera la liste statique passée via --ids.
+Exemples:
+  python simulateur_iot.py provision --black-box-id 1
+  python simulateur_iot.py enroll --device-uid ARGOS-ESP32-ABCD1234 --token TOKEN
+  python simulateur_iot.py telemetry --device-uid ARGOS-ESP32-ABCD1234 --container-id MSCU1234566 --api-key KEY
+  python simulateur_iot.py ack --device-uid ARGOS-ESP32-ABCD1234 --api-key KEY --command-uid UUID --status SUCCEEDED
 """
-import time
-import random
+
 import argparse
+import json
+import random
+import time
+import uuid
+from datetime import datetime, timezone
+
 import requests
-import os
-from datetime import datetime, timedelta
-
-try:
-    import psycopg2
-except Exception:
-    psycopg2 = None
 
 
-def now():
-    return datetime.now().strftime('%H:%M:%S')
-
-
-def get_active_boites_from_db(limit=10):
-    if not psycopg2:
-        return []
+def post_json(base_url, path, payload, headers=None):
+    response = requests.post(
+        f"{base_url.rstrip('/')}{path}",
+        json=payload,
+        headers=headers or {},
+        timeout=15,
+    )
     try:
-        conn = psycopg2.connect(
-            host=os.getenv('PGHOST','localhost'),
-            user=os.getenv('PGUSER','postgres'),
-            password=os.getenv('PGPASSWORD',''),
-            dbname=os.getenv('PGDATABASE','argos')
-        )
-        cur = conn.cursor()
-        # récupérer quelques boîtes récentes
-        cur.execute("SELECT id_boite FROM boite_noir ORDER BY id_boite LIMIT %s", (limit,))
-        rows = cur.fetchall()
-        cur.close(); conn.close()
-        return [r[0] for r in rows]
-    except Exception as e:
-        print(f"Erreur DB: {e}")
-        return []
+        body = response.json()
+    except ValueError:
+        body = {"raw": response.text}
+    print(json.dumps({"status_code": response.status_code, "body": body}, indent=2, ensure_ascii=False))
+    response.raise_for_status()
+    return body
 
 
-def simulate_one_cycle(url, boite_id, state):
-    # state contains last lat/lon
-    lat, lon = state.get('lat'), state.get('lon')
-    if lat is None or lon is None:
-        # random start near central Africa
-        lat = random.uniform(3.0, 6.0)
-        lon = random.uniform(9.0, 12.0)
-
-    # small movement
-    lat += random.uniform(-0.001, 0.001)
-    lon += random.uniform(-0.001, 0.001)
-
-    temperature = round(random.uniform(-10, 40), 1)
-    humidite = round(random.uniform(20, 90), 1)
-    pression = round(random.uniform(980, 1035), 1)
-    vitesse = round(random.uniform(0, 80), 1)
-    chocs = round(random.choice([0, 0, 0, random.uniform(0.2, 6.0)]), 2)
-
+def cmd_provision(args):
     payload = {
-        'id_boite': str(boite_id),
-        'temperature': temperature,
-        'humidite': humidite,
-        'pressions': pression,
-        'vitesse': vitesse,
-        'chocs': chocs,
-        'lat': lat,
-        'lon': lon,
+        "black_box_id": args.black_box_id,
+        "hardware_serial": args.hardware_serial,
+        "firmware_version": args.firmware_version,
+        "protocol_version": "1.0",
+    }
+    login = requests.post(
+        f"{args.base_url.rstrip('/')}/api/login",
+        json={"username": args.username, "password": args.password}, timeout=15,
+    )
+    login.raise_for_status()
+    access_token = login.json().get("access_token")
+    if not access_token:
+        raise RuntimeError("Jeton d'authentification absent")
+    headers = {"Authorization": f"Bearer {access_token}"}
+    post_json(args.base_url, "/api/iot/devices/provision", payload, headers)
+
+
+def cmd_enroll(args):
+    payload = {"deviceUid": args.device_uid, "enrollmentToken": args.token}
+    post_json(args.base_url, "/api/iot/enroll", payload)
+
+
+def telemetry_payload(device_uid, container_id, sequence, lat, lon):
+    return {
+        "messageId": str(uuid.uuid4()),
+        "deviceUid": device_uid,
+        "containerId": container_id,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "sequence": sequence,
+        "type": "telemetry",
+        "position": {
+            "latitude": round(lat, 6),
+            "longitude": round(lon, 6),
+            "accuracy": 8,
+            "speed": round(random.uniform(0, 80), 1),
+            "heading": round(random.uniform(0, 359), 1),
+        },
+        "sensors": {
+            "temperature": round(random.uniform(18, 38), 1),
+            "humidity": round(random.uniform(35, 90), 1),
+            "shock": round(random.choice([0, 0.2, 0.8, random.uniform(2, 8)]), 2),
+            "pressure": round(random.uniform(985, 1025), 1),
+            "flameDetected": random.random() < 0.03,
+            "doorOpen": random.random() < 0.05,
+            "batteryLevel": round(random.uniform(40, 100), 1),
+            "lightLevel": random.randint(0, 4095),
+            "soundLevel": random.randint(0, 4095),
+            "distanceCm": round(random.uniform(5, 120), 1),
+            "accelerationX": round(random.uniform(-2, 2), 2),
+            "accelerationY": round(random.uniform(-2, 2), 2),
+            "accelerationZ": round(random.uniform(8, 12), 2),
+            "securityAlarm": False,
+        },
+        "modes": {
+            "securityEnabled": False,
+            "audioRecordingEnabled": False,
+            "audioListeningEnabled": False,
+            "flameDetectionEnabled": True,
+        },
     }
 
-    try:
-        r = requests.post(url, json=payload, timeout=5)
-        ok = r.status_code in (200,201)
-        print(f"[{now()}] Boîte {boite_id}: Temp {temperature}°C, Humi {humidite}%, Choc {chocs}G -> {'OK' if ok else 'ERR('+str(r.status_code)+')'}")
-    except Exception as e:
-        print(f"[{now()}] Boîte {boite_id}: Erreur envoi -> {e}")
 
-    state['lat'], state['lon'] = lat, lon
-
-
-def main(url, ids, duration_minutes=30, interval_sec=10):
-    # ids: list of boite ids (strings or ints)
-    start = datetime.now()
-    end = start + timedelta(minutes=duration_minutes)
-
-    # state of each box
-    states = {str(b): {'lat': None, 'lon': None} for b in ids}
-
-    print(f"Simulateur démarré vers {url} — {len(ids)} boîtes — durée {duration_minutes} minutes")
-
-    while datetime.now() < end:
-        for b in ids:
-            simulate_one_cycle(url, b, states[str(b)])
-            time.sleep(0.2)  # léger étalement pour ne pas envoyer tout en même temps
-        # attente jusqu'au prochain cycle
-        remaining = interval_sec
-        while remaining > 0:
-            time.sleep(1)
-            remaining -= 1
-
-    print('Simulation terminée.')
+def cmd_telemetry(args):
+    headers = {"X-Device-Key": args.api_key}
+    lat = args.lat
+    lon = args.lon
+    for sequence in range(args.start_sequence, args.start_sequence + args.count):
+        lat += random.uniform(-0.002, 0.002)
+        lon += random.uniform(-0.002, 0.002)
+        payload = telemetry_payload(args.device_uid, args.container_id, sequence, lat, lon)
+        payload["sensors"]["securityAlarm"] = payload["sensors"]["distanceCm"] > args.distance_threshold
+        post_json(args.base_url, "/api/iot/telemetry", payload, headers)
+        if sequence < args.start_sequence + args.count - 1:
+            time.sleep(args.interval)
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--url', default='http://127.0.0.1:5001/api/telemetry', help='URL de la route /api/telemetry')
-    parser.add_argument('--ids', nargs='*', help='Liste d ids de boîtes (ex: 1 2 3)')
-    parser.add_argument('--duration', type=int, default=30, help='Durée (minutes)')
-    parser.add_argument('--interval', type=int, default=10, help='Intervalle entre envois (secondes)')
-    args = parser.parse_args()
+def cmd_ack(args):
+    payload = {
+        "commandUid": args.command_uid,
+        "deviceUid": args.device_uid,
+        "status": args.status,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "result": json.loads(args.result),
+    }
+    headers = {"X-Device-Key": args.api_key}
+    post_json(args.base_url, "/api/iot/acknowledgements", payload, headers)
 
-    ids = args.ids
-    if not ids:
-        # tenter de récupérer depuis la DB
-        ids = get_active_boites_from_db(10)
-    if not ids:
-        # fallback statique
-        ids = ['CONT-TEST-1','CONT-TEST-2']
 
-    main(args.url, ids, duration_minutes=args.duration, interval_sec=args.interval)
+def build_parser():
+    parser = argparse.ArgumentParser(description="Simulateur ESP32 ARGOS")
+    parser.add_argument("--base-url", default="http://127.0.0.1:5002")
+    sub = parser.add_subparsers(required=True)
+
+    provision = sub.add_parser("provision")
+    provision.add_argument("--black-box-id", type=int)
+    provision.add_argument("--hardware-serial", default=f"SIM-{uuid.uuid4().hex[:8].upper()}")
+    provision.add_argument("--firmware-version", default="sim-1.0.0")
+    provision.add_argument("--username", required=True)
+    provision.add_argument("--password", required=True)
+    provision.set_defaults(func=cmd_provision)
+
+    enroll = sub.add_parser("enroll")
+    enroll.add_argument("--device-uid", required=True)
+    enroll.add_argument("--token", required=True)
+    enroll.set_defaults(func=cmd_enroll)
+
+    telemetry = sub.add_parser("telemetry")
+    telemetry.add_argument("--device-uid", required=True)
+    telemetry.add_argument("--api-key", required=True)
+    telemetry.add_argument("--container-id", required=True)
+    telemetry.add_argument("--distance-threshold", type=float, default=50.0)
+    telemetry.add_argument("--count", type=int, default=1)
+    telemetry.add_argument("--interval", type=float, default=2)
+    telemetry.add_argument("--start-sequence", type=int, default=1)
+    telemetry.add_argument("--lat", type=float, default=4.0511)
+    telemetry.add_argument("--lon", type=float, default=9.7679)
+    telemetry.set_defaults(func=cmd_telemetry)
+
+    ack = sub.add_parser("ack")
+    ack.add_argument("--device-uid", required=True)
+    ack.add_argument("--api-key", required=True)
+    ack.add_argument("--command-uid", required=True)
+    ack.add_argument("--status", default="SUCCEEDED")
+    ack.add_argument("--result", default="{}")
+    ack.set_defaults(func=cmd_ack)
+    return parser
+
+
+if __name__ == "__main__":
+    args = build_parser().parse_args()
+    args.func(args)

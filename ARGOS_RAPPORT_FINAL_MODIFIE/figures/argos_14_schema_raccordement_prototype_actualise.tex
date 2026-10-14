@@ -1,0 +1,24 @@
+\resizebox{0.98\linewidth}{!}{%
+\begin{tikzpicture}[font=\sffamily\scriptsize,
+ module/.style={draw=argosnavy,rounded corners=2pt,align=left,minimum width=4cm,minimum height=.9cm,fill=white},
+ mcu/.style={draw=argosnavy,rounded corners=2pt,align=center,minimum width=4.2cm,minimum height=7cm,fill=argoslight,line width=1.1pt},
+ wire/.style={draw=argosmid,line width=.8pt}]
+\node[mcu] (mcu) at (0,0) {\textbf{ESP32}\\[3pt]
+GPIO 1 : LED\\\\GPIO 4 : DHT22 (ou autre)\\GPIO 5 : SCL (I²C)\\
+GPIO 13 : buzzer\\GPIO 14 : MOSI (SD)\\GPIO 15 : RX (GPS)\\GPIO 16 : ECHO (HC-SR04)\\
+GPIO 17 : flamme\\GPIO 18 : TRIG (HC-SR04)\\GPIO 21 : SDA (I²C)\\GPIO 22 : microphone\\
+GPIO 26 : SCK (SD)\\GPIO 27 : MISO (SD)};
+\node[module] (dht) at (-7,3.3) {DHT22 : DATA $\rightarrow$ GPIO 4};
+\node[module] (analog) at (-7,1.9) {Microphone : GPIO 22};
+\node[module] (ultra) at (-7,.5) {HC-SR04 : TRIG 18, ECHO 16\footnotemark};
+\node[module] (i2c) at (-7,-.9) {MPU-6050 + BME280 : SDA 21, SCL 5};
+\node[module] (alarm) at (-7,-2.3) {LED / Buzzer / Flamme : GPIO 1 / 13 / 17};
+\node[module] (sd) at (7,3.3) {microSD SPI : MOSI 14, SCK 26, MISO 27};
+\node[module] (modem) at (7,1.4) {Modem LTE-M/NB-IoT ou LoRaWAN};
+\node[module] (gnss) at (7,-.5) {NEO-6M UART : TX $\rightarrow$ 2, RX $\leftarrow$ 15};
+\node[module] (sat) at (7,-2.4) {Modem satellite IoT\\UART/SPI selon module};
+\foreach \n in {dht,analog,ultra,i2c,alarm} \draw[wire] (\n.east) -- (mcu.west |- \n.east);
+\foreach \n in {sd,modem,gnss,sat} \draw[wire] (mcu.east |- \n.west) -- (\n.west);
+\end{tikzpicture}%
+}
+\footnotetext{La sortie ECHO 5 V du HC-SR04 doit être abaissée à 3,3 V par pont diviseur ou convertisseur de niveau.}

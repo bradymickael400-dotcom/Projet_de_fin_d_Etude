@@ -1,0 +1,113 @@
+% Diagramme de classes métier ARGOS — Version aérée et lisible
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  uml/.style={draw=argosnavy,line width=1.1pt,rectangle split,
+    rectangle split parts=2,align=left,inner sep=6pt,text width=5.0cm,fill=white},
+  group/.style={draw=argosrule,dashed,rounded corners=6pt,inner sep=8mm,line width=1.2pt},
+  assoc/.style={draw=argosgray,line width=1.1pt},
+  dep/.style={draw=argosgray,dashed,line width=1.1pt,-{Stealth[length=3mm]}},
+  mult/.style={font=\sffamily\small\bfseries,fill=white,inner sep=2pt},
+  title/.style={font=\sffamily\large\bfseries,text=argosblue,fill=white,inner sep=4pt}
+]
+
+% ==========================================
+% AGRÉGAT 1 — IDENTITÉS ET ORGANISATIONS
+% ==========================================
+\node[uml] (profile) at (-12,13) {\textbf{ProfilActeur}
+  \nodepart{second}\texttt{idActeur : String}\\\texttt{rôle : Rôle}\\\texttt{login : String}};
+
+\node[uml] (identity) at (-4,13) {\textbf{Identité}
+  \nodepart{second}\texttt{actorRole : String}\\\texttt{actorId : String}\\\texttt{displayName : String}};
+
+\node[uml] (party) at (4,13) {\textbf{PartieLogistique}
+  \nodepart{second}\texttt{type : RôleMetier}\\\texttt{périmètre : List<Boîte>}};
+
+\node[group,fit=(profile)(identity)(party),label={[title]above:AGRÉGAT 1 — IDENTITÉS ET ORGANISATIONS}] {};
+
+\draw[assoc] (profile) -- node[mult,near start,above]{1} node[mult,near end,above]{1} (identity);
+\draw[dep] (identity) -- node[mult,above]{résout} (party);
+
+
+% ==========================================
+% AGRÉGAT 2 — LOGISTIQUE ET WORKFLOWS
+% ==========================================
+\node[uml] (container) at (-12,6.5) {\textbf{Conteneur}
+  \nodepart{second}\texttt{idConteneur : String}\\\texttt{type, statut : String}};
+
+\node[uml] (box) at (-4,6.5) {\textbf{BoîteNoire}
+  \nodepart{second}\texttt{idBoîte : Integer}\\\texttt{uuidQr : UUID}\\\texttt{statut : Boolean}};
+
+\node[uml] (assignment) at (4,6.5) {\textbf{AffectationBoîteConteneur}
+  \nodepart{second}\texttt{assignedAt : DateTime}\\\texttt{detachedAt : DateTime?}};
+
+\node[uml] (destock) at (12,6.5) {\textbf{DemandeDéstockage}
+  \nodepart{second}\texttt{requiredApprovals : Int}\\\texttt{statut : String}};
+
+\node[group,fit=(container)(box)(assignment)(destock),
+  label={[title]above:AGRÉGAT 2 — LOGISTIQUE ET WORKFLOWS}] {};
+
+\draw[assoc] (container) -- node[mult,near start,above]{1} node[mult,near end,above]{0..1} (box);
+\draw[assoc] (box) -- node[mult,near start,above]{1} node[mult,near end,above]{0..*} (assignment);
+\draw[assoc] (container) |- ++(0,-2.2) -| node[mult,near end,below]{0..*} (destock);
+
+
+% ==========================================
+% AGRÉGAT 3 — DISPOSITIFS ET TÉLÉMÉTRIE
+% ==========================================
+\node[uml] (device) at (-12,0) {\textbf{DispositifIoT}
+  \nodepart{second}\texttt{deviceUid : String}\\\texttt{statut : String}};
+
+\node[uml] (raw) at (-4,0) {\textbf{MessageBrut}
+  \nodepart{second}\texttt{messageId : UUID}\\\texttt{payload : JSON}};
+
+\node[uml] (reading) at (4,0) {\textbf{LectureCapteur}
+  \nodepart{second}\texttt{sequence : Integer}\\\texttt{temp, humid, choc}};
+
+\node[uml] (position) at (12,0) {\textbf{Position}
+  \nodepart{second}\texttt{latitude, longitude}\\\texttt{measuredAt : DateTime}};
+
+\node[group,fit=(device)(raw)(reading)(position),
+  label={[title]above:AGRÉGAT 3 — DISPOSITIFS ET TÉLÉMÉTRIE}] {};
+
+\draw[assoc] (device) -- node[mult,near start,above]{1} node[mult,near end,above]{0..*} (raw);
+\draw[assoc] (raw) -- node[mult,near start,above]{1} node[mult,near end,above]{0..1} (reading);
+\draw[assoc] (raw) |- ++(0,-2.2) -| node[mult,near end,below]{0..1} (position);
+
+
+% ==========================================
+% AGRÉGAT 4 — EXPLOITATION ET AUDIT
+% ==========================================
+\node[uml] (event) at (-12,-6.5) {\textbf{Événement}
+  \nodepart{second}\texttt{idEventInit : BigInt}\\\texttt{horodatage : DateTime}};
+
+\node[uml] (notification) at (-4,-6.5) {\textbf{Notification}
+  \nodepart{second}\texttt{type, message : String}\\\texttt{statut : String}};
+
+\node[uml] (audit) at (4,-6.5) {\textbf{JournalAudit}
+  \nodepart{second}\texttt{action, entityType}\\\texttt{createdAt : DateTime}};
+
+\node[uml] (block) at (12,-6.5) {\textbf{BlocScellé}
+  \nodepart{second}\texttt{blockHash : String}\\\texttt{eventType : String}};
+
+\node[group,fit=(event)(notification)(audit)(block),
+  label={[title]above:AGRÉGAT 4 — EXPLOITATION, AUDIT ET PREUVE}] {};
+
+\draw[dep] (event) -- node[mult,above]{alerte} (notification);
+\draw[dep] (event) |- ++(0,-2.2) -| node[mult,below]{scellement} (block);
+
+
+% ==========================================
+% LIAISONS ET INTER-RACCORDEMENTS INTER-AGRÉGATS
+% ==========================================
+% Lien Identité -> Logistique
+\draw[assoc] (party.south) |- ++(0,-1.5) -| node[mult,near end,left]{1..*} (container.north);
+
+% Lien BoîteNoire -> Événement
+\draw[assoc] (box.south) -- node[mult,near start,right]{1} node[mult,near end,right]{0..*} (event.north);
+
+% Lien DispositifIoT -> JournalAudit
+\draw[dep] (device.south) |- ++(0,-1.5) -| node[mult,near end,right]{audit technique} (audit.north);
+
+\end{tikzpicture}%
+}

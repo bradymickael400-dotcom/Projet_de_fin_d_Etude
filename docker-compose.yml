@@ -1,43 +1,113 @@
-version: '3.8'
-
 services:
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - argos_redis:/data
+    restart: unless-stopped
+
   # ── BASE DE DONNÉES (PostgreSQL + TimescaleDB) ──
   db:
     image: timescale/timescaledb:latest-pg14
     container_name: argos_db
     environment:
-      POSTGRES_USER: brady
-      POSTGRES_PASSWORD: 'brady123'
-      POSTGRES_DB: argos
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-brady}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-brady123}
+      POSTGRES_DB: ${POSTGRES_DB:-argos}
     volumes:
       # Persistance des données (pour ne rien perdre si le conteneur s'arrête)
       - argos_pgdata:/var/lib/postgresql/data
-      # Initialisation automatique du schéma au premier démarrage du volume
-      - ./init_argos.sql:/docker-entrypoint-initdb.d/init_argos.sql:ro
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-brady} -d ${POSTGRES_DB:-argos}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   # ── APPLICATION BACKEND (Flask) & FRONTEND ──
   web:
-    build: .
+    build:
+      context: .
+      # Le DNS embarqué de Docker peut perdre la résolution de pypi.org avec
+      # systemd-resolved (127.0.0.53). Pendant le build, utiliser directement
+      # le réseau et les DNS de l'hôte évite cet échec intermittent.
+      network: host
     container_name: argos_web
+    env_file:
+      - .env
     ports:
       - "5002:5002"
     environment:
       # Variables d'environnement lues par ton app Python
       - FLASK_APP=app.py
-      - FLASK_DEBUG=1
+      - APP_ENV=production
       # L'URL de connexion utilise le nom du service "db" ; le nom de la base
       # DOIT correspondre à POSTGRES_DB ci-dessus (argos).
-      - DATABASE_URL=postgresql://brady:brady123@db:5432/argos
-      - SECRET_KEY=Argos_direction_generale2026
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-brady}:${POSTGRES_PASSWORD:-brady123}@db:5432/${POSTGRES_DB:-argos}
+      - SECRET_KEY=${SECRET_KEY:-dev}
+      - INITIAL_ADMIN_LOGIN=${INITIAL_ADMIN_LOGIN:-superadmin}
+      - INITIAL_ADMIN_PASSWORD=${INITIAL_ADMIN_PASSWORD:-admin123}
+      # La valeur peut etre injectee par start-argos.sh quand un Quick Tunnel
+      # vient de recevoir une nouvelle URL.
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-}
+      - PRIVATE_STORAGE_PATH=/app/private_documents
+      - RATELIMIT_STORAGE_URI=redis://redis:6379/0
+      - IOT_REDIS_URL=redis://redis:6379/1
+      - IOT_REDIS_REQUIRED=true
     volumes:
-      # Synchronisation en temps réel de ton code local vers le conteneur (Hot-Reload)
-      - .:/app
+      - argos_documents:/app/private_documents
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 5002), timeout=5).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      network: host
+    command: ["python", "-m", "app.worker"]
+    env_file:
+      - .env
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-brady}:${POSTGRES_PASSWORD:-brady123}@db:5432/${POSTGRES_DB:-argos}
+      - SECRET_KEY=${SECRET_KEY:-dev}
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-}
+      - PRIVATE_STORAGE_PATH=/app/private_documents
+      - RATELIMIT_STORAGE_URI=redis://redis:6379/0
+      - IOT_REDIS_URL=redis://redis:6379/1
+      - IOT_REDIS_REQUIRED=true
+    volumes:
+      - argos_documents:/app/private_documents
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  # Tunnel public HTTPS temporaire. L'URL trycloudflare.com est visible avec :
+  # docker compose logs cloudflared
+  cloudflared:
+    image: cloudflare/cloudflared:2026.6.0
+    container_name: argos_cloudflared
+    # Le reseau de demonstration bloque UDP/QUIC 7844. HTTP/2 utilise TCP
+    # 7844 et evite la boucle de reconnexion observee sur ce poste.
+    command: ["tunnel", "--no-autoupdate", "--protocol", "http2", "--url", "http://web:5002"]
+    depends_on:
+      web:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
   argos_pgdata:
+  argos_documents:
+  argos_redis:

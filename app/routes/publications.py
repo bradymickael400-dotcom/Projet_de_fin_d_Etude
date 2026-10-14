@@ -1,14 +1,19 @@
+"""Endpoints de publication et d’envoi de messages multi-canaux."""
+
 import threading
 from flask import Blueprint, request, jsonify
 from sqlalchemy import text # type: ignore
 from app import db
 from app.utils import *
+from app.security import current_identity
 
 pub_bp = Blueprint("publication", __name__)
 
 @pub_bp.route("/api/publications", methods=["GET", "POST"])
 def api_publications():
     if request.method == "POST":
+        if current_identity().get("role") != "superadmin":
+            return jsonify({"error": "Publication reservee au superadmin"}), 403
         try:
             d = request.get_json()
             titre = d.get("titre")
@@ -43,7 +48,22 @@ def api_publications():
 
             # 3. Lancer les envois multicanaux en arrière-plan
             if emails:
-                threading.Thread(target=send_email_background, args=(emails, titre, contenu)).start()
+                normalized_level = str(niveau or "").strip().lower()
+                severity = (
+                    "critical" if normalized_level in {"critique", "critical", "danger", "urgent"}
+                    else "warning" if normalized_level in {"attention", "warning", "avertissement"}
+                    else "info"
+                )
+                threading.Thread(
+                    target=send_email_background,
+                    args=(emails, titre, contenu),
+                    kwargs={
+                        "severity": severity,
+                        "action_url": get_public_base_url(),
+                        "action_label": "Ouvrir ARGOS",
+                    },
+                    daemon=True,
+                ).start()
             
             return jsonify({"status": "success", "cibles_atteintes": len(emails)}), 201
         except Exception as e:

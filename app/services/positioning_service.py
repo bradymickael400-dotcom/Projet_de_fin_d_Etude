@@ -1,4 +1,9 @@
-"""Positionnement hybride IoT/AIS et corrélation litiges."""
+"""Positionnement hybride IoT/AIS et corrélation des litiges.
+
+Ce service cherche d’abord une position récente issue des capteurs IoT,
+puis complète avec des données AIS si nécessaire avant d’enregistrer
+un litige géolocalisé.
+"""
 import json
 import math
 from datetime import datetime, timedelta, timezone
@@ -230,6 +235,41 @@ def _haversine_nm(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     dlam = math.radians(lon2 - lon1)
     a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlam / 2) ** 2
     return radius_nm * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def get_boxes_with_recent_position_in_port_zone(locode: str,
+                                               radius_nm: float = 5.0,
+                                               freshness_hours: int = 24) -> list:
+    """Retourne les boîtes dont la dernière position récente est dans la zone du port."""
+    from app import db
+
+    port = db.session.execute(text(
+        "SELECT lat, lon FROM port WHERE locode = :locode AND lat IS NOT NULL AND lon IS NOT NULL"
+    ), {"locode": locode}).fetchone()
+    if not port:
+        return []
+
+    rows = db.session.execute(text(
+        """
+        SELECT DISTINCT ON (p.black_box_id)
+            p.black_box_id, p.latitude, p.longitude
+        FROM positions p
+        WHERE p.latitude IS NOT NULL
+          AND p.longitude IS NOT NULL
+          AND p.measured_at >= NOW() - (:hours * INTERVAL '1 hour')
+        ORDER BY p.black_box_id, p.measured_at DESC
+        """
+    ), {"hours": freshness_hours}).fetchall()
+
+    zone_boxes = []
+    port_lat, port_lon = float(port.lat), float(port.lon)
+    for row in rows:
+        if row.black_box_id is None:
+            continue
+        if _haversine_nm(float(row.latitude), float(row.longitude), port_lat, port_lon) <= radius_nm:
+            zone_boxes.append(row.black_box_id)
+
+    return zone_boxes
 
 
 def _find_nearest_port(lat: float, lon: float) -> Tuple[Optional[str], Optional[float]]:

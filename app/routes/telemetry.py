@@ -1,4 +1,11 @@
 
+"""
+Endpoints de télémétrie et monitoring.
+
+Ce module centralise la collecte et la lecture des événements IoT,
+la gestion des seuils d’alerte et les API de suivi de trajectoire.
+"""
+
 import os
 
 from flask import Blueprint, current_app, request, jsonify, url_for
@@ -236,12 +243,29 @@ def get_events():
 
     wh = ("WHERE " + " AND ".join(where)) if where else ""
     rows = db.session.execute(text(f"""
-        SELECT id_eventinit, COALESCE(horodatage, created_at) AS horodatage,
-               id_boite, media_1_url, media_2_url,
-               temperature, humidite, pressions, lat, lon, created_at,
-               log_action, vitesse, notif, chocs
-        FROM evenement_save {wh}
-        ORDER BY COALESCE(horodatage, created_at) DESC LIMIT :limit
+        SELECT es.id_eventinit, COALESCE(es.horodatage, es.created_at) AS horodatage,
+               es.id_boite, es.media_1_url, es.media_2_url,
+               es.temperature, es.humidite, es.pressions, es.lat, es.lon, es.created_at,
+               es.log_action, es.vitesse, es.notif, es.chocs, es.device_uid, es.sequence,
+               es.acceleration_x, es.acceleration_y, es.acceleration_z,
+               es.battery_level, es.heading, es.quality,
+               audio.recording_uid,
+               CASE WHEN audio.recording_uid IS NOT NULL
+                    THEN '/api/audio/' || audio.recording_uid::text END AS audio_url
+        FROM evenement_save es
+        LEFT JOIN LATERAL (
+            SELECT ar.recording_uid
+            FROM audio_recordings ar
+            WHERE ar.black_box_id=es.id_boite
+              AND COALESCE(es.horodatage,es.created_at) >= COALESCE(ar.started_at,ar.created_at)
+              AND COALESCE(es.horodatage,es.created_at) <=
+                  COALESCE(ar.started_at,ar.created_at)
+                  + (COALESCE(ar.duration_seconds,0) * INTERVAL '1 second')
+            ORDER BY COALESCE(ar.started_at,ar.created_at) DESC
+            LIMIT 1
+        ) audio ON TRUE
+        {wh}
+        ORDER BY COALESCE(es.horodatage, es.created_at) DESC LIMIT :limit
     """), params).fetchall()
     return jsonify([dict(r._mapping) for r in rows])
 
@@ -251,39 +275,14 @@ from werkzeug.utils import secure_filename
 #  route qui écoute la boîte physique les donnees 
 @tel_bp.route("/api/telemetry", methods=["POST"])
 def receive_telemetry():
+    """Alias de compatibilite vers l'ingestion IoT unique et authentifiee."""
+    from app.modules.iot.iot_service import ingest_telemetry, IoTAuthError
+    from app.modules.iot.validator import PayloadValidationError
+    payload = request.get_json(silent=True) or {}
     try:
-        # Accepte le JSON ou le Form-Data (si Arduino envoie en form)
-        d = request.form if request.form else request.get_json()
-        id_boite = d.get("id_boite")
-        temp     = float(d.get("temperature", 0))
-        humi     = float(d.get("humidite", 0))
-        press    = float(d.get("pressions", 0))
-        chocs    = float(d.get("chocs", 0))
-        vitesse  = float(d.get("vitesse", 0))
-        lat      = d.get("lat")
-        lon      = d.get("lon")
-
-        # 1. Vérification stricte des Sécurités et Seuils
-        alertes = check_securite_et_seuils(id_boite, temp, chocs)
-        notif_json = json.dumps(alertes) if alertes else None
-        log_action = "Alerte générée" if alertes else "Scan régulier"
-
-        # 2. Sauvegarde de l'événement GPS/Capteurs
-        db.session.execute(text("""
-            INSERT INTO evenement_save
-                (id_boite, temperature, humidite, pressions, lat, lon, log_action, vitesse, chocs, notif)
-            VALUES (:b, :t, :h, :p, :lat, :lon, :la, :v, :c, :n)
-        """), {"b": id_boite, "t": temp, "h": humi, "p": press, "lat": lat, "lon": lon, "la": log_action, "v": vitesse, "c": chocs, "n": notif_json})
-        
-        db.session.commit()
-
-        # 3. Sceller dans la blockchain en cas de fraude ou de choc
-        if alertes:
-            _sceller_evenement("ALERTE_CRITIQUE", id_boite, {
-                "temperature": temp, "chocs": chocs, "alertes": alertes, "lat": lat, "lon": lon
-            })
-
-        return jsonify({"status": "success", "alertes_declenchees": alertes}), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        result = ingest_telemetry(payload, request.headers.get("X-Device-Key", ""), request.remote_addr)
+        return jsonify(result), 200 if result.get("status") == "duplicate" else 201
+    except PayloadValidationError as exc:
+        return jsonify({"status": "error", "error": str(exc)}), 422
+    except IoTAuthError as exc:
+        return jsonify({"status": "error", "error": str(exc)}), 401

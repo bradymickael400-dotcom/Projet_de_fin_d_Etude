@@ -1,6 +1,8 @@
 """
 Service d'intégration BIC BoxTech API.
-Standard : ISO 6346 - identification des conteneurs maritimes.
+
+Il valide les numéros ISO 6346, récupère les spécifications techniques
+et persiste les données dans la base locale quand l’API est disponible.
 """
 import json
 import re
@@ -73,11 +75,8 @@ class BICBoxTechService:
         client_id, client_secret = self._get_credentials()
         resp = requests.post(
             self.TOKEN_URL,
-            data={
-                "grant_type": "client_credentials",
-                "client_id": client_id,
-                "client_secret": client_secret,
-            },
+            auth=(client_id, client_secret),
+            headers={"Accept": "application/json"},
             timeout=15,
         )
         resp.raise_for_status()
@@ -104,22 +103,24 @@ class BICBoxTechService:
         return self._normalize_bic_response(cnum, resp.json())
 
     def _normalize_bic_response(self, container_number: str, raw: dict) -> dict:
+        manufacture_date = raw.get("manufacture_date") or raw.get("year_of_build") or raw.get("manufacture_year")
+        manufacture_year = str(manufacture_date)[:4] if manufacture_date else None
         return {
             "container_number": container_number,
             "owner_prefix": container_number[:4],
-            "type_code": raw.get("type_code") or raw.get("group_st"),
-            "max_gross_mass_kg": raw.get("max_gross_weight"),
-            "tare_mass_kg": raw.get("tare_weight"),
-            "internal_length_mm": raw.get("internal_length"),
-            "internal_width_mm": raw.get("internal_width"),
-            "internal_height_mm": raw.get("internal_height"),
-            "external_length_mm": raw.get("external_length"),
-            "external_width_mm": raw.get("external_width"),
-            "external_height_mm": raw.get("external_height"),
-            "door_width_mm": raw.get("door_width"),
-            "door_height_mm": raw.get("door_height"),
-            "capacity_m3": raw.get("capacity"),
-            "manufacture_year": raw.get("year_of_build") or raw.get("manufacture_year"),
+            "type_code": raw.get("detail_st") or raw.get("group_st") or raw.get("type_code"),
+            "max_gross_mass_kg": raw.get("max_gross_mass_kg") or raw.get("max_gross_weight"),
+            "tare_mass_kg": raw.get("tare_kg") or raw.get("tare_weight"),
+            "internal_length_mm": raw.get("internal_length_mm") or raw.get("internal_length"),
+            "internal_width_mm": raw.get("internal_width_mm") or raw.get("internal_width"),
+            "internal_height_mm": raw.get("internal_height_mm") or raw.get("internal_height"),
+            "external_length_mm": raw.get("external_length_mm") or raw.get("external_length"),
+            "external_width_mm": raw.get("external_width_mm") or raw.get("external_width"),
+            "external_height_mm": raw.get("external_height_mm") or raw.get("external_height"),
+            "door_width_mm": raw.get("door_opening_width_mm") or raw.get("door_width"),
+            "door_height_mm": raw.get("door_opening_height_mm") or raw.get("door_height"),
+            "capacity_m3": raw.get("cubic_capacity_cbm") or raw.get("capacity"),
+            "manufacture_year": manufacture_year,
             "bic_raw_response": json.dumps(raw),
         }
 

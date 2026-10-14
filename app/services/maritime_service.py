@@ -1,4 +1,8 @@
-"""Service de tracking maritime avec adaptateurs provider."""
+"""Service de tracking maritime avec adaptateurs provider.
+
+Le module abstrait l’accès aux fournisseurs de données maritimes et
+normalise leurs réponses pour le reste de l’application.
+"""
 import os
 from abc import ABC, abstractmethod
 from datetime import datetime
