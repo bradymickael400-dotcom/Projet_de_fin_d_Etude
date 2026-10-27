@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="pg-title">{{ school.nom }}</h1>
+<div class="grid g4">
+  <div class="stat"><div class="stat-v">{{ school.effectif }}</div><div class="stat-l">Élèves</div></div>
+  <div class="stat"><div class="stat-v">#{{ rank }}</div><div class="stat-l">Classement national</div></div>
+  <div class="stat"><div class="stat-v">{{ pending_affil }}</div><div class="stat-l">Candidatures</div></div>
+  <div class="stat"><div class="stat-v">{{ pending_enrol }}</div><div class="stat-l">Inscriptions</div></div>
+</div>
+<div class="grid g2">
+  <a class="card" href="{{ url_for('school_admin.affiliations') }}"><div class="card-hd">Candidatures enseignants <span class="badge badge-warn">{{ pending_affil }}</span></div><p>Consulter et valider les enseignants souhaitant rejoindre l'école.</p></a>
+  <a class="card" href="{{ url_for('school_admin.enrolments') }}"><div class="card-hd">Demandes d'inscription <span class="badge badge-warn">{{ pending_enrol }}</span></div><p>Accepter ou rejeter les nouvelles inscriptions.</p></a>
+  <a class="card" href="{{ url_for('school_admin.staff') }}"><div class="card-hd">Personnel de l'établissement</div><p>Créer les comptes des intendants et censeurs, puis leur attribuer des tâches.</p></a>
+</div>
+<form data-api-form action="{{ url_for('school_admin.submit_bilan') }}" data-success="Bilan mis à jour." data-reload="true" class="card">
+  <label>Taux de réussite (%)
+    <input class="inp" type="number" name="taux_reussite" min="0" max="100" step="0.1" value="{{ school.taux_reussite }}" required>
+  </label>
+  <button class="btn btn-p" type="submit">Mettre à jour le bilan</button>
+</form>
+{% endblock %}

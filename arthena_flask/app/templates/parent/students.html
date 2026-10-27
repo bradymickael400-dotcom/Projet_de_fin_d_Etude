@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="pg-title">Mes élèves</h1>
+<p style="color:var(--t2);margin-bottom:1rem">Consultez les notes, présences, remarques et paiements de chaque enfant.</p>
+<div class="s-grid">
+{% for s in students %}
+  <a class="s-card" href="{{ url_for('parent.student_detail', student_id=s.id) }}">
+    <div class="avatar" style="margin:0 auto .8rem">{{ s.photo_initiale or s.prenom[0] }}</div>
+    <div class="s-name">{{ s.prenom }} {{ s.nom }}</div>
+    <div class="s-cls">{{ s.classe }} · {{ s.school.nom }}</div>
+  </a>
+{% else %}<div class="empty">Aucun élève n'est encore rattaché à votre compte.</div>
+{% endfor %}
+</div>
+{% endblock %}

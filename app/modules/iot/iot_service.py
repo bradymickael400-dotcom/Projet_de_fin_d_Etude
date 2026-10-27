@@ -156,6 +156,26 @@ def _persist_validated_telemetry(validated, raw_id, device, relation, remote_add
         actor_role, actor_id,
     )
     db.session.commit()
+    # These secondary evaluators run after telemetry is durable. A bad optional
+    # zone/risk rule must never roll back a valid device reading.
+    try:
+        from app.services.geofence_service import notify_zone_entries
+        position = validated.get("position") or {}
+        notify_zone_entries(
+            relation.black_box_id, position.get("latitude"), position.get("longitude"),
+            validated["timestamp"], device.device_uid, validated["sequence"],
+        )
+    except Exception:
+        db.session.rollback()
+        import logging
+        logging.getLogger(__name__).exception("Évaluation des zones géographiques indisponible")
+    try:
+        from app.services.proactive_risk_service import create_proactive_risk_notification
+        create_proactive_risk_notification(relation.black_box_id, device.device_uid, validated["sequence"])
+    except Exception:
+        db.session.rollback()
+        import logging
+        logging.getLogger(__name__).exception("Évaluation proactive des risques indisponible")
     opening_alert = event_payload.get("alert") or {}
     if opening_alert.get("raised") and opening_alert.get("label") == "OUVERTURE_CONTENEUR":
         from app.utils import _sceller_evenement

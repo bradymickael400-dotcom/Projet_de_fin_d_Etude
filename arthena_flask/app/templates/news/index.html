@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Actualités éducatives du Cameroun — Arthena{% endblock %}
+{% block content %}
+<section class="news-page">
+  <div class="news-page-head">
+    <div>
+      <span class="eyebrow" data-i18n="newsWatch">Veille éducative camerounaise</span>
+      <h1 class="pg-title" data-i18n="newsTitle">Actualités des écoles et décisions officielles</h1>
+      <p data-i18n="newsIntro">Une sélection actualisée chaque jour, classée par pertinence et toujours reliée à sa source.</p>
+    </div>
+    <span class="news-freshness"><i class="fas fa-rotate"></i> <span data-i18n="dailyUpdate">Actualisation quotidienne</span></span>
+  </div>
+  <div class="news-filters" data-news-filters>
+    <button class="active" data-news-filter="all" data-i18n="allNews">Tout</button>
+    <button data-news-filter="decision" data-i18n="decisions">Décisions</button>
+    <button data-news-filter="etablissement" data-i18n="institutions">Établissements</button>
+    <button data-news-filter="examen" data-i18n="exams">Examens</button>
+    <button data-news-filter="enseignant" data-i18n="teachers">Enseignants</button>
+    <button data-news-filter="innovation" data-i18n="innovation">Innovation</button>
+  </div>
+  {% if articles %}
+  <div class="news-grid">
+    {% for article in articles %}
+    <article class="news-card" data-news-category="{{ article.category }}">
+      <div class="news-meta">
+        <span class="news-category">{{ article.category|capitalize }}</span>
+        {% if article.is_verified_source %}<span class="verified-source"><i class="fas fa-circle-check"></i> Source reconnue</span>{% endif %}
+      </div>
+      <h2>{{ article.title }}</h2>
+      <p>{{ article.summary or "Consultez la publication originale pour lire l'information complète." }}</p>
+      <footer><span>{{ article.source }} · {{ article.published_at.strftime('%d/%m/%Y') }}</span><a href="{{ article.url }}" target="_blank" rel="noopener noreferrer">Lire la source <i class="fas fa-arrow-up-right-from-square"></i></a></footer>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card empty-news">
+    <i class="fas fa-satellite-dish"></i>
+    <h2>La première veille est en préparation</h2>
+    <p>Le collecteur quotidien publiera ici les informations éducatives vérifiables. Aucune actualité ne sera inventée en cas d’indisponibilité d’une source.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

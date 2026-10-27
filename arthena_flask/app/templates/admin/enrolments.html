@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="pg-title">Demandes d'inscription</h1>
+{% for r in requests %}
+  <div class="card" data-removable>
+    <div class="card-hd"><span>{{ r.prenom }} {{ r.nom }} — {{ r.classe }}</span><span class="badge {{ 'badge-ok' if r.documents_statut == 'conforme' else 'badge-err' if r.documents_statut == 'non_conforme' else 'badge-warn' }}">Documents : {{ r.documents_statut }}</span></div>
+    <p>Âge : {{ r.age }} ans · {{ "Déjà élève" if r.ancien_eleve else "Première inscription dans l'établissement" }}</p>
+    {% if r.motif_nouvelle_ecole %}<p><strong>Motif :</strong> {{ r.motif_nouvelle_ecole }}</p>{% endif %}
+    <div class="enrolment-actions">
+      <a class="btn btn-s" href="{{ url_for('school_admin.enrolment_document', req_id=r.id, kind='acte-naissance') }}"><i class="fas fa-file-shield"></i> Acte de naissance</a>
+      <a class="btn btn-s" href="{{ url_for('school_admin.enrolment_document', req_id=r.id, kind='ancien-bulletin') }}"><i class="fas fa-file-lines"></i> Ancien bulletin</a>
+      <button class="btn btn-p" data-api-action="{{ url_for('school_admin.review_documents', req_id=r.id, decision='conforme') }}" data-success="Documents déclarés conformes.">Documents conformes</button>
+      <button class="btn btn-err" data-api-action="{{ url_for('school_admin.review_documents', req_id=r.id, decision='non_conforme') }}" data-success="Documents déclarés non conformes.">Non conformes</button>
+    </div>
+    <hr>
+    <button class="btn btn-p" data-api-action="{{ url_for('school_admin.accept_enrolment', req_id=r.id) }}" data-success="Inscription acceptée.">Valider l'inscription</button>
+    <button class="btn btn-err" data-api-action="{{ url_for('school_admin.reject_enrolment', req_id=r.id) }}" data-success="Inscription rejetée.">Rejeter</button>
+  </div>
+{% else %}
+  <p>Aucune demande en attente.</p>
+{% endfor %}
+{% endblock %}

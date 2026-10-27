@@ -13,8 +13,6 @@ from sqlalchemy import text
 from app import db, limiter
 from app.utils import *
 from app.utils import get_boite_for_client
-from google.api_core.client_options import ClientOptions
-from google.ai.generativelanguage import GenerativeServiceClient, GenerateContentRequest, Content, Part
 from app.security import current_identity, roles_required
 
 dash_bp = Blueprint("dashboard", __name__)

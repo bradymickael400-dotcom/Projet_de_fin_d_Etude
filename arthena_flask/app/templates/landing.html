@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}Arthena — La communauté scolaire, enfin réunie{% endblock %}
+{% block content %}
+<div class="landing">
+  <header class="public-nav">
+    <a class="brand brand-dark" href="#top">Art<span>hena</span></a>
+    <nav>
+      <a href="#solution" data-i18n="solution">Solution</a>
+      <a href="#benefits" data-i18n="benefits">Bénéfices</a>
+      <a href="#schools-cm" data-i18n="schoolLevels">Établissements</a>
+      <a href="{{ url_for('news.index') }}" data-i18n="news">Actualités</a>
+      <a href="{{ url_for('auth.request_school') }}">Ajouter mon établissement</a>
+      <a href="#trust" data-i18n="trust">Confiance</a>
+    </nav>
+    <div class="public-actions">
+      <button class="tool-btn" type="button" data-language-toggle>EN</button>
+      <button class="tool-btn" type="button" data-theme-toggle aria-label="Changer de thème"><i class="fas fa-moon"></i></button>
+      {% if current_user.is_authenticated %}
+      <a class="btn btn-p" href="{{ role_dashboard_url }}" data-i18n="dashboard">Tableau de bord</a>
+      {% else %}
+      <a class="btn btn-s" href="{{ url_for('auth.login') }}" data-i18n="login">Connexion</a>
+      <a class="btn btn-p" href="{{ url_for('auth.register') }}" data-i18n="subscribe">Souscrire</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero-section">
+      <div class="hero-copy">
+        <span class="eyebrow" data-i18n="heroEyebrow">L’école connectée, humaine et accessible</span>
+        <h1 data-i18n="heroTitle">Une seule plateforme pour rapprocher les familles, les écoles et les enseignants.</h1>
+        <p data-i18n="heroText">Arthena simplifie les inscriptions, rend le suivi scolaire transparent et donne aux équipes éducatives les bons outils pour agir au bon moment.</p>
+        <div class="hero-actions">
+          <a class="btn btn-p btn-lg" href="{{ url_for('auth.register') }}" data-i18n="startNow">Commencer maintenant</a>
+          <a class="btn btn-ghost btn-lg" href="#solution" data-i18n="discover">Découvrir Arthena</a>
+        </div>
+        <div class="trust-line"><i class="fas fa-shield-halved"></i><span data-i18n="privacyFirst">Confidentialité, contrôle d’accès et traçabilité dès la conception.</span></div>
+      </div>
+      <div class="hero-visual cameroon-hero" aria-label="Élèves camerounais dans une salle numérique">
+        <div class="visual-glow"></div>
+        <div class="cameroon-slideshow" data-slideshow data-interval="4500">
+          <img class="active" src="{{ url_for('static', filename='img/cameroon/digital-classroom.jpg') }}" alt="Enseignant et élèves camerounais pendant un cours d'informatique">
+          <img src="{{ url_for('static', filename='img/cameroon/primary-school.jpg') }}" alt="Élèves d'une école primaire camerounaise">
+          <img src="{{ url_for('static', filename='img/cameroon/secondary-students.jpg') }}" alt="Élèves du secondaire au Cameroun">
+          <img src="{{ url_for('static', filename='img/cameroon/classroom.jpg') }}" alt="Salle de classe camerounaise">
+          <img src="{{ url_for('static', filename='img/cameroon/school-event.jpg') }}" alt="Événement dans une école camerounaise">
+          <img src="{{ url_for('static', filename='img/cameroon/nursery.jpg') }}" alt="Élèves de maternelle au Cameroun">
+          <img src="{{ url_for('static', filename='img/cameroon/primary-school-2.jpg') }}" alt="Écoliers camerounais dans leur établissement">
+          <img src="{{ url_for('static', filename='img/cameroon/primary-school-3.jpg') }}" alt="Vie scolaire dans une école primaire camerounaise">
+          <img src="{{ url_for('static', filename='img/cameroon/college.jpg') }}" alt="Élèves d'un collège camerounais">
+          <div class="slide-dots" aria-label="Choisir une photographie"></div>
+        </div>
+        <div class="hero-image-badge"><span class="cm-star">★</span><div><strong data-i18n="builtForCameroon">Pensée pour le Cameroun</strong><small data-i18n="fromPrimaryToHigh">Du primaire au lycée</small></div></div>
+      </div>
+    </section>
+
+    <section class="cm-stat-section">
+      <div class="section-intro">
+        <span class="eyebrow">Comprendre l’éducation camerounaise</span>
+        <h2>Des chiffres qui montrent pourquoi chaque suivi compte.</h2>
+      </div>
+      <div class="cm-stat-grid">
+        <a href="https://www.journaletudiant.com/baccalaureat-esg-2026-des-resultats-en-baisse/" target="_blank" rel="noopener"><strong>45,92 %</strong><span>de réussite au Baccalauréat ESG 2026</span><small>OBC, résultats publiés le 15 juillet 2026</small></a>
+        <a href="https://www.journaletudiant.com/baccalaureat-esg-2026-des-resultats-en-baisse/" target="_blank" rel="noopener"><strong>54 455</strong><span>admis au Baccalauréat ESG sur 131 402 candidats présents</span><small>Session camerounaise 2026</small></a>
+        <a href="https://www.lebledparle.com/dossier/le-probatoire-industriel-serie-f-affiche-un-taux-de-reussite-de-22/" target="_blank" rel="noopener"><strong>22,42 %</strong><span>de réussite au Probatoire industriel série F</span><small>Session camerounaise 2026</small></a>
+        <a href="https://www.minesec.gov.cm/web/index.php/fr/actualites/694-reprise-de-la-session-du-gce-2026" target="_blank" rel="noopener"><strong>182 000+</strong><span>candidats au GCE Ordinary et Advanced Level</span><small>MINESEC, session 2026</small></a>
+      </div>
+      <p class="stats-note">Données camerounaises de la session 2026 uniquement. Arthena affiche la nature exacte de chaque examen et renvoie vers la publication d’origine ; aucun taux national non confirmé n’est extrapolé.</p>
+    </section>
+
+    <section class="section cm-schools-section" id="schools-cm">
+      <div class="section-intro">
+        <span class="eyebrow" data-i18n="cameroonSchools">Chaque établissement camerounais compte</span>
+        <h2 data-i18n="schoolLevelsTitle">Une continuité numérique du primaire au lycée.</h2>
+        <p data-i18n="schoolLevelsText">Arthena respecte les réalités des écoles publiques et privées, francophones et anglophones, en ville comme dans les zones moins connectées.</p>
+      </div>
+      <div class="school-level-grid">
+        <article><img src="{{ url_for('static', filename='img/cameroon/primary-school.jpg') }}" alt="Écoliers camerounais du primaire" loading="lazy"><div><span>01</span><h3 data-i18n="primary">Primaire</h3><p data-i18n="primaryText">Créer tôt un lien de confiance : inscription, présence, progression et messages essentiels accessibles aux familles.</p></div></article>
+        <article><img src="{{ url_for('static', filename='img/cameroon/secondary-students.jpg') }}" alt="Élèves camerounais en tenue scolaire" loading="lazy"><div><span>02</span><h3 data-i18n="college">Collège</h3><p data-i18n="collegeText">Suivre les matières, anticiper le décrochage et aider chaque adolescent à construire son orientation.</p></div></article>
+        <article><img src="{{ url_for('static', filename='img/cameroon/classroom.jpg') }}" alt="Salle de classe dans un établissement camerounais" loading="lazy"><div><span>03</span><h3 data-i18n="highSchool">Lycée</h3><p data-i18n="highSchoolText">Préparer examens et avenir professionnel avec des données claires, une communication rapide et un meilleur accompagnement.</p></div></article>
+      </div>
+    </section>
+
+    <section class="proof-strip">
+      <div><strong data-i18n="onePortal">1 portail</strong><span data-i18n="onePortalText">pour toute la vie scolaire</span></div>
+      <div><strong data-i18n="fourRoles">4 espaces</strong><span data-i18n="fourRolesText">adaptés à chaque acteur</span></div>
+      <div><strong data-i18n="twoLanguages">FR + EN</strong><span data-i18n="twoLanguagesText">pour une adoption inclusive</span></div>
+      <div><strong data-i18n="mobileFirst">Mobile first</strong><span data-i18n="mobileFirstText">pensé pour le terrain</span></div>
+    </section>
+
+    <section class="section" id="solution">
+      <div class="section-intro">
+        <span class="eyebrow" data-i18n="dailyNeeds">Des besoins quotidiens, une réponse claire</span>
+        <h2 data-i18n="solutionTitle">Moins de démarches. Plus de visibilité. Davantage de temps pour apprendre.</h2>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card"><i class="fas fa-people-roof"></i><h3 data-i18n="families">Pour les familles</h3><p data-i18n="familiesText">Inscriptions centralisées, notes, absences, paiements et alertes importantes dans un espace sécurisé.</p></article>
+        <article class="feature-card"><i class="fas fa-school"></i><h3 data-i18n="schools">Pour les établissements</h3><p data-i18n="schoolsText">Dossiers mieux organisés, validation rapide, pilotage des effectifs et communication structurée.</p></article>
+        <article class="feature-card"><i class="fas fa-chalkboard-user"></i><h3 data-i18n="teachers">Pour les enseignants</h3><p data-i18n="teachersText">Appel, notes, remarques, planning et candidatures multi-écoles réunis dans une interface simple.</p></article>
+      </div>
+    </section>
+
+    <section class="section benefit-section" id="benefits">
+      <div class="benefit-copy">
+        <span class="eyebrow" data-i18n="whySubscribe">Pourquoi souscrire ?</span>
+        <h2 data-i18n="benefitTitle">Une relation école-famille plus fluide et plus responsable.</h2>
+        <ul class="check-list">
+          <li><i class="fas fa-check"></i><span data-i18n="benefit1">Réduire les déplacements et les dossiers éparpillés.</span></li>
+          <li><i class="fas fa-check"></i><span data-i18n="benefit2">Détecter plus tôt absences, retards et difficultés.</span></li>
+          <li><i class="fas fa-check"></i><span data-i18n="benefit3">Recevoir les informations importantes par email.</span></li>
+          <li><i class="fas fa-check"></i><span data-i18n="benefit4">Retrouver des données cohérentes, accessibles selon votre rôle.</span></li>
+        </ul>
+      </div>
+      <div class="quote-card">
+        <i class="fas fa-quote-left"></i>
+        <p data-i18n="unescoPoint">Le numérique éducatif doit rester centré sur l’apprenant, soutenir l’interaction humaine et être pertinent, équitable, fondé sur des preuves et durable.</p>
+        <a href="https://www.unesco.org/en/articles/global-education-monitoring-report-2023-technology-education-tool-whose-terms" target="_blank" rel="noopener noreferrer">Rapport GEM 2023 — UNESCO</a>
+      </div>
+    </section>
+
+    <section class="section stakeholder-section">
+      <div class="section-intro">
+        <span class="eyebrow" data-i18n="sharedProgress">Une réussite partagée</span>
+        <h2 data-i18n="stakeholderTitle">Des bénéfices concrets pour ceux qui font vivre l’école.</h2>
+      </div>
+      <div class="stakeholder-grid">
+        <article>
+          <div class="stakeholder-icon teacher"><i class="fas fa-chalkboard-user"></i></div>
+          <h3 data-i18n="teacherBenefits">Ce que gagnent les enseignants</h3>
+          <ul>
+            <li data-i18n="teacherGain1">Moins de registres répétitifs et plus de temps pédagogique.</li>
+            <li data-i18n="teacherGain2">Une vue claire des absences, notes et besoins de chaque classe.</li>
+            <li data-i18n="teacherGain3">Des échanges traçables avec l’établissement et les familles.</li>
+            <li data-i18n="teacherGain4">Une meilleure visibilité des opportunités et candidatures auprès des écoles.</li>
+            <li data-i18n="teacherGain5">La valorisation du travail accompli et du suivi régulier.</li>
+          </ul>
+        </article>
+        <article>
+          <div class="stakeholder-icon school"><i class="fas fa-school-flag"></i></div>
+          <h3 data-i18n="schoolBenefits">Ce que gagnent les établissements</h3>
+          <ul>
+            <li data-i18n="schoolGain1">Une administration structurée des inscriptions et des effectifs.</li>
+            <li data-i18n="schoolGain2">Des indicateurs fiables pour agir avant qu’un problème s’aggrave.</li>
+            <li data-i18n="schoolGain3">Une communication cohérente qui renforce la confiance des familles.</li>
+            <li data-i18n="schoolGain4">Une image moderne et transparente, favorable aux nouvelles inscriptions.</li>
+            <li data-i18n="schoolGain5">Des données centralisées avec des accès limités selon les responsabilités.</li>
+          </ul>
+        </article>
+        <article>
+          <div class="stakeholder-icon parent"><i class="fas fa-people-roof"></i></div>
+          <h3 data-i18n="parentBenefits">Ce que gagnent les parents</h3>
+          <ul>
+            <li data-i18n="parentGain1">Être informés rapidement des absences, notes et décisions importantes.</li>
+            <li data-i18n="parentGain2">Réduire les déplacements et conserver les démarches au même endroit.</li>
+            <li data-i18n="parentGain3">Mieux dialoguer avec les équipes éducatives sur des faits précis.</li>
+            <li data-i18n="parentGain4">Comparer les établissements avec des informations plus lisibles.</li>
+            <li data-i18n="parentGain5">Accompagner l’enfant aujourd’hui pour préparer son métier de demain.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="future-section">
+      <img src="{{ url_for('static', filename='img/cameroon/school-event.jpg') }}" alt="Événement scolaire dans une école camerounaise" loading="lazy">
+      <div>
+        <span class="eyebrow" data-i18n="futureStarts">L’avenir commence dans nos écoles</span>
+        <h2 data-i18n="futureTitle">Chaque présence, chaque progrès et chaque encouragement construit le Cameroun de demain.</h2>
+        <p data-i18n="futureText">Médecins, ingénieurs, enseignants, entrepreneurs, agriculteurs modernes, artistes ou chercheurs : mieux relier l’école et la famille aide chaque jeune à transformer son potentiel en projet.</p>
+        <div class="career-tags"><span><i class="fas fa-stethoscope"></i> Santé</span><span><i class="fas fa-laptop-code"></i> Numérique</span><span><i class="fas fa-gears"></i> Ingénierie</span><span><i class="fas fa-seedling"></i> Agriculture</span></div>
+      </div>
+    </section>
+
+    <section class="section landing-news-section">
+      <div class="section-intro">
+        <span class="eyebrow" data-i18n="stayInformed">Comprendre pour mieux décider</span>
+        <h2 data-i18n="landingNewsTitle">L’actualité éducative du Cameroun, réunie au même endroit.</h2>
+        <p data-i18n="landingNewsText">Décisions officielles, examens, établissements, enseignants et innovations : une veille intelligente actualisée quotidiennement, avec la source originale.</p>
+      </div>
+      <div class="news-promo">
+        <div class="news-promo-visual"><span class="cm-flag" aria-label="Drapeau du Cameroun"><i></i><i>★</i><i></i></span><i class="fas fa-newspaper"></i></div>
+        <div><strong data-i18n="verifiedWatch">Une veille utile, transparente et vérifiable</strong><p data-i18n="verifiedWatchText">Le système collecte, déduplique et classe les sujets éducatifs. Il n’invente jamais d’information lorsque les sources sont indisponibles.</p></div>
+        <a class="btn btn-p" href="{{ url_for('news.index') }}" data-i18n="seeNews">Voir les actualités</a>
+      </div>
+    </section>
+
+    <section class="section" id="trust">
+      <div class="section-intro">
+        <span class="eyebrow" data-i18n="expertView">Ce que les références internationales nous enseignent</span>
+        <h2 data-i18n="trustTitle">La technologie est utile lorsqu’elle renforce la communauté éducative.</h2>
+      </div>
+      <div class="evidence-grid">
+        <article><i class="fas fa-user-shield"></i><h3 data-i18n="humanCentered">Centrée sur l’humain</h3><p data-i18n="humanCenteredText">Arthena accompagne les échanges entre personnes ; elle ne remplace ni l’enseignant ni le dialogue familial.</p><a href="https://www.unesco.org/gem-report/en/articles/why-technology-education-must-be-on-our-terms" target="_blank" rel="noopener">UNESCO</a></article>
+        <article><i class="fas fa-handshake-angle"></i><h3 data-i18n="familyEngagement">Familles engagées</h3><p data-i18n="familyEngagementText">L’UNICEF souligne l’importance de la collaboration avec les parents et les communautés dans l’apprentissage numérique.</p><a href="https://www.unicef.org/digitaleducation/community-engagement" target="_blank" rel="noopener">UNICEF</a></article>
+        <article><i class="fas fa-scale-balanced"></i><h3 data-i18n="responsibleEvidence">Choix responsables</h3><p data-i18n="responsibleEvidenceText">Nous privilégions l’utilité, la sécurité et les résultats concrets plutôt que la technologie pour elle-même.</p><a href="https://gem-report-2023.unesco.org/" target="_blank" rel="noopener">GEM Report</a></article>
+      </div>
+    </section>
+
+    <section class="cta-section">
+      <div><span class="eyebrow" data-i18n="ready">Prêt à simplifier la vie scolaire ?</span><h2 data-i18n="ctaTitle">Rejoignez une communauté qui place la réussite de chaque élève au centre.</h2></div>
+      <a class="btn btn-light btn-lg" href="{{ url_for('auth.register') }}" data-i18n="createAccount">Créer un compte</a>
+      <a class="btn btn-light btn-lg" href="{{ url_for('auth.request_school') }}">Ajouter mon établissement</a>
+    </section>
+  </main>
+  <footer class="public-footer"><a class="brand brand-dark" href="#top">Art<span>hena</span></a><p data-i18n="footerText">Une plateforme scolaire plus proche, plus claire et plus sûre.</p><a href="https://commons.wikimedia.org/wiki/Category:School_children_of_Cameroon" target="_blank" rel="noopener">Photos : Wikimedia Commons</a><span>© 2026 Arthena</span></footer>
+</div>
+{% endblock %}

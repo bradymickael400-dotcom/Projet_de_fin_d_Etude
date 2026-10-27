@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="pg-title">📚 Planning & classes</h1>
+<div class="grid g4">
+  <div class="stat"><div class="stat-v">{{ schools|length }}</div><div class="stat-l">Établissements</div></div>
+  <div class="stat"><div class="stat-v">{{ teacher.horaires|length }}</div><div class="stat-l">Créneaux</div></div>
+  <div class="stat"><div class="stat-v">{{ teacher.matieres_list()|length }}</div><div class="stat-l">Matières</div></div>
+  <div class="stat"><div class="stat-v">{{ teacher.prime_mensuelle() }} F</div><div class="stat-l">Prime estimée</div></div>
+</div>
+<section class="card"><div class="card-hd"><span>Mes classes</span><a class="btn btn-p btn-sm" href="{{ url_for('teacher.apply') }}">Rejoindre une école</a></div>
+  <div class="grid g2">
+  {% for school_id, classe in classes %}
+    <a class="s-card" href="{{ url_for('teacher.class_view', school_id=school_id, classe=classe) }}"><strong>{{ classe }}</strong><div class="s-cls">Faire l'appel et saisir les notes</div></a>
+  {% else %}<div class="empty">Aucune classe n'est encore assignée dans votre planning.</div>{% endfor %}
+  </div>
+</section>
+<section class="card"><div class="card-hd">Mon planning de la semaine</div><div class="tbl-wrap"><table><thead><tr><th>Jour</th><th>Heure</th><th>Matière</th><th>Classe</th><th>École</th></tr></thead><tbody>
+{% for h in teacher.horaires|sort(attribute='jour') %}<tr><td>{{ h.jour }}</td><td>{{ h.heure }}</td><td>{{ h.matiere }}</td><td><a href="{{ url_for('teacher.class_view', school_id=h.school_id, classe=h.classe) }}">{{ h.classe }}</a></td><td>{{ h.school_id }}</td></tr>
+{% else %}<tr><td colspan="5">Aucun créneau enregistré.</td></tr>{% endfor %}
+</tbody></table></div></section>
+<h2 class="pg-title">Mes établissements</h2>
+<div class="grid g2">
+{% for school in schools %}
+  <div class="card"><div class="card-hd">{{ school.nom }}</div><p>{{ school.ville }} · {{ school.type|capitalize }}</p></div>
+{% else %}<div class="empty">Vous n'êtes rattaché à aucun établissement.</div>
+{% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,3017 @@
+{
+  "dataset_id": "ARGOS-DEMO-TRANSPORT-2ROUTES-v1",
+  "synthetic": true,
+  "description": "Deux trajets de démonstration avec une heure de mesures minute par minute, incluant périodes stables et incidents simulés.",
+  "generated_at": "2026-10-27T03:47:00.434089+00:00",
+  "data_safety": "Les entreprises, chauffeurs, identifiants, valeurs et incidents sont fictifs. Les e-mails utilisent example.invalid. Le trajet complet n'est pas parcouru en une heure.",
+  "provisioning_order": [
+    "company",
+    "driver",
+    "container",
+    "black_box",
+    "thresholds",
+    "shipment_and_route",
+    "telemetry"
+  ],
+  "normative_context": {
+    "source_candidates": [
+      "IMO_SOLAS_1974",
+      "IMO_IMDG_CODE",
+      "UN_CMR_1956",
+      "CM_LAW_2001_015",
+      "ARGOS_THRESHOLD_RULES"
+    ],
+    "applicability": "TO_VERIFY",
+    "note": "Ne pas interpréter les seuils fictifs comme des limites légales."
+  },
+  "scenarios": [
+    {
+      "scenario_id": "china_cameroon",
+      "synthetic": true,
+      "mode": "sea",
+      "route": {
+        "origin": "Shanghai, Chine",
+        "destination": "Douala, Cameroun",
+        "waypoints": [
+          [
+            "Shanghai",
+            31.2304,
+            121.4737
+          ],
+          [
+            "Singapour",
+            1.2903,
+            103.8519
+          ],
+          [
+            "Colombo",
+            6.9271,
+            79.8612
+          ],
+          [
+            "Suez",
+            29.9668,
+            32.5498
+          ],
+          [
+            "Gibraltar",
+            36.1408,
+            -5.3536
+          ],
+          [
+            "Douala",
+            4.0511,
+            9.7679
+          ]
+        ],
+        "simulation_window_minutes": 60,
+        "window_note": "Première heure simulée du trajet; elle ne représente pas la durée complète du voyage.",
+        "playback_mode": "one_sample_per_minute"
+      },
+      "provisioning": {
+        "company": {
+          "name": "ARGOS Transport Démo",
+          "niu": "DEMO-CHINA_CAMEROON-NIU",
+          "login": "demo.company.china_cameroon",
+          "email": "demo-company@example.invalid",
+          "password_placeholder": "À définir hors de ce fichier"
+        },
+        "driver": {
+          "id_cni": "DEMO-CHINA_CAMEROON-DRIVER",
+          "first_name": "Conducteur",
+          "last_name": "Démo Mer",
+          "login": "demo.driver.china_cameroon",
+          "contact": "+237600000000",
+          "password_placeholder": "À définir hors de ce fichier"
+        },
+        "container": {
+          "container_number": "ARGU0000012",
+          "classification": "synthetic demo",
+          "company_link_required": true
+        },
+        "black_box": {
+          "serial": "ARGOS-DEMO-CHINA_CAMEROON",
+          "type": "continuous",
+          "deployment_date": "2026-01-01T08:00:00+00:00",
+          "firmware": "v2.1-demo",
+          "initial_parameters": {
+            "shock_max_g": 3.0,
+            "speed_max_kmh": 55,
+            "temperature_min_c": -10,
+            "temperature_max_c": 32,
+            "humidity_max_percent": 75,
+            "door_open_alert": true
+          },
+          "initial_route": [
+            [
+              "Shanghai",
+              31.2304,
+              121.4737
+            ],
+            [
+              "Singapour",
+              1.2903,
+              103.8519
+            ],
+            [
+              "Colombo",
+              6.9271,
+              79.8612
+            ],
+            [
+              "Suez",
+              29.9668,
+              32.5498
+            ],
+            [
+              "Gibraltar",
+              36.1408,
+              -5.3536
+            ],
+            [
+              "Douala",
+              4.0511,
+              9.7679
+            ]
+          ],
+          "driver_affiliation": "link driver to the created company and shipment"
+        },
+        "journey": {
+          "mode": "sea",
+          "from": "Shanghai, Chine",
+          "to": "Douala, Cameroun",
+          "assign_driver": true,
+          "assign_company": true,
+          "assign_container_and_black_box": true
+        }
+      },
+      "geofences": [
+        {
+          "id": "CN_SHANGHAI_PORT",
+          "name": "Port de Shanghai — périmètre de démonstration",
+          "enter_minute": 2
+        },
+        {
+          "id": "SG_STRAIT",
+          "name": "Détroit de Singapour — périmètre de démonstration",
+          "enter_minute": null
+        },
+        {
+          "id": "CM_DOUALA_PORT",
+          "name": "Port de Douala — périmètre de démonstration",
+          "enter_minute": null
+        }
+      ],
+      "expected_incidents": {
+        "speed_exceedance_minutes": [],
+        "shock_event_minutes": [
+          25,
+          26,
+          27
+        ],
+        "shock_count": 3,
+        "shock_sum_g": 11.1,
+        "door_open_minutes": [
+          37,
+          38
+        ],
+        "stationary_minutes": [
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52
+        ],
+        "stationary_zone": null
+      },
+      "samples": [
+        {
+          "minute": 0,
+          "timestamp": "2026-01-01T08:00:00+00:00",
+          "position": {
+            "latitude": 31.18,
+            "longitude": 121.4,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.15,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 1,
+          "timestamp": "2026-01-01T08:01:00+00:00",
+          "position": {
+            "latitude": 31.18302,
+            "longitude": 121.404228,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 2,
+          "timestamp": "2026-01-01T08:02:00+00:00",
+          "position": {
+            "latitude": 31.186041,
+            "longitude": 121.408457,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": "CN_SHANGHAI_PORT"
+        },
+        {
+          "minute": 3,
+          "timestamp": "2026-01-01T08:03:00+00:00",
+          "position": {
+            "latitude": 31.189061,
+            "longitude": 121.412685,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 4,
+          "timestamp": "2026-01-01T08:04:00+00:00",
+          "position": {
+            "latitude": 31.192081,
+            "longitude": 121.416914,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 5,
+          "timestamp": "2026-01-01T08:05:00+00:00",
+          "position": {
+            "latitude": 31.195101,
+            "longitude": 121.421142,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 6,
+          "timestamp": "2026-01-01T08:06:00+00:00",
+          "position": {
+            "latitude": 31.198122,
+            "longitude": 121.425371,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 7,
+          "timestamp": "2026-01-01T08:07:00+00:00",
+          "position": {
+            "latitude": 31.201142,
+            "longitude": 121.429599,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.15,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 8,
+          "timestamp": "2026-01-01T08:08:00+00:00",
+          "position": {
+            "latitude": 31.204162,
+            "longitude": 121.433827,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 9,
+          "timestamp": "2026-01-01T08:09:00+00:00",
+          "position": {
+            "latitude": 31.207183,
+            "longitude": 121.438056,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 10,
+          "timestamp": "2026-01-01T08:10:00+00:00",
+          "position": {
+            "latitude": 31.210203,
+            "longitude": 121.442284,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 11,
+          "timestamp": "2026-01-01T08:11:00+00:00",
+          "position": {
+            "latitude": 31.213223,
+            "longitude": 121.446513,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 12,
+          "timestamp": "2026-01-01T08:12:00+00:00",
+          "position": {
+            "latitude": 31.216244,
+            "longitude": 121.450741,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 13,
+          "timestamp": "2026-01-01T08:13:00+00:00",
+          "position": {
+            "latitude": 31.219264,
+            "longitude": 121.454969,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 14,
+          "timestamp": "2026-01-01T08:14:00+00:00",
+          "position": {
+            "latitude": 31.222284,
+            "longitude": 121.459198,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.15,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 15,
+          "timestamp": "2026-01-01T08:15:00+00:00",
+          "position": {
+            "latitude": 31.225304,
+            "longitude": 121.463426,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 16,
+          "timestamp": "2026-01-01T08:16:00+00:00",
+          "position": {
+            "latitude": 31.228325,
+            "longitude": 121.467655,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 17,
+          "timestamp": "2026-01-01T08:17:00+00:00",
+          "position": {
+            "latitude": 31.231345,
+            "longitude": 121.471883,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 18,
+          "timestamp": "2026-01-01T08:18:00+00:00",
+          "position": {
+            "latitude": 31.234365,
+            "longitude": 121.476112,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 19,
+          "timestamp": "2026-01-01T08:19:00+00:00",
+          "position": {
+            "latitude": 31.237386,
+            "longitude": 121.48034,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 20,
+          "timestamp": "2026-01-01T08:20:00+00:00",
+          "position": {
+            "latitude": 31.240406,
+            "longitude": 121.484568,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 21,
+          "timestamp": "2026-01-01T08:21:00+00:00",
+          "position": {
+            "latitude": 31.243426,
+            "longitude": 121.488797,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.15,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 22,
+          "timestamp": "2026-01-01T08:22:00+00:00",
+          "position": {
+            "latitude": 31.246447,
+            "longitude": 121.493025,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 23,
+          "timestamp": "2026-01-01T08:23:00+00:00",
+          "position": {
+            "latitude": 31.249467,
+            "longitude": 121.497254,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 24,
+          "timestamp": "2026-01-01T08:24:00+00:00",
+          "position": {
+            "latitude": 31.252487,
+            "longitude": 121.501482,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 25,
+          "timestamp": "2026-01-01T08:25:00+00:00",
+          "position": {
+            "latitude": 31.255507,
+            "longitude": 121.50571,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 3.4,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 26,
+          "timestamp": "2026-01-01T08:26:00+00:00",
+          "position": {
+            "latitude": 31.258528,
+            "longitude": 121.509939,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 4.1,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 27,
+          "timestamp": "2026-01-01T08:27:00+00:00",
+          "position": {
+            "latitude": 31.261548,
+            "longitude": 121.514167,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 3.6,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 28,
+          "timestamp": "2026-01-01T08:28:00+00:00",
+          "position": {
+            "latitude": 31.264568,
+            "longitude": 121.518396,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.15,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 29,
+          "timestamp": "2026-01-01T08:29:00+00:00",
+          "position": {
+            "latitude": 31.267589,
+            "longitude": 121.522624,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 30,
+          "timestamp": "2026-01-01T08:30:00+00:00",
+          "position": {
+            "latitude": 31.270609,
+            "longitude": 121.526853,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 31,
+          "timestamp": "2026-01-01T08:31:00+00:00",
+          "position": {
+            "latitude": 31.273629,
+            "longitude": 121.531081,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 32,
+          "timestamp": "2026-01-01T08:32:00+00:00",
+          "position": {
+            "latitude": 31.27665,
+            "longitude": 121.535309,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 33,
+          "timestamp": "2026-01-01T08:33:00+00:00",
+          "position": {
+            "latitude": 31.27967,
+            "longitude": 121.539538,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 34,
+          "timestamp": "2026-01-01T08:34:00+00:00",
+          "position": {
+            "latitude": 31.28344,
+            "longitude": 121.543096,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 35,
+          "timestamp": "2026-01-01T08:35:00+00:00",
+          "position": {
+            "latitude": 31.287303,
+            "longitude": 121.546572,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.15,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 36,
+          "timestamp": "2026-01-01T08:36:00+00:00",
+          "position": {
+            "latitude": 31.291165,
+            "longitude": 121.550048,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 37,
+          "timestamp": "2026-01-01T08:37:00+00:00",
+          "position": {
+            "latitude": 31.295027,
+            "longitude": 121.553525,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": true,
+            "security_alarm": true,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 38,
+          "timestamp": "2026-01-01T08:38:00+00:00",
+          "position": {
+            "latitude": 31.29889,
+            "longitude": 121.557001,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": true,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 39,
+          "timestamp": "2026-01-01T08:39:00+00:00",
+          "position": {
+            "latitude": 31.302752,
+            "longitude": 121.560477,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 40,
+          "timestamp": "2026-01-01T08:40:00+00:00",
+          "position": {
+            "latitude": 31.306615,
+            "longitude": 121.563953,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 41,
+          "timestamp": "2026-01-01T08:41:00+00:00",
+          "position": {
+            "latitude": 31.310477,
+            "longitude": 121.567429,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 42,
+          "timestamp": "2026-01-01T08:42:00+00:00",
+          "position": {
+            "latitude": 31.314339,
+            "longitude": 121.570905,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.15,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 43,
+          "timestamp": "2026-01-01T08:43:00+00:00",
+          "position": {
+            "latitude": 31.318202,
+            "longitude": 121.574382,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 44,
+          "timestamp": "2026-01-01T08:44:00+00:00",
+          "position": {
+            "latitude": 31.322064,
+            "longitude": 121.577858,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 45,
+          "timestamp": "2026-01-01T08:45:00+00:00",
+          "position": {
+            "latitude": 31.36,
+            "longitude": 121.59,
+            "speed_kmh": 0,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 46,
+          "timestamp": "2026-01-01T08:46:00+00:00",
+          "position": {
+            "latitude": 31.36,
+            "longitude": 121.59,
+            "speed_kmh": 0,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 47,
+          "timestamp": "2026-01-01T08:47:00+00:00",
+          "position": {
+            "latitude": 31.36,
+            "longitude": 121.59,
+            "speed_kmh": 0,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 48,
+          "timestamp": "2026-01-01T08:48:00+00:00",
+          "position": {
+            "latitude": 31.36,
+            "longitude": 121.59,
+            "speed_kmh": 0,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 49,
+          "timestamp": "2026-01-01T08:49:00+00:00",
+          "position": {
+            "latitude": 31.36,
+            "longitude": 121.59,
+            "speed_kmh": 0,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.15,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 50,
+          "timestamp": "2026-01-01T08:50:00+00:00",
+          "position": {
+            "latitude": 31.36,
+            "longitude": 121.59,
+            "speed_kmh": 0,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 51,
+          "timestamp": "2026-01-01T08:51:00+00:00",
+          "position": {
+            "latitude": 31.36,
+            "longitude": 121.59,
+            "speed_kmh": 0,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 52,
+          "timestamp": "2026-01-01T08:52:00+00:00",
+          "position": {
+            "latitude": 31.36,
+            "longitude": 121.59,
+            "speed_kmh": 0,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 53,
+          "timestamp": "2026-01-01T08:53:00+00:00",
+          "position": {
+            "latitude": 31.356826,
+            "longitude": 121.609143,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 54,
+          "timestamp": "2026-01-01T08:54:00+00:00",
+          "position": {
+            "latitude": 31.360688,
+            "longitude": 121.612619,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 55,
+          "timestamp": "2026-01-01T08:55:00+00:00",
+          "position": {
+            "latitude": 31.36455,
+            "longitude": 121.616095,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 56,
+          "timestamp": "2026-01-01T08:56:00+00:00",
+          "position": {
+            "latitude": 31.368413,
+            "longitude": 121.619572,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.15,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 57,
+          "timestamp": "2026-01-01T08:57:00+00:00",
+          "position": {
+            "latitude": 31.372275,
+            "longitude": 121.623048,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 58,
+          "timestamp": "2026-01-01T08:58:00+00:00",
+          "position": {
+            "latitude": 31.376138,
+            "longitude": 121.626524,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 59,
+          "timestamp": "2026-01-01T08:59:00+00:00",
+          "position": {
+            "latitude": 31.38,
+            "longitude": 121.63,
+            "speed_kmh": 34,
+            "heading_deg": 90,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 22.5,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        }
+      ]
+    },
+    {
+      "scenario_id": "bertoua_yaounde",
+      "synthetic": true,
+      "mode": "road",
+      "route": {
+        "origin": "Bertoua, Cameroun",
+        "destination": "Yaoundé, Cameroun",
+        "waypoints": [
+          [
+            "Bertoua",
+            4.577,
+            13.6846
+          ],
+          [
+            "Dimako",
+            4.383,
+            13.59
+          ],
+          [
+            "Abong-Mbang",
+            3.983,
+            13.183
+          ],
+          [
+            "Ayos",
+            3.9,
+            12.516
+          ],
+          [
+            "Awaé",
+            3.833,
+            11.683
+          ],
+          [
+            "Yaoundé",
+            3.848,
+            11.5021
+          ]
+        ],
+        "simulation_window_minutes": 60,
+        "window_note": "Première heure simulée du trajet; elle ne représente pas la durée complète du voyage.",
+        "playback_mode": "one_sample_per_minute"
+      },
+      "provisioning": {
+        "company": {
+          "name": "ARGOS Transport Démo",
+          "niu": "DEMO-BERTOUA_YAOUNDE-NIU",
+          "login": "demo.company.bertoua_yaounde",
+          "email": "demo-company@example.invalid",
+          "password_placeholder": "À définir hors de ce fichier"
+        },
+        "driver": {
+          "id_cni": "DEMO-BERTOUA_YAOUNDE-DRIVER",
+          "first_name": "Conducteur",
+          "last_name": "Démo Route",
+          "login": "demo.driver.bertoua_yaounde",
+          "contact": "+237600000000",
+          "password_placeholder": "À définir hors de ce fichier"
+        },
+        "container": {
+          "container_number": "ARGU0000028",
+          "classification": "synthetic demo",
+          "company_link_required": true
+        },
+        "black_box": {
+          "serial": "ARGOS-DEMO-BERTOUA_YAOUNDE",
+          "type": "continuous",
+          "deployment_date": "2026-01-01T08:00:00+00:00",
+          "firmware": "v2.1-demo",
+          "initial_parameters": {
+            "shock_max_g": 3.0,
+            "speed_max_kmh": 80,
+            "temperature_min_c": -10,
+            "temperature_max_c": 32,
+            "humidity_max_percent": 75,
+            "door_open_alert": true
+          },
+          "initial_route": [
+            [
+              "Bertoua",
+              4.577,
+              13.6846
+            ],
+            [
+              "Dimako",
+              4.383,
+              13.59
+            ],
+            [
+              "Abong-Mbang",
+              3.983,
+              13.183
+            ],
+            [
+              "Ayos",
+              3.9,
+              12.516
+            ],
+            [
+              "Awaé",
+              3.833,
+              11.683
+            ],
+            [
+              "Yaoundé",
+              3.848,
+              11.5021
+            ]
+          ],
+          "driver_affiliation": "link driver to the created company and shipment"
+        },
+        "journey": {
+          "mode": "road",
+          "from": "Bertoua, Cameroun",
+          "to": "Yaoundé, Cameroun",
+          "assign_driver": true,
+          "assign_company": true,
+          "assign_container_and_black_box": true
+        }
+      },
+      "geofences": [
+        {
+          "id": "CM_BERTOUA",
+          "name": "Bertoua — zone urbaine de démonstration",
+          "enter_minute": 0
+        },
+        {
+          "id": "CM_N10_BERTOUA_DIMAKO",
+          "name": "Périmètre simulé N10 — secteur Bertoua–Dimako",
+          "enter_minute": 15,
+          "stop_zone": true
+        },
+        {
+          "id": "CM_ABONG_MBANG",
+          "name": "Abong-Mbang — zone urbaine de démonstration",
+          "enter_minute": null
+        },
+        {
+          "id": "CM_AYOS",
+          "name": "Ayos — zone urbaine de démonstration",
+          "enter_minute": null
+        },
+        {
+          "id": "CM_YAOUNDE",
+          "name": "Yaoundé — zone urbaine de démonstration",
+          "enter_minute": null
+        }
+      ],
+      "expected_incidents": {
+        "speed_exceedance_minutes": [
+          30,
+          31,
+          32,
+          33
+        ],
+        "shock_event_minutes": [
+          18,
+          19,
+          20,
+          21
+        ],
+        "shock_count": 4,
+        "shock_sum_g": 384,
+        "door_open_minutes": [
+          37,
+          38,
+          39
+        ],
+        "stationary_minutes": [
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52
+        ],
+        "stationary_zone": "Périmètre simulé N10 — secteur Bertoua–Dimako"
+      },
+      "samples": [
+        {
+          "minute": 0,
+          "timestamp": "2026-01-01T08:00:00+00:00",
+          "position": {
+            "latitude": 4.577,
+            "longitude": 13.6846,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.15,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": "CM_BERTOUA"
+        },
+        {
+          "minute": 1,
+          "timestamp": "2026-01-01T08:01:00+00:00",
+          "position": {
+            "latitude": 4.575595,
+            "longitude": 13.68361,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 2,
+          "timestamp": "2026-01-01T08:02:00+00:00",
+          "position": {
+            "latitude": 4.574191,
+            "longitude": 13.68262,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 3,
+          "timestamp": "2026-01-01T08:03:00+00:00",
+          "position": {
+            "latitude": 4.572786,
+            "longitude": 13.68163,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 4,
+          "timestamp": "2026-01-01T08:04:00+00:00",
+          "position": {
+            "latitude": 4.571382,
+            "longitude": 13.68064,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 5,
+          "timestamp": "2026-01-01T08:05:00+00:00",
+          "position": {
+            "latitude": 4.569977,
+            "longitude": 13.679651,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 6,
+          "timestamp": "2026-01-01T08:06:00+00:00",
+          "position": {
+            "latitude": 4.568573,
+            "longitude": 13.678661,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 7,
+          "timestamp": "2026-01-01T08:07:00+00:00",
+          "position": {
+            "latitude": 4.567168,
+            "longitude": 13.677671,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.15,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 8,
+          "timestamp": "2026-01-01T08:08:00+00:00",
+          "position": {
+            "latitude": 4.565763,
+            "longitude": 13.676681,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 9,
+          "timestamp": "2026-01-01T08:09:00+00:00",
+          "position": {
+            "latitude": 4.564359,
+            "longitude": 13.675691,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 10,
+          "timestamp": "2026-01-01T08:10:00+00:00",
+          "position": {
+            "latitude": 4.562954,
+            "longitude": 13.674701,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 11,
+          "timestamp": "2026-01-01T08:11:00+00:00",
+          "position": {
+            "latitude": 4.56155,
+            "longitude": 13.673711,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 12,
+          "timestamp": "2026-01-01T08:12:00+00:00",
+          "position": {
+            "latitude": 4.560145,
+            "longitude": 13.672721,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 13,
+          "timestamp": "2026-01-01T08:13:00+00:00",
+          "position": {
+            "latitude": 4.558741,
+            "longitude": 13.671731,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 14,
+          "timestamp": "2026-01-01T08:14:00+00:00",
+          "position": {
+            "latitude": 4.557336,
+            "longitude": 13.670742,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.15,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 15,
+          "timestamp": "2026-01-01T08:15:00+00:00",
+          "position": {
+            "latitude": 4.555931,
+            "longitude": 13.669752,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": "CM_N10_BERTOUA_DIMAKO"
+        },
+        {
+          "minute": 16,
+          "timestamp": "2026-01-01T08:16:00+00:00",
+          "position": {
+            "latitude": 4.554527,
+            "longitude": 13.668762,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 17,
+          "timestamp": "2026-01-01T08:17:00+00:00",
+          "position": {
+            "latitude": 4.553122,
+            "longitude": 13.667772,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 18,
+          "timestamp": "2026-01-01T08:18:00+00:00",
+          "position": {
+            "latitude": 4.551718,
+            "longitude": 13.666782,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 94,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 19,
+          "timestamp": "2026-01-01T08:19:00+00:00",
+          "position": {
+            "latitude": 4.550313,
+            "longitude": 13.665792,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 101,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 98
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 20,
+          "timestamp": "2026-01-01T08:20:00+00:00",
+          "position": {
+            "latitude": 4.548908,
+            "longitude": 13.664802,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 97,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 21,
+          "timestamp": "2026-01-01T08:21:00+00:00",
+          "position": {
+            "latitude": 4.547504,
+            "longitude": 13.663812,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 92,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 22,
+          "timestamp": "2026-01-01T08:22:00+00:00",
+          "position": {
+            "latitude": 4.546099,
+            "longitude": 13.662822,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 23,
+          "timestamp": "2026-01-01T08:23:00+00:00",
+          "position": {
+            "latitude": 4.544695,
+            "longitude": 13.661832,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 24,
+          "timestamp": "2026-01-01T08:24:00+00:00",
+          "position": {
+            "latitude": 4.54329,
+            "longitude": 13.660843,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 25,
+          "timestamp": "2026-01-01T08:25:00+00:00",
+          "position": {
+            "latitude": 4.541886,
+            "longitude": 13.659853,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 26,
+          "timestamp": "2026-01-01T08:26:00+00:00",
+          "position": {
+            "latitude": 4.540481,
+            "longitude": 13.658863,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 27,
+          "timestamp": "2026-01-01T08:27:00+00:00",
+          "position": {
+            "latitude": 4.539076,
+            "longitude": 13.657873,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 28,
+          "timestamp": "2026-01-01T08:28:00+00:00",
+          "position": {
+            "latitude": 4.537672,
+            "longitude": 13.656883,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.15,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 29,
+          "timestamp": "2026-01-01T08:29:00+00:00",
+          "position": {
+            "latitude": 4.536267,
+            "longitude": 13.655893,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 30,
+          "timestamp": "2026-01-01T08:30:00+00:00",
+          "position": {
+            "latitude": 4.534866,
+            "longitude": 13.654899,
+            "speed_kmh": 3.5,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 31,
+          "timestamp": "2026-01-01T08:31:00+00:00",
+          "position": {
+            "latitude": 4.533491,
+            "longitude": 13.653868,
+            "speed_kmh": 4.2,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 32,
+          "timestamp": "2026-01-01T08:32:00+00:00",
+          "position": {
+            "latitude": 4.532116,
+            "longitude": 13.652837,
+            "speed_kmh": 5.1,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 33,
+          "timestamp": "2026-01-01T08:33:00+00:00",
+          "position": {
+            "latitude": 4.530742,
+            "longitude": 13.651806,
+            "speed_kmh": 3.8,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 34,
+          "timestamp": "2026-01-01T08:34:00+00:00",
+          "position": {
+            "latitude": 4.529367,
+            "longitude": 13.650775,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 35,
+          "timestamp": "2026-01-01T08:35:00+00:00",
+          "position": {
+            "latitude": 4.527992,
+            "longitude": 13.649744,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.15,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 36,
+          "timestamp": "2026-01-01T08:36:00+00:00",
+          "position": {
+            "latitude": 4.526618,
+            "longitude": 13.648713,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 37,
+          "timestamp": "2026-01-01T08:37:00+00:00",
+          "position": {
+            "latitude": 4.525243,
+            "longitude": 13.647682,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": true,
+            "security_alarm": true,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 38,
+          "timestamp": "2026-01-01T08:38:00+00:00",
+          "position": {
+            "latitude": 4.523868,
+            "longitude": 13.646651,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": true,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 39,
+          "timestamp": "2026-01-01T08:39:00+00:00",
+          "position": {
+            "latitude": 4.522494,
+            "longitude": 13.64562,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": true,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 97
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 40,
+          "timestamp": "2026-01-01T08:40:00+00:00",
+          "position": {
+            "latitude": 4.521119,
+            "longitude": 13.644589,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 41,
+          "timestamp": "2026-01-01T08:41:00+00:00",
+          "position": {
+            "latitude": 4.519744,
+            "longitude": 13.643558,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 42,
+          "timestamp": "2026-01-01T08:42:00+00:00",
+          "position": {
+            "latitude": 4.51837,
+            "longitude": 13.642527,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.15,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 43,
+          "timestamp": "2026-01-01T08:43:00+00:00",
+          "position": {
+            "latitude": 4.516995,
+            "longitude": 13.641496,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 44,
+          "timestamp": "2026-01-01T08:44:00+00:00",
+          "position": {
+            "latitude": 4.51562,
+            "longitude": 13.640465,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 45,
+          "timestamp": "2026-01-01T08:45:00+00:00",
+          "position": {
+            "latitude": 4.52,
+            "longitude": 13.645,
+            "speed_kmh": 0,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 46,
+          "timestamp": "2026-01-01T08:46:00+00:00",
+          "position": {
+            "latitude": 4.52,
+            "longitude": 13.645,
+            "speed_kmh": 0,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 47,
+          "timestamp": "2026-01-01T08:47:00+00:00",
+          "position": {
+            "latitude": 4.52,
+            "longitude": 13.645,
+            "speed_kmh": 0,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 48,
+          "timestamp": "2026-01-01T08:48:00+00:00",
+          "position": {
+            "latitude": 4.52,
+            "longitude": 13.645,
+            "speed_kmh": 0,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 49,
+          "timestamp": "2026-01-01T08:49:00+00:00",
+          "position": {
+            "latitude": 4.52,
+            "longitude": 13.645,
+            "speed_kmh": 0,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.15,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 50,
+          "timestamp": "2026-01-01T08:50:00+00:00",
+          "position": {
+            "latitude": 4.52,
+            "longitude": 13.645,
+            "speed_kmh": 0,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 51,
+          "timestamp": "2026-01-01T08:51:00+00:00",
+          "position": {
+            "latitude": 4.52,
+            "longitude": 13.645,
+            "speed_kmh": 0,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 52,
+          "timestamp": "2026-01-01T08:52:00+00:00",
+          "position": {
+            "latitude": 4.52,
+            "longitude": 13.645,
+            "speed_kmh": 0,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "simulated_anomaly",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 53,
+          "timestamp": "2026-01-01T08:53:00+00:00",
+          "position": {
+            "latitude": 4.503248,
+            "longitude": 13.631186,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 54,
+          "timestamp": "2026-01-01T08:54:00+00:00",
+          "position": {
+            "latitude": 4.501873,
+            "longitude": 13.630155,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 55,
+          "timestamp": "2026-01-01T08:55:00+00:00",
+          "position": {
+            "latitude": 4.500499,
+            "longitude": 13.629124,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 56,
+          "timestamp": "2026-01-01T08:56:00+00:00",
+          "position": {
+            "latitude": 4.499124,
+            "longitude": 13.628093,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.15,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 57,
+          "timestamp": "2026-01-01T08:57:00+00:00",
+          "position": {
+            "latitude": 4.497749,
+            "longitude": 13.627062,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 58,
+          "timestamp": "2026-01-01T08:58:00+00:00",
+          "position": {
+            "latitude": 4.496375,
+            "longitude": 13.626031,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        },
+        {
+          "minute": 59,
+          "timestamp": "2026-01-01T08:59:00+00:00",
+          "position": {
+            "latitude": 4.495,
+            "longitude": 13.625,
+            "speed_kmh": 62,
+            "heading_deg": 315,
+            "accuracy_m": 8
+          },
+          "sensors": {
+            "temperature_c": 26.2,
+            "humidity_percent": 61.0,
+            "shock_g": 0.08,
+            "door_open": false,
+            "security_alarm": false,
+            "pressure_hpa": 1008.0,
+            "battery_percent": 96
+          },
+          "event": "stable",
+          "zone_transition_expected": null
+        }
+      ]
+    }
+  ]
+}

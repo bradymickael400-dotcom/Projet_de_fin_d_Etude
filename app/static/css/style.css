@@ -168,6 +168,7 @@ html,body{height:100%;font-family:var(--font);background:radial-gradient(circle 
 }
 .notif-btn:hover{border-color:var(--cyan);color:var(--cyan)}
 .notif-badge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:9px;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
+.notif-badge[hidden]{display:none!important}
 .user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--cyan2),var(--blue2));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--border2)}
 /* MAIN LAYOUT */
 .main-layout{display:flex;flex:1;overflow:hidden}
@@ -235,7 +236,7 @@ html,body{height:100%;font-family:var(--font);background:radial-gradient(circle 
 .cube-3d-large{font-size:1em;color:var(--cyan)}
 @keyframes cubeBounce3d{0%,100%{transform:translateY(0) rotateX(0deg) rotateY(0deg) scale(1)}18%{transform:translateY(-9px) rotateX(18deg) rotateY(-16deg) scale(1.08)}32%{transform:translateY(0) rotateX(0deg) rotateY(0deg) scale(.98)}44%{transform:translateY(-4px) rotateX(10deg) rotateY(10deg) scale(1.03)}58%{transform:translateY(0) rotateX(0deg) rotateY(0deg) scale(1)}}
 .stat-label{font-size:11px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
-.stat-value{font-size:28px;font-weight:700;color:var(--text);font-family:var(--mono);line-height:1}
+.stat-value{font-size:28px;font-weight:700;color:var(--text);font-family:var(--font);line-height:1}
 .stat-sub{font-size:12px;color:var(--text3);margin-top:6px}
 .stat-trend{font-size:12px;font-weight:600}
 .stat-trend.up{color:var(--green)}
@@ -243,14 +244,15 @@ html,body{height:100%;font-family:var(--font);background:radial-gradient(circle 
 /* MAP */
 .map-container{border-radius:var(--radius2);overflow:hidden;border:1px solid var(--border);position:relative}
 #map-main,#map-sale,#map-mini,.leaflet-map{height:100%;width:100%}
-.leaflet-container{background:#07090f!important}
+.leaflet-container{background-color:#0a1724!important;background-image:radial-gradient(ellipse at 48% 48%,rgba(56,189,248,.09),transparent 38%),linear-gradient(rgba(126,171,196,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(126,171,196,.07) 1px,transparent 1px)!important;background-size:auto,56px 56px,56px 56px!important}
 .map-overlay{position:absolute;top:10px;left:10px;z-index:500;display:flex;flex-direction:column;gap:6px}
-.map-legend{background:rgba(13,17,23,.9);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 12px;font-size:11px}
+.map-legend{background:rgba(13,17,23,.9);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 12px;font-size:12px}
 .legend-item{display:flex;align-items:center;gap:6px;margin:4px 0;color:var(--text2)}
 .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .map-controls{position:absolute;top:10px;right:10px;z-index:500;display:flex;flex-direction:column;gap:6px}
 .map-btn{background:rgba(13,17,23,.9);border:1px solid var(--border2);border-radius:var(--radius);width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--text2);transition:all var(--trans)}
 .map-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.map-btn:disabled{opacity:.38;cursor:not-allowed;filter:grayscale(1)}
 /* PULSAR ANIMATION */
 @keyframes pulse-ring{0%{transform:scale(.8);opacity:1}100%{transform:scale(2.2);opacity:0}}
 @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.7}}
@@ -580,9 +582,21 @@ li {
   }
 }
 
-/* --- Masquer l'attribution Leaflet --- */
+/* Attribution des fonds de carte: visible et lisible au-dessus des tuiles. */
 .leaflet-control-attribution {
-  display: none !important;
+  display: block !important;
+  width: max-content !important;
+  min-width: 220px !important;
+  white-space: nowrap !important;
+  max-width: calc(100% - 12px);
+  padding: 3px 6px !important;
+  background: rgba(11,17,32,.88) !important;
+  color: var(--text) !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+}
+.leaflet-control-attribution a {
+  color: var(--cyan) !important;
 }
 
 /* --- S'assurer que la sidebar défile bien sur tous les écrans --- */
@@ -804,6 +818,11 @@ li {
 .monitoring-map-panel {
   min-height: 0;
 }
+.monitoring-map-panel::after{display:none}
+.map-empty-overlay{position:absolute;z-index:450;left:50%;top:52%;display:grid;gap:6px;max-width:min(370px,calc(100% - 36px));padding:14px 18px;transform:translate(-50%,-50%);border:1px solid color-mix(in srgb,var(--cyan) 28%,var(--border));border-radius:12px;background:rgba(7,18,31,.88);color:var(--text);text-align:center;box-shadow:0 12px 28px rgba(0,0,0,.22);pointer-events:none}
+.map-empty-overlay[hidden]{display:none}
+.map-empty-overlay strong{font-size:13px}
+.map-empty-overlay span{font-size:12px;line-height:1.45;color:var(--text3)}
 
 .monitoring-resources-panel {
   min-height: 0;
@@ -1248,4 +1267,143 @@ body:has(.modal-overlay) .leaflet-control-zoom {
     font-size: 14px;
     outline: none;
     transition: border-color 0.3s ease;
+}
+
+/* Phase 3: consolidated GPS surface and global ARGOS assistant */
+.map-data-status,.map-empty-state { color:var(--text3);font-size:13px;line-height:1.5; }
+.map-data-status { margin-top:6px; }
+.map-position-item { width:100%;display:flex;align-items:flex-start;gap:10px;padding:11px 9px;margin:0 0 6px;text-align:left;color:var(--text);background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:pointer; }
+.map-position-item:hover { border-color:var(--cyan);background:var(--bg4); }
+.map-position-item:focus-visible,.argos-ai-widget button:focus-visible,.argos-ai-widget textarea:focus-visible { outline:3px solid var(--cyan);outline-offset:2px; }
+.map-position-dot { width:10px;height:10px;margin-top:4px;flex:none;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px color-mix(in srgb,var(--cyan) 55%,transparent); }
+.map-position-meta { display:block;margin-top:4px;color:var(--text3);font-size:12px;line-height:1.4; }
+.map-empty-state { padding:12px 8px; }
+.map-filter-group{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.map-filter-group button{min-height:36px;padding:6px 9px;border:1px solid var(--border);border-radius:8px;background:var(--bg3);color:var(--text2);font:600 11px var(--font);cursor:pointer}
+.map-filter-group button[aria-pressed="true"]{border-color:var(--cyan);background:color-mix(in srgb,var(--cyan) 14%,var(--bg3));color:var(--cyan)}
+.map-filter-group button:focus-visible,.argos-ai-selection button:focus-visible,.argos-ai-selection input:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+.map-position-dot.state-alert{background:var(--amber);box-shadow:0 0 12px color-mix(in srgb,var(--amber) 55%,transparent)}
+.map-position-dot.state-stale{background:var(--text3);box-shadow:none}
+.argos-ai-widget[hidden] { display:none !important; }
+.argos-ai-widget { position:fixed;right:22px;bottom:20px;z-index:1200;font-family:var(--font); }
+.argos-ai-toggle { display:flex;align-items:center;justify-content:center;gap:9px;width:112px;min-width:112px;height:54px;padding:0 12px;border:1px solid color-mix(in srgb,var(--cyan) 60%,var(--border));border-radius:999px;background:linear-gradient(145deg,var(--bg2),var(--bg3));color:var(--text);font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 10px 34px rgba(0,0,0,.32),0 0 22px color-mix(in srgb,var(--cyan) 16%,transparent);cursor:pointer; }
+.argos-ai-toggle::before,.argos-ai-toggle::after{content:none}
+.argos-ai-toggle-logo{display:block;flex:none;width:74px;height:36px;overflow:visible}
+.argos-ai-header{min-height:90px}
+.argos-ai-brand{display:flex;align-items:center;gap:14px;min-width:0}
+.argos-ai-hero-mark{position:relative;display:grid;place-items:center;flex:none;width:58px;height:62px;perspective:180px;filter:drop-shadow(0 8px 10px rgba(0,0,0,.35))}
+.argos-ai-hero-mark svg{position:relative;z-index:1;display:block;width:58px;height:62px;overflow:visible;filter:drop-shadow(0 0 12px color-mix(in srgb,var(--cyan) 35%,transparent))}
+.argos-ai-hero-mark::before{content:"";position:absolute;inset:7px 5px 1px;border:1px solid color-mix(in srgb,var(--cyan) 55%,transparent);border-radius:16px 5px 16px 5px;background:linear-gradient(145deg,color-mix(in srgb,var(--cyan) 16%,transparent),transparent 70%);transform:rotate(-8deg)}
+.argos-ai-selection{margin:0 0 12px;padding:12px;border:1px solid color-mix(in srgb,var(--cyan) 35%,var(--border));border-radius:12px;background:var(--bg3);color:var(--text);font-size:13px}
+.argos-ai-selection form{display:grid;gap:10px}
+.argos-ai-container-options{display:grid;gap:6px;max-height:190px;overflow:auto}
+.argos-ai-container-option{display:flex;align-items:center;gap:10px;min-height:48px;padding:8px 10px;border:1px solid var(--border);border-radius:9px;background:var(--bg2);cursor:pointer}
+.argos-ai-container-option input{width:18px;height:18px;accent-color:var(--cyan)}
+.argos-ai-container-option strong,.argos-ai-container-option small{display:block}
+.argos-ai-container-option small{margin-top:3px;color:var(--text3);font-size:11px}
+.argos-ai-scope-submit{min-height:44px;padding:9px 12px;border:1px solid var(--cyan);border-radius:9px;background:color-mix(in srgb,var(--cyan) 18%,var(--bg2));color:var(--text);font:700 12px var(--font);cursor:pointer}
+.page-header>.btn-secondary{flex:none;width:auto;min-width:126px;min-height:44px;padding:10px 16px;color:var(--text)!important;-webkit-text-fill-color:var(--text);font-size:13px;white-space:nowrap}
+.page-header>.map-refresh-action{width:48px;min-width:48px;height:48px;padding:12px;border-radius:14px;color:var(--cyan)!important}
+.map-refresh-action svg{display:block;width:22px;height:22px}
+.map-btn span { font-family:var(--font);font-size:19px;line-height:1; }
+.argos-ai-panel { position:absolute;right:0;bottom:64px;width:min(420px,calc(100vw - 32px));height:min(620px,calc(100dvh - 110px));min-height:320px;display:flex;flex-direction:column;overflow:hidden;background:var(--bg2);border:1px solid var(--border2);border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.5); }
+.argos-ai-panel[hidden] { display:none; }
+.argos-ai-header { display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid var(--border); }
+.argos-ai-header strong,.argos-ai-header span { display:block; }
+.argos-ai-header strong { color:var(--text);font-size:15px; }
+.argos-ai-header span { margin-top:4px;color:var(--text3);font-size:12px; }
+.argos-ai-close { position:relative;width:36px;height:36px;border:0;border-radius:9px;background:var(--bg3);color:var(--text);font-size:0;cursor:pointer; }
+.argos-ai-close::before,.argos-ai-close::after { content:"";position:absolute;left:10px;top:17px;width:16px;height:2px;border-radius:2px;background:var(--text); }
+.argos-ai-close::before { transform:rotate(45deg); }
+.argos-ai-close::after { transform:rotate(-45deg); }
+.argos-ai-messages { flex:1;overflow-y:auto;padding:14px; }
+.argos-ai-suggestions{display:flex;gap:7px;align-items:center;overflow-x:auto;padding:0 12px 10px;scrollbar-width:thin}
+.argos-ai-suggestions>span{flex:none;color:var(--text3);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.argos-ai-suggestions button{flex:none;min-height:32px;padding:6px 10px;border:1px solid var(--border2);border-radius:999px;background:var(--bg3);color:var(--text2);font:600 11px var(--font);cursor:pointer;white-space:nowrap}
+.argos-ai-suggestions button:hover,.argos-ai-suggestions button:focus-visible{border-color:var(--cyan);color:var(--cyan)}
+.argos-ai-messages .ai-msg { margin:0 0 12px; }
+.argos-ai-messages .msg-bubble { max-width:95%;padding:11px 13px;border:1px solid var(--border);border-radius:13px;background:var(--bg3);color:var(--text);font-size:13px;line-height:1.55;overflow-wrap:anywhere; }
+.argos-ai-messages .ai-msg.user { display:flex;justify-content:flex-end; }
+.argos-ai-messages .ai-msg.user .msg-bubble { background:color-mix(in srgb,var(--cyan) 16%,var(--bg3));border-color:color-mix(in srgb,var(--cyan) 35%,var(--border)); }
+.argos-ai-metadata { margin-top:10px;padding-top:8px;border-top:1px solid var(--border);color:var(--text3);font-size:12px;line-height:1.5; }
+.argos-ai-metadata div+div { margin-top:3px; }
+.argos-ai-form { display:flex;align-items:flex-end;gap:8px;padding:12px;border-top:1px solid var(--border);background:var(--bg); }
+.argos-ai-form textarea { flex:1;min-width:0;resize:vertical;max-height:120px;padding:10px 12px;border:1px solid var(--border2);border-radius:11px;background:var(--bg3);color:var(--text);font:inherit;font-size:13px;line-height:1.4; }
+.argos-ai-send { width:44px;height:44px;flex:none;border:0;border-radius:11px;background:var(--cyan);color:var(--bg);font-size:16px;cursor:pointer; }
+.argos-ai-send::before { content:"";display:block;width:0;height:0;margin:auto;border-top:7px solid transparent;border-bottom:7px solid transparent;border-left:13px solid var(--bg);transform:translateX(1px); }
+.argos-ai-send:disabled { opacity:.55;cursor:wait; }
+.sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
+@media(max-width:600px) {
+  .argos-ai-widget { right:12px;bottom:12px; }
+  .argos-ai-panel { position:fixed;right:12px;bottom:72px;width:calc(100vw - 24px);height:min(70dvh,620px); }
+  .monitoring-map-panel { min-height:380px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .argos-ai-widget *, .map-position-item { scroll-behavior:auto !important;animation:none !important;transition:none !important; }
+}
+
+/* Phase 4: supervision dashboard hierarchy and genuinely data-backed states */
+.dashboard-page-header{align-items:flex-end;gap:16px;margin-bottom:22px}
+.dashboard-eyebrow{margin-bottom:7px;color:var(--cyan);font-size:11px;font-weight:700;letter-spacing:.15em}
+.dashboard-page-header .page-title{font-size:clamp(24px,3vw,34px);letter-spacing:-.035em}
+.dashboard-page-header .page-title small{display:block;margin-top:6px;color:var(--text3);font-size:13px;font-weight:400;letter-spacing:0}
+.dashboard-header-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px}
+.dashboard-data-note{display:inline-flex;align-items:center;gap:8px;color:var(--text2);font-size:12px}
+.dashboard-live-dot{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 4px color-mix(in srgb,var(--cyan) 14%,transparent)}
+.dashboard-kpis{margin-bottom:18px!important;gap:12px}
+.dashboard-kpis .stat-card{position:relative;min-width:0;min-height:120px;padding:19px 20px 17px;border:1px solid var(--border);border-top:2px solid var(--accent,var(--cyan));border-radius:15px;background:linear-gradient(145deg,color-mix(in srgb,var(--bg2) 94%,var(--accent,var(--cyan)) 6%),var(--bg2));box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.dashboard-kpis .stat-card>*{position:relative;z-index:1}
+.dashboard-kpis .stat-card::after{z-index:0}
+.dashboard-kpis .stat-card::after,.dashboard-primary-grid>.card::after,.dashboard-secondary-grid>.card::after,.dashboard-secondary-grid+.card::after{display:none}
+.dashboard-kpis .stat-label{color:var(--text2);font-size:12px;letter-spacing:.035em}
+.dashboard-kpis .stat-value{display:block!important;height:auto!important;min-height:38px;margin-top:9px;color:#f1f5f9!important;-webkit-text-fill-color:#f1f5f9;font-family:var(--font)!important;font-size:clamp(27px,3vw,36px);font-weight:700;line-height:1.1;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.dashboard-kpis .stat-sub{margin-top:8px;color:var(--text3);font-size:11px;line-height:1.4}
+.dashboard-primary-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.85fr);gap:16px;margin-bottom:18px}
+.dashboard-primary-grid>.card,.dashboard-secondary-grid>.card,.dashboard-page-header+.dashboard-kpis~.card{min-width:0;border:1px solid var(--border);border-radius:15px;background:var(--bg2);box-shadow:0 8px 26px rgba(0,0,0,.11)}
+.dashboard-map-card .card-header,.dashboard-alerts-card .card-header,.dashboard-secondary-grid .card-header{min-height:57px;padding:14px 17px}
+.dashboard-map-card .map-container{height:clamp(280px,34vw,410px)!important;border-radius:0 0 14px 14px;overflow:hidden}
+.dashboard-map-card #map-main{min-height:100%}
+.dashboard-alerts-card #dash-alertes-list{max-height:410px!important;min-height:270px;padding:6px 16px 14px;overflow:auto}
+.dashboard-secondary-grid{gap:16px;margin-bottom:18px!important}
+.dashboard-secondary-grid .card{overflow:hidden}
+.dashboard-secondary-grid .zone-scrollable{max-height:250px!important;padding:12px 16px}
+.dashboard-empty{display:grid;min-height:94px;place-items:center;padding:20px;color:var(--text3);font-size:13px;text-align:center}
+.dashboard-secondary-grid .chart-wrap{padding:12px 16px}
+.dashboard-secondary-grid+.card{border:1px solid var(--border);border-radius:15px;overflow:hidden;background:var(--bg2)}
+.dashboard-secondary-grid+.card>.card-header{padding:15px 17px}
+.dashboard-secondary-grid+.card .data-table-wrap{max-height:360px}
+.dashboard-secondary-grid+.card .data-table{min-width:680px}
+.dashboard-map-card .btn-icon,.dashboard-header-actions .btn-icon{display:inline-flex!important;width:auto!important;min-width:112px;min-height:42px;padding:10px 14px!important;color:var(--text)!important;-webkit-text-fill-color:var(--text);font-size:12px!important;line-height:1.2}
+.dashboard-map-card .btn-icon span,.dashboard-header-actions .btn-icon span{display:inline-block;color:#f1f5f9!important;-webkit-text-fill-color:#f1f5f9;font-family:var(--font)!important;font-size:12px;font-weight:600}
+#page-dashboard .card-title{font-size:13px;font-weight:650}
+#page-dashboard .timeline-item{padding:12px 0;border-bottom:1px solid var(--border)}
+#page-dashboard .timeline-item:last-child{border-bottom:0}
+#page-dashboard .timeline-content{min-width:0}
+#page-dashboard .timeline-content>div:first-child{color:var(--text);font-size:13px!important;line-height:1.45}
+#page-dashboard .timeline-time{margin-top:5px;color:var(--text3)}
+@media(max-width:900px){
+ .dashboard-primary-grid{grid-template-columns:minmax(0,1.2fr) minmax(250px,.8fr)}
+ .dashboard-secondary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .dashboard-secondary-grid>.card:last-child{grid-column:1/-1}
+}
+@media(max-width:650px){
+ .dashboard-page-header{align-items:flex-start;flex-direction:column}
+ .dashboard-header-actions{justify-content:space-between;width:100%}
+ .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .dashboard-kpis .stat-card{min-height:112px;padding:15px}
+ .dashboard-primary-grid,.dashboard-secondary-grid{grid-template-columns:minmax(0,1fr)}
+ .dashboard-primary-grid>.card,.dashboard-secondary-grid>.card:last-child{grid-column:auto}
+ .dashboard-map-card .map-container{height:340px!important}
+ .dashboard-alerts-card #dash-alertes-list{min-height:150px;max-height:250px!important}
+}
+@media(max-width:360px){.dashboard-kpis{grid-template-columns:minmax(0,1fr)!important}}
+@media(max-width:600px){
+ .topbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;min-height:58px;height:auto;padding:8px 12px;gap:10px}
+ .mobile-menu-btn{order:0;flex:0 0 40px;width:40px;height:40px}
+ .topbar-brand{order:1;flex:1 1 auto;width:auto;text-align:left;font-size:16px;letter-spacing:2px}
+ .topbar-sep,.topbar-role{display:none}
+ .topbar-actions{order:2;flex:0 0 auto;width:auto;margin-left:auto;justify-content:flex-end;flex-wrap:nowrap;gap:7px}
+ .topbar-search{order:3;flex:1 0 100%;width:100%;max-width:none}
+ .topbar-actions .notif-btn{min-width:42px;min-height:40px;padding:0 10px}
+ .topbar-actions .notif-label,.topbar-actions #theme-toggle-btn span{display:inline;color:var(--text2);font-size:11px}
 }

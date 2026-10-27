@@ -1156,8 +1156,18 @@ def detach_black_box_container(box_id):
             return jsonify({"error": "Boîte déjà détachée"}), 409
 
         container_id = box.id_conteneurs
-        pdf_bytes = generate_container_report_pdf(container_id)
         doc_uid = str(uuid.uuid4())
+        from app.regulatory.history import record_decision
+        identity = {"role": role, "user_id": user_id}
+        record_decision(
+            identity=identity, black_box_id=int(box_id), container_id=str(container_id),
+            subject_type="report", subject_id=doc_uid, event_type="REPORT_GENERATED",
+            action="Rapport de situation généré avant détachement",
+            reaction="Le rapport conserve les mesures, l’historique et les références de source disponibles.",
+            remarks={"report_uid": doc_uid, "reason": reason},
+            source_keys=["ARGOS_AGENT_RULES"], applicability_status="NOT_ASSESSED",
+        )
+        pdf_bytes = generate_container_report_pdf(container_id)
         storage_key = f"generated_reports/container_{container_id}_{doc_uid}.pdf"
         stored = store_private_document(storage_key, pdf_bytes)
 
@@ -1204,6 +1214,13 @@ def detach_black_box_container(box_id):
             INSERT INTO notifications (type, message, cible_role, id_boite)
             VALUES ('CONTAINER_DETACHED', :message, 'all', :box_id)
         """), {"message": f"Conteneur {container_id} détaché. Rapport disponible.", "box_id": box_id})
+        record_decision(
+            identity=identity, black_box_id=int(box_id), container_id=str(container_id),
+            subject_type="container_assignment", subject_id=str(box_id), event_type="CONTAINER_DETACHED",
+            action="Boîte noire détachée du conteneur par un utilisateur autorisé",
+            reaction=str(reason), remarks={"report_uid": doc_uid, "access_revocation": "scheduled_48h"},
+            source_keys=["ARGOS_AGENT_RULES"], applicability_status="NOT_ASSESSED",
+        )
         db.session.commit()
         return jsonify({
             "status": "success",
@@ -1258,6 +1275,26 @@ def export_container_report(container_id):
     if not role:
         return jsonify({"error": "Authentification requise"}), 401
     try:
+        from app.routes.workflows import _can_access_container
+        if not _can_access_container(role, str(user_id), str(container_id)):
+            return jsonify({"error": "Accès refusé à ce dossier"}), 403
+        from app.extensions import db
+        from app.regulatory.history import record_decision
+        box_id = db.session.execute(text("""
+            SELECT id_boite FROM boite_noir WHERE id_conteneurs=:container
+            ORDER BY created_at DESC NULLS LAST LIMIT 1
+        """), {"container": container_id}).scalar()
+        report_uid = str(uuid.uuid4())
+        record_decision(
+            identity={"role": role, "user_id": user_id},
+            black_box_id=int(box_id) if box_id else None,
+            container_id=str(container_id), subject_type="report", subject_id=report_uid,
+            event_type="REPORT_GENERATED", action="Rapport opérationnel conteneur généré",
+            reaction="Le PDF inclut l’historique disponible et les références de source; aucune applicabilité juridique n’est inférée.",
+            remarks={"report_uid": report_uid, "format": "application/pdf"},
+            source_keys=["ARGOS_AGENT_RULES"], applicability_status="NOT_ASSESSED",
+        )
+        db.session.commit()
         pdf_bytes = generate_container_report_pdf(container_id)
         return send_file(
             io.BytesIO(pdf_bytes),

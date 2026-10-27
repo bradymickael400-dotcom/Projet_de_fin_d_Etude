@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="pg-title">Demandes d'écoles</h1>
+{% for p in pending %}
+  <div class="card" data-removable>
+    <div class="card-hd"><span>{{ p.nom }}</span><span class="badge badge-warn">{{ p.cycle }}</span></div>
+    <p><strong>Gestionnaire :</strong> {{ p.manager_prenom }} {{ p.manager_nom }} · {{ p.email }} · {{ p.manager_phone }}</p>
+    <p><strong>Localisation :</strong> {{ p.ville }}, {{ p.region }} · {{ p.latitude }}, {{ p.longitude }}</p>
+    <div class="enrolment-actions">
+      <a class="btn btn-s" href="{{ url_for('superadmin.school_request_document', req_id=p.id, kind='creation') }}"><i class="fas fa-file-shield"></i> Acte de création</a>
+      <a class="btn btn-s" href="{{ url_for('superadmin.school_request_document', req_id=p.id, kind='autorisation') }}"><i class="fas fa-file-circle-check"></i> Autorisation d'ouverture</a>
+    </div>
+    <button class="btn btn-p" data-api-action="{{ url_for('superadmin.approve_school', req_id=p.id) }}" data-success="École approuvée.">Approuver</button>
+    <button class="btn" data-api-action="{{ url_for('superadmin.reject_school', req_id=p.id) }}" data-success="Demande rejetée.">Rejeter</button>
+  </div>
+{% else %}
+  <p>Aucune demande en attente.</p>
+{% endfor %}
+{% endblock %}

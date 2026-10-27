@@ -264,9 +264,10 @@ async function loadSADashboardData(){
     const data = await res.json();
     if(data.status !== 'success') return;
     const kpi = data.kpi || {};
-    document.getElementById('dash-tot-ent')?.textContent !== undefined && (document.getElementById('dash-tot-ent').textContent = kpi.entreprises || 0);
-    document.getElementById('dash-tot-subs')?.textContent !== undefined && (document.getElementById('dash-tot-subs').textContent = kpi.abonnes || 0);
-    document.getElementById('dash-tot-alerts')?.textContent !== undefined && (document.getElementById('dash-tot-alerts').textContent = kpi.alertes || 0);
+    const setMetric=(id,value)=>{const el=document.getElementById(id);if(el) el.textContent=String(value ?? 0);};
+    setMetric('dash-tot-ent',kpi.entreprises || 0);
+    setMetric('dash-tot-subs',kpi.abonnes || 0);
+    setMetric('dash-tot-alerts',kpi.alertes || 0);
 
     // Blocs blockchain count
     try {
@@ -315,7 +316,7 @@ async function loadSADashboardData(){
   // Entreprises recentes
     const entEl = document.getElementById('dash-top-entreprises');
     if(entEl){
-      entEl.innerHTML = topEntreprises.map(e => {
+      entEl.innerHTML = topEntreprises.length ? topEntreprises.map(e => {
         const encodedData = encodeURIComponent(JSON.stringify(e));
         return `<tr>
         <td><div style="font-weight:600">${e.nom || '—'}</div></td>
@@ -325,7 +326,7 @@ async function loadSADashboardData(){
         <td style="font-size:12px">${e.contact || '—'}</td>
         <td><button class="btn-icon" type="button" onclick="openDashboardEnterpriseProfile('${encodedData}')">Profil</button></td>
       </tr>`;
-      }).join('');
+      }).join('') : '<tr><td colspan="6"><div class="dashboard-empty">Aucune entreprise à afficher.</div></td></tr>';
     }
   // Doughnut (répartition des alertes)
     if(charts['chart-subs'] && Array.isArray(chartData.alerts_dist)){
@@ -999,8 +1000,9 @@ function filterContainersStatus(status, tabEl){
 }
 
 function filterContainersList(val){
-  document.querySelectorAll('#containers-sidebar-list .container-item').forEach(el=>{
-    el.style.display = !val || el.textContent.toLowerCase().includes(val.toLowerCase()) ? 'flex' : 'none';
+  if(typeof applyMapPositionFilters==='function') applyMapPositionFilters();
+  else document.querySelectorAll('#containers-sidebar-list .map-position-item').forEach(el=>{
+    el.hidden = !!val && !el.textContent.toLowerCase().includes(val.toLowerCase());
   });
 }
 

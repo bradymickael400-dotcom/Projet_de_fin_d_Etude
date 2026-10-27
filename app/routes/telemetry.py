@@ -74,6 +74,18 @@ def update_thresholds():
         """), {"b": bid, "tm": d.get("temp_max"), "hm": d.get("humi_max"),
                "cm": d.get("choc_max"), "pm": d.get("pression_min"),
                "vm": d.get("vitesse_max"), "am": d.get("angle_max")})
+        from app.regulatory.history import record_decision
+        from app.security import current_identity
+        record_decision(
+            identity=current_identity(), black_box_id=int(bid), subject_type="threshold_config",
+            subject_id=str(bid), event_type="THRESHOLD_CONFIGURED",
+            action="Seuils internes de détection ARGOS modifiés par un utilisateur autorisé",
+            reaction="Configuration enregistrée et appliquée par le détecteur déterministe.",
+            remarks={"thresholds": {key: d.get(key) for key in
+                                     ("temp_max", "humi_max", "choc_max", "pression_min", "vitesse_max", "angle_max")},
+                     "legal_compliance": "Cette configuration n’est pas une prescription légale."},
+            source_keys=["ARGOS_THRESHOLD_RULES"],
+        )
         db.session.commit()
         seal_block("CONFIG_SEUILS", bid, d)
         return jsonify({"status": "success", "id_boite": bid})

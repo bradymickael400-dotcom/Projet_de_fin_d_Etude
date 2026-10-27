@@ -70,6 +70,22 @@ def inventory_pdf_preview():
         return jsonify({"error": "container_id requis"}), 400
     if not _can_access_container(role, user_id, container_id):
         return jsonify({"error": "Acces refuse a ce conteneur"}), 403
+    box_id = db.session.execute(text("""
+        SELECT id_boite FROM boite_noir WHERE id_conteneurs=:container
+        ORDER BY created_at DESC NULLS LAST LIMIT 1
+    """), {"container": container_id}).scalar()
+    from app.regulatory.history import record_decision
+    report_uid = str(uuid4())
+    record_decision(
+        identity={"role": role, "user_id": user_id},
+        black_box_id=int(box_id) if box_id else None, container_id=container_id,
+        subject_type="report", subject_id=report_uid, event_type="REPORT_GENERATED",
+        action="Aperçu de feuille d’inventaire PDF généré",
+        reaction="Document opérationnel; aucune conformité légale n’est inférée.",
+        remarks={"report_uid": report_uid, "format": "application/pdf"},
+        source_keys=["ARGOS_AGENT_RULES"], applicability_status="NOT_ASSESSED",
+    )
+    db.session.commit()
     pdf = generate_inventory_pdf(payload)
     return send_file(
         io.BytesIO(pdf), mimetype="application/pdf", as_attachment=True,
@@ -100,6 +116,16 @@ def contract_document(contract_uid):
     """), {"uid": contract_uid}).fetchone()
     if not row or not (role == "superadmin" or (role == "owner" and str(row.company_id) == user_id)):
         return jsonify({"error": "Contrat introuvable"}), 404
+    from app.regulatory.history import record_decision
+    record_decision(
+        identity={"role": role, "user_id": user_id}, subject_type="contract",
+        subject_id=str(contract_uid), event_type="REPORT_GENERATED",
+        action="Copie PDF du contrat ARGOS générée",
+        reaction="Le document reprend le modèle et les termes enregistrés; aucune conformité juridique du contrat n’est certifiée par l’IA.",
+        remarks={"contract_number": row.contract_number, "status": row.status},
+        source_keys=["ARGOS_AGENT_RULES"], applicability_status="NOT_ASSESSED",
+    )
+    db.session.commit()
     pdf = generate_contract_pdf({
         "contract_number": row.contract_number, "company_name": row.nom_agence,
         "starts_on": row.starts_on.strftime("%d/%m/%Y"), "ends_on": row.ends_on.strftime("%d/%m/%Y"),
@@ -315,6 +341,17 @@ def create_destocking_request():
                 INSERT INTO destocking_votes (request_id,voter_role,voter_id)
                 VALUES (:request_id,:role,:uid) ON CONFLICT DO NOTHING
             """), {"request_id": request_id, "role": voter_role, "uid": voter_id})
+        from app.regulatory.history import record_decision
+        record_decision(
+            identity={"role": role, "user_id": user_id}, black_box_id=int(box),
+            container_id=container_id, subject_type="destocking_request",
+            subject_id=str(request_id), event_type="DESTOCKING_REQUESTED",
+            action="Demande de déstockage soumise au vote multipartite",
+            reaction=reason,
+            remarks={"eligible_voters": len(voters), "required_approvals": required,
+                     "vote_deadline": deadline.isoformat()},
+            source_keys=["ARGOS_AGENT_RULES"], applicability_status="NOT_ASSESSED",
+        )
         db.session.execute(text("""
             INSERT INTO notifications(type,message,cible_role,id_boite,initiator_id)
             VALUES ('DESTOCKING_VOTE',:message,'all',:box,:uid)
@@ -389,6 +426,18 @@ def vote_destocking_request(request_id):
         UPDATE destocking_requests SET status=:status, decided_at=CASE WHEN :status!='PENDING_VOTES' THEN NOW() ELSE NULL END,
                detach_at=:detach_at, updated_at=NOW() WHERE id=:id
     """), {"status": new_status, "detach_at": detach_at, "id": request_id})
+    from app.regulatory.history import record_decision
+    record_decision(
+        identity={"role": role, "user_id": user_id},
+        black_box_id=int(request_row.black_box_id), container_id=str(request_row.container_id),
+        subject_type="destocking_vote", subject_id=f"{request_id}:{role}:{user_id}",
+        event_type="DESTOCKING_VOTE",
+        action=f"Vote de déstockage enregistré : {decision}",
+        reaction=f"Résultat collectif courant : {new_status} ({approvals}/{request_row.required_approvals} approbations requises).",
+        remarks={"request_id": request_id, "approvals": approvals, "rejections": rejections,
+                 "required_approvals": request_row.required_approvals},
+        source_keys=["ARGOS_AGENT_RULES"], applicability_status="NOT_ASSESSED",
+    )
     if new_status == "APPROVED":
         db.session.execute(text("""
             INSERT INTO background_jobs(job_uid,job_type,payload,run_at)

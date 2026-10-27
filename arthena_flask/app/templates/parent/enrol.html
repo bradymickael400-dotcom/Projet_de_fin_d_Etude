@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Inscription scolaire — Arthena{% endblock %}
+{% block content %}
+<h1 class="pg-title">Inscrire un enfant</h1>
+<div class="grid g2">
+  <form class="card" enctype="multipart/form-data" data-api-form action="{{ url_for('parent.enrol') }}" data-success="Demande envoyée à l'établissement." data-reset="true" data-reload="true">
+    <div class="card-hd">Nouvelle demande</div>
+    <label>Établissement<select class="inp" name="ecole_id" required>
+      {% for school in schools %}<option value="{{ school.id }}">{{ school.nom }} — {{ school.ville }}</option>{% endfor %}
+    </select></label>
+    <div class="grid g2"><label>Prénom<input class="inp" name="prenom" required></label><label>Nom<input class="inp" name="nom" required></label></div>
+    <label>Classe demandée<input class="inp" name="classe" placeholder="Ex. CM2, 6e" required></label>
+    <label>Âge de l'élève<input class="inp" type="number" name="age" min="2" max="25" required></label>
+    <label>Acte de naissance <small>(PDF, JPG ou PNG, 5 Mo maximum)</small><input class="inp" type="file" name="acte_naissance" accept=".pdf,.jpg,.jpeg,.png" required></label>
+    <label>Ancien bulletin scolaire <small>(dernier bulletin disponible, PDF, JPG ou PNG)</small><input class="inp" type="file" name="ancien_bulletin" accept=".pdf,.jpg,.jpeg,.png" required></label>
+    <label class="checkbox-label"><input type="checkbox" name="ancien_eleve" value="true" data-form-toggle="returning-student"> L'enfant a déjà fréquenté cet établissement</label>
+    <label data-new-school-reason>Pourquoi souhaitez-vous inscrire l'enfant dans cet établissement ?
+      <textarea class="inp" name="motif_nouvelle_ecole" minlength="10" rows="4" required placeholder="Déménagement, changement de cycle, projet pédagogique…"></textarea>
+    </label>
+    <button class="btn btn-p" type="submit" {% if not schools %}disabled{% endif %}>Envoyer la demande</button>
+  </form>
+  <section class="card"><div class="card-hd">Mes demandes</div>
+    {% for r in requests %}<div class="rank-row"><strong>{{ r.prenom }} {{ r.nom }}</strong> · {{ r.classe }}<br><span class="badge {{ 'badge-ok' if r.statut == 'accepted' else 'badge-err' if r.statut == 'rejected' else 'badge-warn' }}">{{ r.statut }}</span></div>
+    {% else %}<div class="empty">Aucune demande envoyée.</div>{% endfor %}
+  </section>
+</div>
+{% endblock %}

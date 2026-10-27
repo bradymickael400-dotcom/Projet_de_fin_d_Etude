@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ school.nom }} — Actualités et calendrier{% endblock %}
+{% block content %}
+<section class="school-public-page">
+  <header><span class="eyebrow">Établissement vérifié sur Arthena</span><h1>{{ school.nom }}</h1><p>{{ school.ville }}, {{ school.region }} · {{ school.type|capitalize }}</p></header>
+  <div class="school-public-feed">
+  {% for post in posts %}<article class="school-public-post"><span>{{ post.category|capitalize }}</span><h2>{{ post.title }}</h2><p>{{ post.content }}</p>{% if post.starts_at %}<time>{{ post.starts_at.strftime('%d/%m/%Y à %H:%M') }}</time>{% endif %}<small>Publié par {{ post.author.full_name() }} le {{ post.published_at.strftime('%d/%m/%Y') }}</small></article>{% else %}<div class="card empty">Cet établissement n’a encore publié aucune information publique.</div>{% endfor %}
+  </div>
+</section>
+{% endblock %}

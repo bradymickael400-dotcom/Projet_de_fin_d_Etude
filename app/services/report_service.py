@@ -437,6 +437,37 @@ def collect_container_report(container_id):
             f"Choc={event.chocs} V={event.vitesse} GPS=({event.lat},{event.lon}){alerts}"
         )
 
+    history = []
+    if box and box.id_boite:
+        from app.regulatory.history import history_for_box
+        history = history_for_box(box.id_boite, limit=100)
+    history_lines = []
+    for item in history:
+        timestamp = item.get("created_at") or "date inconnue"
+        history_lines.append(
+            f"{timestamp} | {item.get('event_type')} | {item.get('action')} | "
+            f"Réaction: {item.get('reaction') or '—'} | Applicabilité: {item.get('applicability_status')}"
+        )
+    source_lines = []
+    seen_sources = set()
+    for item in history:
+        for source in item.get("sources", []):
+            key = source.get("source_key")
+            if key in seen_sources:
+                continue
+            seen_sources.add(key)
+            source_lines.append(
+                f"{source.get('title')} | Autorité: {source.get('authority')} | "
+                f"Juridiction: {source.get('jurisdiction')} | Statut: {source.get('legal_status')} | "
+                f"Applicabilité au dossier: {item.get('applicability_status')} | "
+                f"URL officielle: {source.get('official_url') or 'sans URL externe'}"
+            )
+    if not source_lines:
+        source_lines = [
+            "Aucune source juridique spécifique n’a été déterminée pour ce dossier.",
+            "La référence interne ARGOS ne constitue pas une loi ou une certification de conformité.",
+        ]
+
     return {
         "title": f"Rapport conteneur {container_id}",
         "sections": [
@@ -445,6 +476,9 @@ def collect_container_report(container_id):
             ("Boite noire", f"{box.id_boite} / {box.numero_serie}" if box else "Aucune boite active"),
             ("Prototype ESP32", box.device_uid if box and box.device_uid else "Non lie"),
             ("Evenements chronologiques", event_lines or ["Aucun evenement enregistre"]),
+            ("Historique des actions et réactions IA", history_lines or ["Aucune action tracée avant ce rapport"]),
+            ("Sources, règles et applicabilité", source_lines),
+            ("Réserve réglementaire", "Les sources ci-dessus sont des références documentaires. ARGOS ne conclut pas à la conformité juridique sans vérification du champ, de la juridiction, du trajet, de la marchandise, des amendements et des preuves métier."),
             ("Synthese", "Rapport genere depuis les donnees autorisees disponibles dans ARGOS."),
         ],
     }

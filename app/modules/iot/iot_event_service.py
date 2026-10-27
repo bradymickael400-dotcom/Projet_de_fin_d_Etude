@@ -92,6 +92,18 @@ def create_threshold_notifications(black_box_id, alerts, device_uid=None, sequen
         VALUES ('IOT_ALERT', :message, 'all', :id_boite, :device_uid, :sequence)
     """), {"message": message, "id_boite": black_box_id,
             "device_uid": device_uid, "sequence": sequence})
+    from app.regulatory.history import record_decision
+    record_decision(
+        identity={"role": "system", "user_id": "iot_event_service"},
+        black_box_id=int(black_box_id), subject_type="iot_alert",
+        subject_id=f"{black_box_id}:{sequence or 'unknown'}:{message[:50]}",
+        event_type="IOT_ALERT",
+        action="Alerte automatique créée après dépassement de seuil ARGOS",
+        reaction=message,
+        remarks={"device_uid": device_uid, "sequence": sequence,
+                 "threshold_based": True, "external_legal_applicability": "not_assessed"},
+        source_keys=["ARGOS_THRESHOLD_RULES", "ARGOS_IOT_TELEMETRY"],
+    )
     emails = _concerned_emails(black_box_id)
     if emails:
         subject = f"[ARGOS] Alerte boîte noire #{black_box_id}"

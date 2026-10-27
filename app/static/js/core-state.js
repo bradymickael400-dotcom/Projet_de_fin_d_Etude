@@ -75,6 +75,9 @@ let isRefreshing = false;
 // DB-backed live data
 let DB_CONTAINERS = [];  // mis à jour depuis /api/containers/all
 let MAP_BLACK_BOXES = []; // boîtes suivies sans conteneur, visibles sur la carte
+let MAP_GPS_POSITIONS = []; // positions issues exclusivement de /api/containers/positions
+let MAP_FILTER = 'all';
+let MAP_TRAIL_VERSION = 0;
 let DB_EVENTS     = [];
 let DB_COMPANIES  = [];
 let DB_CLIENTS    = [];
@@ -181,10 +184,9 @@ soundInfo.volume = 0.5; soundAlert.volume = 0.8;
 
 // Fond de cartes disponibles
 const MAP_LAYERS = [
-  { name:'Satellite Sombre', url:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' },
-  { name:'OpenStreetMap',    url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' },
-  { name:'Terrain Stadia',   url:'https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}{r}.png' },
-  { name:'Satellite Esri',   url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}' },
+  { name:'OpenStreetMap',    url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attribution:'© OpenStreetMap contributors' },
+  { name:'Satellite Esri',   url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attribution:'Tiles © Esri — Sources: Esri, Maxar, Earthstar Geographics and the GIS User Community' },
+  { name:'Terrain Stadia',   url:'https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}{r}.png', attribution:'© Stadia Maps © OpenMapTiles © OpenStreetMap contributors' },
 ];
 
 // ── NAV ────────────────────────────────────────────────

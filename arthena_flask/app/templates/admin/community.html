@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Communauté {{ school.nom }} — Arthena{% endblock %}
+{% block content %}
+<div class="community-head">
+  <div><span class="eyebrow">Vie de l’établissement</span><h1 class="pg-title">{{ school.nom }}</h1></div>
+  <a class="btn btn-s" href="{{ url_for('news.school_publications', school_id=school.id) }}" target="_blank">Voir la page publique</a>
+</div>
+{% if can_manage %}
+<form class="card" data-api-form action="{{ url_for('school_admin.publish_school_post', school_id=school.id) }}" data-success="Publication enregistrée." data-reset="true" data-reload="true">
+  <div class="card-hd">Publier un calendrier, événement ou communiqué</div>
+  <div class="grid g2"><label>Titre<input class="inp" name="title" required></label><label>Catégorie<select class="inp" name="category"><option value="calendrier">Calendrier scolaire</option><option value="evenement">Événement</option><option value="communique">Communiqué</option><option value="information">Information</option></select></label></div>
+  <label>Contenu<textarea class="inp" name="content" rows="5" minlength="10" required></textarea></label>
+  <div class="grid g2"><label>Début<input class="inp" type="datetime-local" name="starts_at"></label><label>Fin<input class="inp" type="datetime-local" name="ends_at"></label></div>
+  <label>Visibilité<select class="inp" name="visibility"><option value="communaute">Parents et personnel de l’établissement</option><option value="public">Visible par tous sur Internet</option></select></label>
+  <button class="btn btn-p" type="submit">Publier</button>
+</form>
+{% endif %}
+<div class="grid g2">
+  <section><h2 class="pg-title">Fil de l’établissement</h2>
+  {% for post in posts %}<article class="card school-post"><div class="card-hd"><span>{{ post.title }}</span><span class="badge {{ 'badge-ok' if post.visibility == 'public' else 'badge-warn' }}">{{ post.visibility }}</span></div><p>{{ post.content }}</p>{% if post.starts_at %}<small>{{ post.starts_at.strftime('%d/%m/%Y à %H:%M') }}{% if post.ends_at %} — {{ post.ends_at.strftime('%d/%m/%Y à %H:%M') }}{% endif %}</small>{% endif %}<footer>{{ post.category|capitalize }} · {{ post.author.full_name() }}</footer></article>{% else %}<div class="card empty">Aucune publication.</div>{% endfor %}
+  </section>
+  {% if current_user.role in ('admin','intendante','censeur') %}
+  <aside>
+    <section class="card"><div class="card-hd">Élèves par classe</div>{% for group in students|groupby('classe') %}<div class="rank-row"><strong>{{ group.grouper }}</strong><span>{{ group.list|length }} élève(s)</span></div>{% else %}<p class="empty">Aucun élève.</p>{% endfor %}</section>
+    <section class="card"><div class="card-hd">Scolarité entièrement réglée</div>{% for student in fully_paid %}<div class="rank-row">{{ student.prenom }} {{ student.nom }} · {{ student.classe }}</div>{% else %}<p class="empty">Aucun paiement soldé.</p>{% endfor %}</section>
+    <section class="card"><div class="card-hd">Présences récentes</div>{% for presence in recent_presences %}<div class="rank-row"><strong>{{ presence.student.prenom }} {{ presence.student.nom }}</strong> · {{ presence.date.strftime('%d/%m/%Y') }} <span class="badge {{ 'badge-ok' if presence.statut == 'present' else 'badge-warn' if presence.statut == 'retard' else 'badge-err' }}">{{ presence.statut }}</span></div>{% else %}<p class="empty">Aucune présence enregistrée.</p>{% endfor %}</section>
+  </aside>
+  {% endif %}
+</div>
+{% endblock %}

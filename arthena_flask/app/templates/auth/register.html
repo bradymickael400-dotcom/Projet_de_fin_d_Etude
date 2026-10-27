@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Inscription — Arthena{% endblock %}
+{% block content %}
+<form method="POST" class="card" style="max-width:420px;margin:4rem auto">
+  {{ form.hidden_tag() }}
+  <h1 class="pg-title">Créer un compte</h1>
+  <div class="fg">{{ form.prenom.label }} {{ form.prenom(class_="inp") }}</div>
+  <div class="fg">{{ form.nom.label }} {{ form.nom(class_="inp") }}</div>
+  <div class="fg">{{ form.email.label }} {{ form.email(class_="inp") }}</div>
+  <div class="fg">{{ form.password.label }} {{ form.password(class_="inp") }}</div>
+  <div class="fg">{{ form.role.label }} {{ form.role(class_="inp") }}</div>
+  {% for field in form if field.errors %}
+    {% for error in field.errors %}<p class="form-error">{{ field.label.text }} : {{ error }}</p>{% endfor %}
+  {% endfor %}
+  <button class="btn btn-p btn-blk" type="submit">Créer mon compte</button>
+</form>
+{% endblock %}

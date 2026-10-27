@@ -28,6 +28,7 @@ services:
   web:
     build:
       context: .
+      dockerfile: dockerfile
       # Le DNS embarqué de Docker peut perdre la résolution de pypi.org avec
       # systemd-resolved (127.0.0.53). Pendant le build, utiliser directement
       # le réseau et les DNS de l'hôte évite cet échec intermittent.
@@ -72,6 +73,7 @@ services:
   worker:
     build:
       context: .
+      dockerfile: dockerfile
       network: host
     command: ["python", "-m", "app.worker"]
     env_file:

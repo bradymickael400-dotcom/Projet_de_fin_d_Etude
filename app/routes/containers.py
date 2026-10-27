@@ -1179,41 +1179,33 @@ def api_lier_container():
 @cnt_bp.route('/api/ai/deepseek', methods=['POST'])
 @limiter.limit("20/hour")
 def ai_chat_deepseek():
-    """Proxy optionnel vers DeepSeek LLM. Nécessite DEEPSEEK_API_KEY dans l'environnement.
-    Le frontend n'appelle pas cette route par défaut ; elle reste un repli sûr pour DeepSeek."""
+    """Compatibilité historique; partage le même registre et le même LLM Gemini."""
+    from app.agents.audit import persist_agent_run
+    from app.agents.orchestrator import run_agent_request
+    from app.llm.gemini import GeminiToolProvider
+    from app.security import current_identity
+
     data = request.get_json(silent=True) or {}
-    user_message = data.get('message', '').strip()
-    if not user_message:
+    user_message = data.get("message")
+    if not isinstance(user_message, str) or not user_message.strip():
         return jsonify({"error": "Le message est requis."}), 400
+    if len(user_message) > 4000:
+        return jsonify({"error": "Le message dépasse la limite de 4000 caractères."}), 413
+    if not current_app.config.get("API_KEY"):
+        return jsonify({"error": "Assistant IA non configuré côté serveur."}), 503
 
-    api_key = os.getenv('DEEPSEEK_API_KEY')
-    if not api_key:
-        return jsonify({
-            "reply": "Assistant IA non configuré côté serveur. Merci de définir DEEPSEEK_API_KEY.",
-            "echo": user_message,
-        }), 200
+    from uuid import uuid4
+    trace_id = str(uuid4())
     try:
-        import requests
-        r = requests.post(
-            "https://api.deepseek.com/v1/chat/completions",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            json={"model": "deepseek-chat", "messages": [{"role": "user", "content": user_message}]},
-            timeout=30,
+        identity = current_identity()
+        result = run_agent_request(
+            user_message.strip(), identity, GeminiToolProvider(),
+            black_box_id=data.get("black_box_id"), trace_id=trace_id,
         )
-        resp_data = r.json()
-        if r.status_code != 200:
-            return jsonify({"error": resp_data.get('error') or resp_data}), r.status_code
-
-        reply = None
-        if isinstance(resp_data, dict):
-            reply = resp_data.get('reply')
-            if not reply and resp_data.get('choices'):
-                choice = resp_data['choices'][0]
-                if isinstance(choice, dict):
-                    reply = (choice.get('message') or {}).get('content') or choice.get('text')
-        if not reply:
-            reply = str(resp_data)
-
-        return jsonify({"reply": reply, "provider_response": resp_data}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 502
+        persist_agent_run(trace_id, identity, "success", result["agents_consulted"], result["sources"])
+        return jsonify(result), 200
+    except Exception:
+        current_app.logger.exception("Échec alias assistant ARGOS trace_id=%s", trace_id)
+        identity = current_identity()
+        persist_agent_run(trace_id, identity, "error", [], [], "LLM_OR_AGENT_ERROR")
+        return jsonify({"error": "Échec de l'assistant ARGOS.", "trace_id": trace_id}), 502

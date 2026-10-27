@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}?v=20260726-stacking-fix">
+<link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}?v=20261028-regulatory-history-v1">
 <link rel="stylesheet" href="{{url_for('static', filename='css/ai-assistant.css')}}?v=20261027-ai-assistant">
 </head>
 <body>
@@ -98,10 +98,10 @@
     </div>
     <div class="topbar-actions">
       <center><div id="live-time" style="font-family:var(--mono);font-size:20px;color:var(--cyan);white-space:nowrap;"></div></center>
-      <button class="notif-btn" onclick="toggleNotif()" id="notif-btn">
-        <i class="fas fa-bell"></i> <span class="notif-badge" id="notif-count">4</span>
+        <button class="notif-btn" onclick="toggleNotif()" id="notif-btn" aria-label="Ouvrir les notifications">
+        <i class="fas fa-bell" aria-hidden="true"></i> <span class="notif-label">Alertes</span> <span class="notif-badge" id="notif-count" hidden></span>
       </button>
-      <button class="btn-icon" id="theme-toggle-btn" onclick="toggleTheme()" title="Basculer thème clair/sombre"><i class="fas fa-adjust"></i></button>
+      <button class="btn-icon" id="theme-toggle-btn" onclick="toggleTheme()" title="Basculer thème clair/sombre" aria-label="Basculer le thème"><i class="fas fa-adjust" aria-hidden="true"></i><span>Thème</span></button>
       <div class="user-avatar" id="user-avatar" onclick="navigateTo('settings')">SA</div>
     </div>
   </div>
@@ -118,7 +118,7 @@
     </div>
   </div>
 </div>
-  <script src="{{url_for('static', filename='js/script.js')}}?v=20260829-audio-bic-v4"></script>
+  <script src="{{url_for('static', filename='js/script.js')}}?v=20261028-regulatory-history-v1"></script>
   <script>
     const loginHeroSlides = [
       {title:'Supervision navale 360°', subtitle:'Routes, alertes et containers visibles en un seul écran.', metric:'8.2ms', label:'Latence IA'},

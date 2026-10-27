@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="pg-title">Candidatures</h1>
+{% for a in applications %}
+  <div class="card" data-removable>
+    <p>{{ a.matieres }} — {{ a.motivation }}</p>
+    <button class="btn btn-p" data-api-action="{{ url_for('school_admin.accept_affiliation', app_id=a.id) }}" data-success="Candidature acceptée.">Accepter</button>
+    <button class="btn" data-api-action="{{ url_for('school_admin.reject_affiliation', app_id=a.id) }}" data-success="Candidature rejetée.">Rejeter</button>
+  </div>
+{% else %}
+  <p>Aucune candidature en attente.</p>
+{% endfor %}
+{% endblock %}
