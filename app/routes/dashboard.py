@@ -779,50 +779,190 @@ def get_owner_dashboard():
 @dash_bp.route('/api/ai/chat', methods=['POST'])
 @limiter.limit("20/hour")
 def ai_chat():
+    from app.agents.audit import persist_agent_run
+    from app.agents.orchestrator import run_agent_request
+    from app.llm.gemini import GeminiToolProvider
+
+    identity = current_identity()
+    data = request.get_json(silent=True) or {}
+    message = data.get("message")
+    if not isinstance(message, str) or not message.strip():
+        return jsonify({"error": "Le message est requis."}), 400
+    message = message.strip()
+    if len(message) > 4000:
+        return jsonify({"error": "Le message dépasse la limite de 4000 caractères."}), 413
+    selected = data.get("black_box_ids")
+    if selected is None and data.get("black_box_id") is not None:
+        selected = [data.get("black_box_id")]
+    if selected is None:
+        selected = []
+    if not isinstance(selected, list) or len(selected) > 20:
+        return jsonify({"error": "black_box_ids doit contenir au plus 20 identifiants."}), 400
+    selected = list(dict.fromkeys(str(value).strip() for value in selected))
+    if any(not value.isdigit() or int(value) <= 0 for value in selected):
+        return jsonify({"error": "Identifiant de boîte noire invalide."}), 400
+
+    # Les demandes clairement hors transport sont refusées avant tout accès
+    # aux outils et nomment le domaine détecté.
+    out_of_scope_sector = _ai_out_of_scope_sector(message)
+    provider = None
+    if not out_of_scope_sector and current_app.config.get("API_KEY"):
+        try:
+            provider = GeminiToolProvider()
+            classify_scope = getattr(provider, "classify_scope", None)
+            disposition = classify_scope(message) if callable(classify_scope) else None
+            if disposition and disposition.get("in_scope") is False:
+                out_of_scope_sector = disposition.get("sector") or "un autre domaine que la logistique"
+        except Exception as scope_error:
+            # Le classement est sans données IoT. Si le fournisseur est indisponible,
+            # les refus lexicaux restent actifs et aucun agent ne s'exécute sans sélection.
+            current_app.logger.warning("Classification de domaine IA indisponible: %s", type(scope_error).__name__)
+    if out_of_scope_sector:
+        return jsonify({
+            "status": "out_of_scope",
+            "reply": ("Je suis ARGOS Intelligence, une IA spécialisée dans la logistique "
+                      "et le transport conteneurisé. Votre demande relève du secteur "
+                      f"{out_of_scope_sector}; je ne peux pas la traiter."),
+            "agents_consulted": [], "agent_results": [], "sources": [],
+        })
+
     try:
-        data = request.get_json() or {}
-        message = (data.get('message') or '').strip()
-        system_prompt = (
-            "Tu es ReportAI, assistant ARGOS. Produis des rapports factuels en francais, "
-            "n'invente aucune donnee et signale explicitement toute information manquante."
+        available = _ai_available_containers(identity)
+    except Exception:
+        current_app.logger.exception("Impossible de déterminer le périmètre IA autorisé")
+        return jsonify({"error": "Impossible de vérifier les conteneurs autorisés."}), 503
+    available_ids = {item["black_box_id"] for item in available}
+    if not selected:
+        return jsonify({
+            "status": "needs_container_selection",
+            "reply": "Pour analyser les données ARGOS, choisissez un ou plusieurs conteneurs autorisés.",
+            "available_containers": available,
+            "agents_consulted": [], "agent_results": [], "sources": [],
+        })
+    if not set(selected).issubset(available_ids):
+        return jsonify({"error": "Un ou plusieurs conteneurs sont hors périmètre ou indisponibles."}), 403
+    if not current_app.config.get("API_KEY"):
+        return jsonify({"error": "Assistant IA non configuré côté serveur."}), 503
+
+    import time
+    from uuid import uuid4
+
+    trace_id = str(uuid4())
+    started = time.monotonic()
+    try:
+        result = run_agent_request(
+            message, identity, provider or GeminiToolProvider(),
+            black_box_ids=selected, trace_id=trace_id,
         )
-        context_data = data.get('contextData') or ''
+        from app.regulatory.history import search_regulatory_sources
+        regulatory_candidates = search_regulatory_sources(message)
+        existing_source_keys = {item.get("source_key") for item in result.get("sources", [])}
+        result.setdefault("sources", []).extend(
+            source for source in regulatory_candidates
+            if source.get("source_key") not in existing_source_keys
+        )
+        result["regulatory_applicability"] = "TO_VERIFY"
+        result["duration_ms"] = round((time.monotonic() - started) * 1000)
+        persist_agent_run(trace_id, identity, "success", result["agents_consulted"], result["sources"])
+        from app.regulatory.history import AGENT_SOURCE, record_decision
+        from app.extensions import db as regulatory_db
 
-        if not message:
-            return jsonify({"error": "Le message est requis."}), 400
-
-        # Récupérer la clé API depuis la config Flask ou l'environnement
-        api_key = current_app.config.get('API_KEY') or os.environ.get('API_KEY')
-        if not api_key:
-            return jsonify({"error": "Assistant IA non configuré côté serveur. Veuillez définir API_KEY dans .env"}), 500
-
-        client = GenerativeServiceClient(client_options=ClientOptions(api_key=api_key))
-        final_prompt = f"DONNÉES ACTUELLES DES CONTENEURS :\n{context_data}\n\nDEMANDE DE L'UTILISATEUR :\n{message}"
-
-        gemini_model = current_app.config.get('GEMINI_MODEL') or os.environ.get('GEMINI_MODEL') or 'models/gemini-2.5-flash'
-        request_payload = GenerateContentRequest(
-            model=gemini_model,
-            system_instruction=Content(
-                role='system',
-                parts=[Part(text=system_prompt)]
-            ),
-            contents=[
-                Content(
-                    role='user',
-                    parts=[Part(text=final_prompt)]
+        def save_agent_history(item):
+            agent_id = item.get("agent_id") or "assistant"
+            source_keys = [AGENT_SOURCE.get(agent_id, "ARGOS_AGENT_RULES")]
+            for source in (item.get("provenance") or []):
+                if source.get("source_key"):
+                    source_keys.append(source["source_key"])
+            for ref in (item.get("data") or {}).get("references", []):
+                if ref.get("source_key"):
+                    source_keys.append(ref["source_key"])
+            for box_id in selected:
+                record_decision(
+                    identity=identity, black_box_id=int(box_id),
+                    subject_type="ai_agent", subject_id=f"{trace_id}:{agent_id}",
+                    event_type="AI_AGENT_ACTION", action=f"Capacité IA consultée : {agent_id}",
+                    reaction=f"Statut retourné : {item.get('status', 'unknown')}",
+                    remarks={"agent_id": agent_id, "status": item.get("status"),
+                             "trace_id": trace_id, "error": item.get("error")},
+                    source_keys=source_keys, trace_id=trace_id,
                 )
-            ]
-        )
+            for child in (item.get("data") or {}).get("consumed_results", []):
+                save_agent_history(child)
 
-        response = client.generate_content(request=request_payload, timeout=30)
-        reply = ''
-        if response.candidates:
-            candidate = response.candidates[0]
-            if candidate.content and candidate.content.parts:
-                reply = ''.join([part.text or '' for part in candidate.content.parts])
-
-        return jsonify({"reply": reply})
-
+        for tool_result in result.get("agent_results", []):
+            save_agent_history(tool_result)
+        turn_source_keys = ["ARGOS_AGENT_RULES"]
+        for source in result.get("sources", []):
+            if source.get("source_key"):
+                turn_source_keys.append(source["source_key"])
+        for box_id in selected:
+            record_decision(
+                identity=identity, black_box_id=int(box_id),
+                subject_type="ai_turn", subject_id=trace_id, event_type="AI_RESPONSE",
+                action="Analyse de la demande ARGOS par l’orchestrateur multi-agents",
+                reaction=result.get("reply", ""),
+                remarks={"agents_consulted": result.get("agents_consulted", []),
+                         "limitations": result.get("limitations", []), "trace_id": trace_id},
+                source_keys=turn_source_keys, trace_id=trace_id,
+            )
+        regulatory_db.session.commit()
+        return jsonify(result)
     except Exception as e:
-        current_app.logger.exception("Erreur Gemini")
-        return jsonify({"error": f"Erreur de communication avec l'IA: {e}"}), 500
+        current_app.logger.exception("Échec assistant ARGOS trace_id=%s", trace_id)
+        persist_agent_run(trace_id, identity, "error", [], [], "LLM_OR_AGENT_ERROR")
+        try:
+            from app.regulatory.history import record_decision
+            record_decision(identity=identity, black_box_id=int(selected[0]) if selected else None,
+                            subject_type="ai_turn", subject_id=trace_id, event_type="AI_ERROR",
+                            action="Échec de génération de la réponse IA",
+                            reaction="Aucune réponse fiable n’a été produite.",
+                            remarks={"trace_id": trace_id, "error_type": type(e).__name__},
+                            source_keys=["ARGOS_AGENT_RULES"], trace_id=trace_id)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+        return jsonify({"error": "Échec de l'assistant ARGOS.", "trace_id": trace_id}), 502
+
+
+def _ai_out_of_scope_sector(message):
+    """Détection prudente des secteurs courants étrangers au transport ARGOS."""
+    import re
+    sectors = (
+        ("médecine et santé", r"\b(médecin|médecine|maladie|sympt[oô]me|diagnostic médical|ordonnance|traitement médical)\b"),
+        ("finance personnelle et fiscalité", r"\b(imp[oô]t|déclaration fiscale|bourse|action à acheter|portefeuille d'investissement|crédit immobilier)\b"),
+        ("cuisine et restauration", r"\b(recette de cuisine|cuisiner|ingrédients|cuisson|restaurant à|menu végétarien)\b"),
+        ("droit général", r"\b(divorce|garde des enfants|procès pénal|testament|droit de la famille)\b"),
+        ("divertissement et jeux vidéo", r"\b(jeu vidéo|soluce de jeu|paroles de chanson|série télé|acteur préféré)\b"),
+        ("informatique générale", r"\b(code python|débogue mon code|algorithme de tri|installer linux)\b"),
+    )
+    normalized = message.casefold()
+    for sector, pattern in sectors:
+        if re.search(pattern, normalized):
+            return sector
+    return None
+
+
+def _ai_available_containers(identity):
+    """Liste minimale des boîtes visibles par l'identité authentifiée."""
+    role, user_id = identity.get("role"), identity.get("user_id")
+    if role not in {"superadmin", "owner", "company", "client", "driver"}:
+        return []
+    visible = _visible_boites_for(role, user_id)
+    query = """
+        SELECT b.id_boite, c.id_conteneurs, b.numero_serie
+        FROM boite_noir b
+        LEFT JOIN conteneurs c ON c.id_conteneurs = b.id_conteneurs
+    """
+    params = {}
+    if visible is not None:
+        if not visible:
+            return []
+        keys = [f"box{i}" for i in range(len(visible))]
+        query += " WHERE b.id_boite IN (" + ",".join(f":{key}" for key in keys) + ")"
+        params.update({key: value for key, value in zip(keys, visible)})
+    rows = db.session.execute(text(query + " ORDER BY b.id_boite"), params).fetchall()
+    return [{
+        "black_box_id": str(row[0]),
+        "container_id": str(row[1]) if row[1] is not None else None,
+        "label": str(row[1] or row[2] or f"Boîte {row[0]}"),
+    } for row in rows]

@@ -1443,57 +1443,80 @@ function openPublicationModal(pubId) {
 // Le frontend ne stocke aucune clé API. Gemini est appelé via le proxy Flask.
 const AI_CHAT_ENDPOINT = '/api/ai/chat';
 const AI_CHAT_PROVIDER = 'Google Gemini';
+let AI_CHAT_BLACK_BOX_ID = null;
+let AI_PENDING_MESSAGE = null;
 
 function openAIAssistant(containerId=null){
-  const html = `
-    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
-      <div class="modal" style="max-width:900px;max-height:85vh;display:flex;flex-direction:column">
-        <div class="modal-header">
-          <div class="modal-title" style="font-family:var(--display);color:var(--cyan)">
-            <i class="fa-solid fa-robot"></i> Assistant IA — Rapports ARGOS
-          </div>
-          <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-times"></i></button>
-        </div>
-        <div class="modal-body" style="flex:1;display:flex;flex-direction:column;padding:0;overflow:hidden">
-          <div id="ai-chat-messages" style="flex:1;overflow-y:auto;padding:16px"></div>
-          <div style="padding:12px;background:var(--bg2);border-top:1px solid var(--border)">
-            <div id="ai-suggestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
-              <button class="ai-chip" onclick="quickAIMessage('incident')"> Signaler incident</button>
-              <button class="ai-chip" onclick="quickAIMessage('pertes')"> Évaluer pertes</button>
-              <button class="ai-chip" onclick="quickAIMessage('chronologie')">⏱ Chronologie</button>
-              <button class="ai-chip" onclick="quickAIMessage('excuse')">✍ Lettre d'excuse</button>
-            </div>
-            <div style="display:flex;gap:8px">
-              <input type="text" id="ai-chat-input" placeholder="Décrivez l'incident ou demandez un rapport…"
-                style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-size:13px"
-                onkeydown="if(event.key==='Enter')sendAIMessage()">
-              <button class="btn-primary" style="width:auto;padding:8px 16px" onclick="sendAIMessage()">
-                <i class="fa-solid fa-paper-plane"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>`;
-  document.getElementById('modal-root').innerHTML = html;
-  setTimeout(()=>{
-    addAIMessage('Bonjour ! Je suis l\'assistant de rédaction ARGOS. Je peux générer des rapports d\'incidents, évaluer des pertes, reconstituer des chronologies ou rédiger des correspondances professionnelles. Que souhaitez-vous ?');
-    if(containerId){
-      const c = DB_CONTAINERS.find(x=>x.id_boite===containerId||x.id===containerId);
-      if(c){
-        const ctx = `Boîte: ${c.id_boite||c.id} | Type: ${c.type_conteneurs} | Statut: ${c.status} | T:${c.temp}°C | H:${c.humidity}% | P:${c.pressure}hPa | V:${c.speed}km/h | G:${c.shock}G | Alertes: ${(c.alerts||[]).join(' / ')||'aucune'}`;
-        sendAIMessage(`Génère un rapport professionnel complet pour ce conteneur:\n\n${ctx}`);
-      }
-    }
-  }, 300);
+  AI_CHAT_BLACK_BOX_ID = containerId ? String(containerId) : null;
+  mountGlobalAIAssistant();
+  const panel=document.getElementById('argos-ai-panel');
+  const toggle=document.getElementById('argos-ai-toggle');
+  if(!panel || !toggle) return;
+  panel.hidden=false;
+  panel.classList.add('is-open');
+  toggle.setAttribute('aria-expanded','true');
+  toggle.setAttribute('aria-label','Fermer l’assistant IA ARGOS');
+  if(!document.getElementById('ai-chat-messages').childElementCount){
+    addAIMessage('Bonjour. Je peux consulter les agents ARGOS et leurs données autorisées pour répondre à votre demande.');
+  }
+  if(containerId && !panel.dataset.initializedFor){
+    panel.dataset.initializedFor=String(containerId);
+    addAIMessage(`Boîte ${formatAIReply(containerId)} sélectionnée. Posez votre question pour lancer l’analyse.`);
+  }
+  setTimeout(()=>document.getElementById('ai-chat-input')?.focus(),0);
 }
+
+function mountGlobalAIAssistant(){
+  if(document.getElementById('argos-ai-widget')) return;
+  const root=document.createElement('aside');
+  root.id='argos-ai-widget';
+  root.className='argos-ai-widget';
+  root.innerHTML=`<button id="argos-ai-toggle" class="argos-ai-toggle" type="button" aria-expanded="false" aria-controls="argos-ai-panel" aria-label="Ouvrir l’assistant IA ARGOS" onclick="toggleGlobalAIAssistant()"><svg class="argos-ai-toggle-logo" aria-hidden="true" viewBox="0 0 82 40"><path d="M4 34 17 5h7l13 29h-8l-3-8H15l-3 8Zm14-14h5l-2.5-8Z" fill="#75e8f5"/><path d="M44 9h7v24h-7zM40 5h15v4H40zM40 33h15v4H40z" fill="#41b9cc"/><path d="M62 11h14a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4h-5l-5 4v-4h-4a4 4 0 0 1-4-4V15a4 4 0 0 1 4-4Z" fill="none" stroke="#f1f5f9" stroke-width="2"/><circle cx="66" cy="20" r="1.5" fill="#f1f5f9"/><circle cx="71" cy="20" r="1.5" fill="#f1f5f9"/><circle cx="76" cy="20" r="1.5" fill="#f1f5f9"/></svg><span class="sr-only">Ouvrir ARGOS IA</span></button>
+    <section id="argos-ai-panel" class="argos-ai-panel" role="dialog" aria-labelledby="argos-ai-title" aria-modal="false" hidden>
+      <header class="argos-ai-header"><div class="argos-ai-brand"><div class="argos-ai-hero-mark" aria-hidden="true"><svg viewBox="0 0 72 76"><path d="M8 67 29 8h10l21 59H44l-4-13H28l-5 13Z" fill="#175b73" transform="translate(8 5)"/><path d="M8 67 29 8h10l21 59H44l-4-13H28l-5 13Z" fill="#58c7d9"/><path d="m29 43 5-15 5 15Z" fill="#11182a"/></svg></div><div><strong id="argos-ai-title">Assistant ARGOS</strong><span>Orchestrateur multi-agents · Logistique & transport</span></div></div><button class="argos-ai-close" type="button" aria-label="Fermer l’assistant" onclick="toggleGlobalAIAssistant(false)">×</button></header>
+      <div id="ai-chat-messages" class="argos-ai-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+      <nav class="argos-ai-suggestions" aria-label="Exemples de questions à poser à l’assistant">
+        <span>Essayez une question</span>
+        <button type="button" onclick="quickAIMessage('incidents')">Incidents et chocs</button>
+        <button type="button" onclick="quickAIMessage('risk')">Risques à venir</button>
+        <button type="button" onclick="quickAIMessage('route')">Trajet et zones</button>
+        <button type="button" onclick="quickAIMessage('regulation')">Sources réglementaires</button>
+        <button type="button" onclick="quickAIMessage('report')">Préparer un rapport</button>
+      </nav>
+      <form class="argos-ai-form" onsubmit="event.preventDefault();sendAIMessage()"><label class="sr-only" for="ai-chat-input">Votre question à l’assistant ARGOS</label><textarea id="ai-chat-input" rows="2" maxlength="4000" placeholder="Posez une question aux agents ARGOS…" required></textarea><button id="ai-chat-send" class="argos-ai-send" type="submit" aria-label="Envoyer la question"><i class="fas fa-paper-plane" aria-hidden="true"></i></button></form>
+    </section>`;
+  document.body.appendChild(root);
+}
+
+function toggleGlobalAIAssistant(force){
+  mountGlobalAIAssistant();
+  const panel=document.getElementById('argos-ai-panel');
+  const toggle=document.getElementById('argos-ai-toggle');
+  const open=typeof force==='boolean'?force:panel.hidden;
+  panel.hidden=!open;
+  panel.classList.toggle('is-open',open);
+  toggle.setAttribute('aria-expanded',String(open));
+  toggle.setAttribute('aria-label',open?'Fermer l’assistant IA ARGOS':'Ouvrir l’assistant IA ARGOS');
+  if(open){
+    if(!document.getElementById('ai-chat-messages').childElementCount){
+      addAIMessage('Bonjour. Posez une question et l’orchestrateur consultera les agents ARGOS autorisés pour cette session.');
+    }
+    setTimeout(()=>document.getElementById('ai-chat-input')?.focus(),0);
+  }
+  else toggle.focus();
+}
+
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape' && !document.getElementById('argos-ai-panel')?.hidden) toggleGlobalAIAssistant(false);
+});
 
 function quickAIMessage(type){
   const msgs = {
-    incident:'Je souhaite déclarer un incident survenu sur un conteneur.',
-    pertes:"J'ai besoin d'un rapport détaillé des pertes matérielles.",
-    chronologie:'Aidez-moi à retracer la chronologie des événements du trajet.',
-    excuse:"Rédigez une lettre d'excuse professionnelle pour cet incident."
+    incidents:'Analyse les derniers chocs, ouvertures de porte et alertes. Indique les mesures observées, leur heure et les recommandations prudentes.',
+    risk:'À partir des dernières mesures, estime les risques observables à court terme et explique les données et seuils utilisés.',
+    route:'Résume le trajet récent, les zones traversées, les arrêts inhabituels et la fraîcheur des positions.',
+    regulation:'Quelles sources réglementaires peuvent concerner ce trajet ? Indique ce qui reste à vérifier selon la juridiction, le mode et la cargaison.',
+    report:'Prépare une synthèse chronologique des événements et recommandations du dossier sélectionné.'
   };
   const msg = msgs[type] || '';
   if(msg){ document.getElementById('ai-chat-input').value=msg; sendAIMessage(msg); }
@@ -1537,47 +1560,136 @@ function formatAIReply(content){
     .replace(/\n/g, '<br>');
 }
 
-async function sendAIMessage(msgText=null){
+async function sendAIMessage(msgText=null, selectedBoxIds=null, alreadyDisplayed=false){
   const input = document.getElementById('ai-chat-input');
   if(!input) return;
   const text = msgText || input.value.trim();
   if(!text) return;
   
-  addUserMessage(text);
+  if(!alreadyDisplayed) addUserMessage(text);
   if(!msgText) input.value = '';
   input.disabled = true;
-  const loading = addAIMessage(`<em>${AI_CHAT_PROVIDER} rédige une réponse...</em>`);
-  
-  //cette logique pour récupérer les données live
-  const containers = Array.isArray(DB_CONTAINERS) ? DB_CONTAINERS : [];
-  const ctx = containers.slice(0,5).map(c=>`${c.id_boite||c.id}: ${c.status} T:${c.temp}°C ${(c.alerts||[]).join(' ')}`).join('\n');
-  const sys = `Tu es ReportAI, assistant de rédaction pour l'application ARGOS (suivi de conteneurs Cameroun). Contexte:\n${ctx}\nAide l'utilisateur avec des rapports professionnels en français.`;
+  const loading = addAIMessage(`<em>${AI_CHAT_PROVIDER} consulte l’orchestrateur…</em>`);
+  const send=document.getElementById('ai-chat-send');
+  if(send) send.disabled=true;
   
   try {
-    const res = await fetch(AI_CHAT_ENDPOINT, {
+    const res = await secureApiFetch(AI_CHAT_ENDPOINT, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ 
+      body: JSON.stringify({
           message: text,
-          systemPrompt: sys,
-          contextData: ctx
+          black_box_ids: selectedBoxIds || (AI_CHAT_BLACK_BOX_ID ? [AI_CHAT_BLACK_BOX_ID] : [])
       })
     });
     
     const data = await res.json();
     if(!res.ok) throw new Error(data.error || `Serveur IA erreur ${res.status}`);
     
+    if(data.status==='needs_container_selection'){
+      if(loading) loading.remove();
+      AI_PENDING_MESSAGE=text;
+      addAIMessage(formatAIReply(data.reply || 'Choisissez les conteneurs à analyser.'));
+      renderAIContainerSelection(data.available_containers || []);
+      return;
+    }
+
     // gère plusieurs formats de réponse
     const resp = data.reply || data.provider_response?.choices?.[0]?.message?.content || data.provider_response?.choices?.[0]?.text || JSON.stringify(data);
     if(loading) loading.remove();
-    addAIMessage(formatAIReply(resp));
+    if(data.status==='out_of_scope'){
+      addAIMessage(formatAIReply(resp));
+      AI_CHAT_BLACK_BOX_ID=null;
+      return;
+    }
+    AI_PENDING_MESSAGE=null;
+    const answer=addAIMessage(formatAIReply(resp));
+    const metadata=document.createElement('div');
+    metadata.className='argos-ai-metadata';
+    const agents=Array.isArray(data.agents_consulted)?data.agents_consulted:[];
+    const sources=Array.isArray(data.sources)?data.sources:[];
+    const agentResults=Array.isArray(data.agent_results)?data.agent_results:[];
+    const agentLine=document.createElement('div');
+    agentLine.textContent=agents.length?`Agents consultés : ${agents.map(a=>typeof a==='string'?a:(a.name||a.id||'agent')).join(' · ')}`:'Aucun agent déclaré par l’orchestrateur.';
+    metadata.appendChild(agentLine);
+    if(agentResults.length){
+      const outcomes=document.createElement('div');
+      outcomes.textContent=`Résultats transmis : ${agentResults.map(result=>`${result.agent_id || 'agent'} (${result.status || 'statut inconnu'})`).join(' · ')}`;
+      metadata.appendChild(outcomes);
+      const exchanged=[];
+      const collectExchanges=(result)=>{
+        for(const child of result?.data?.consumed_results || []){
+          exchanged.push(child.agent_id || 'agent');
+          collectExchanges(child);
+        }
+      };
+      agentResults.forEach(collectExchanges);
+      if(exchanged.length){
+        const exchangeLine=document.createElement('div');
+        exchangeLine.textContent=`Résultats inter-agents consommés : ${[...new Set(exchanged)].join(' → ')}`;
+        metadata.appendChild(exchangeLine);
+      }
+    }
+    if(sources.length){
+      const sourceLine=document.createElement('div');
+      sourceLine.appendChild(document.createTextNode('Références : '));
+      sources.forEach((source,index)=>{
+        if(index)sourceLine.appendChild(document.createTextNode(' · '));
+        if(typeof source==='string'){sourceLine.appendChild(document.createTextNode(source));return;}
+        const label=source.title||source.source||source.path||source.id||source.source_key||'source';
+        const url=String(source.official_url||'');
+        if(url.startsWith('https://')){
+          const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.textContent=label;sourceLine.appendChild(link);
+        }else sourceLine.appendChild(document.createTextNode(label));
+        const status=[source.jurisdiction,source.legal_status,source.applicability_status||'applicabilité à vérifier'].filter(Boolean).join(' · ');
+        if(status)sourceLine.appendChild(document.createTextNode(` [${status}]`));
+      });
+      metadata.appendChild(sourceLine);
+    }
+    if(data.trace_id){const trace=document.createElement('div');trace.textContent=`Trace : ${data.trace_id}`;metadata.appendChild(trace);}
+    answer?.appendChild(metadata);
   } catch(e){
     if(loading) loading.remove();
-    addAIMessage(`<span style="color:var(--red)">Erreur IA: ${formatAIReply(e.message)}</span>`);
+    addAIMessage(`<span style="color:var(--red)">Erreur IA : ${formatAIReply(e.message)}</span>`);
   } finally {
     input.disabled = false;
+    if(send) send.disabled=false;
+    AI_CHAT_BLACK_BOX_ID=null;
     input.focus();
   }
+}
+
+function renderAIContainerSelection(containers){
+  const messages=document.getElementById('ai-chat-messages');
+  if(!messages) return;
+  const block=document.createElement('div');
+  block.className='argos-ai-selection';
+  if(!containers.length){
+    block.textContent='Aucun conteneur autorisé n’est disponible pour cette session.';
+    messages.appendChild(block);
+    return;
+  }
+  const options=containers.map(item=>{
+    const id=String(item.black_box_id);
+    const label=String(item.label || item.container_id || `Boîte ${id}`);
+    const safeId=formatAIReply(id), safeLabel=formatAIReply(label);
+    const checked=AI_CHAT_BLACK_BOX_ID && String(AI_CHAT_BLACK_BOX_ID)===id ? ' checked' : '';
+    return `<label class="argos-ai-container-option"><input type="checkbox" name="ai-container" value="${safeId}"${checked}><span><strong>${safeLabel}</strong><small>Boîte ARGOS ${safeId}</small></span></label>`;
+  }).join('');
+  block.innerHTML=`<form onsubmit="event.preventDefault();submitAIContainerSelection(this)"><strong>Choisissez le périmètre d’analyse</strong><div class="argos-ai-container-options">${options}</div><button class="argos-ai-scope-submit" type="submit">Analyser les conteneurs sélectionnés</button></form>`;
+  messages.appendChild(block);
+  messages.scrollTop=messages.scrollHeight;
+}
+
+function submitAIContainerSelection(form){
+  const selected=Array.from(form.querySelectorAll('input[name="ai-container"]:checked')).map(input=>input.value);
+  if(!selected.length){
+    showToast('Sélectionnez au moins un conteneur.','warn');
+    return;
+  }
+  if(!AI_PENDING_MESSAGE) return;
+  form.querySelectorAll('input,button').forEach(control=>control.disabled=true);
+  return sendAIMessage(AI_PENDING_MESSAGE,selected,true);
 }
 
 // ══════════════════════════════════════════════════════
