@@ -37,6 +37,16 @@ def _process_destocking(job):
         return
     pdf = generate_container_report_pdf(request_row.container_id)
     report_uid = str(uuid.uuid4())
+    from app.regulatory.history import record_decision
+    record_decision(
+        identity={"role": "system", "user_id": "argos_worker"},
+        black_box_id=int(request_row.black_box_id), container_id=str(request_row.container_id),
+        subject_type="report", subject_id=report_uid, event_type="REPORT_GENERATED",
+        action="Rapport PDF de déstockage généré après vote approuvé",
+        reaction="Le rapport reprend l’historique du dossier et les références disponibles.",
+        remarks={"request_id": request_id, "report_uid": report_uid},
+        source_keys=["ARGOS_AGENT_RULES"], applicability_status="NOT_ASSESSED",
+    )
     stored = store_private_document(f"generated_reports/destocking_{request_row.container_id}_{report_uid}.pdf", pdf)
     db.session.execute(text("""
         INSERT INTO generated_reports(report_uid,category,title,container_id,black_box_id,storage_key,mime_type,size,checksum)
@@ -50,6 +60,15 @@ def _process_destocking(job):
             status='DETACHED',visibility_until=NOW()+INTERVAL '24 hours'
         WHERE black_box_id=:box AND container_id=:container AND status='ACTIVE'
     """), {"box": request_row.black_box_id, "container": request_row.container_id})
+    record_decision(
+        identity={"role": "system", "user_id": "argos_worker"},
+        black_box_id=int(request_row.black_box_id), container_id=str(request_row.container_id),
+        subject_type="container_assignment", subject_id=str(request_id), event_type="DESTOCKING_COMPLETED",
+        action="Détachement du conteneur exécuté après approbation multipartite",
+        reaction=f"Rapport associé : {report_uid}",
+        remarks={"request_id": request_id, "report_uid": report_uid},
+        source_keys=["ARGOS_AGENT_RULES"], applicability_status="NOT_ASSESSED",
+    )
     db.session.execute(text("""
         UPDATE destocking_requests SET status='COMPLETED',final_report_id=(SELECT id FROM generated_reports WHERE report_uid=CAST(:uid AS uuid)),updated_at=NOW()
         WHERE id=:id

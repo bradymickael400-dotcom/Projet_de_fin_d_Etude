@@ -241,6 +241,7 @@ function changeRefreshRate(v) {
 //  INIT APP (Corrigé et Sécurisé)
 // ══════════════════════════════════════════════════════
 function initApp(){
+  if(typeof mountGlobalAIAssistant==='function') mountGlobalAIAssistant();
   const roleLabels = {superadmin:'SUPER ADMIN', owner:'PROPRIÉTAIRE BB',
                       driver:'CHAUFFEUR', client:'CLIENT', company:'ENTREPRISE',
                       port_authority:'AUTORITÉ PORTUAIRE'};
@@ -316,6 +317,7 @@ function buildNav(){
 }
 
 function navigateTo(page){
+  if(typeof mountGlobalAIAssistant==='function') mountGlobalAIAssistant();
   if(currentPage === page) {
     closeSidebarAfterNavigation();
     return;
@@ -340,6 +342,7 @@ function goToPage(page) {
 }
 
 function renderPage(page){
+  if(typeof mountGlobalAIAssistant==='function') mountGlobalAIAssistant();
   const c = document.getElementById('pages-container');
   if (!c) {
     console.warn('pages-container introuvable pour la page', page);

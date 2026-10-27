@@ -429,16 +429,16 @@ async function manualRefresh() {
 function buildSADashboard(){
   return `
   <div class="page active" id="page-dashboard">
-    <div class="page-header">
-      <div class="page-title">Dashboard Global <small>Temps Réel</small></div>
-      <div style="display:flex;gap:8px">
-        <span class="badge badge-ok"><span class="badge-dot"></span>Système Opérationnel</span>
-        <button class="btn-icon" onclick="manualRefresh()">
-            <i class="fas fa-sync-alt"></i> Actualiser
+    <div class="page-header dashboard-page-header">
+      <div><div class="dashboard-eyebrow">CENTRE DE SUPERVISION</div><div class="page-title">Vue d’ensemble <small>Flux opérationnels ARGOS</small></div></div>
+      <div class="dashboard-header-actions">
+        <span class="dashboard-data-note"><span class="dashboard-live-dot"></span>Données issues des API ARGOS</span>
+        <button class="btn-icon dashboard-refresh" onclick="manualRefresh()" aria-label="Actualiser les données">
+            <i class="fas fa-sync-alt"></i><span>Actualiser</span>
         </button>
       </div>
     </div>
-    <div class="grid-4" style="margin-bottom:20px">
+    <div class="grid-4 dashboard-kpis">
       <div class="stat-card" style="--accent:var(--cyan)">
         <div class="stat-label">Comptes Entreprises</div>
         <div class="stat-value" id="dash-tot-ent">--</div>
@@ -460,24 +460,24 @@ function buildSADashboard(){
         <div class="stat-sub" style="color:var(--cyan);cursor:pointer">↗ Voir données scellées</div>
       </div>
     </div>
-    <div class="responsive-map-resource-layout" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
-      <div class="card">
-        <div class="card-header"><span class="card-title">Carte Globale Live</span>
-          <button class="btn-icon" onclick="navigateTo('map')"><i class="fas fa-expand"></i> Plein écran</button>
+    <div class="dashboard-primary-grid">
+      <div class="card dashboard-map-card">
+        <div class="card-header"><span class="card-title">Carte des positions disponibles</span>
+          <button class="btn-icon" onclick="navigateTo('map')"><span>Ouvrir la carte</span></button>
         </div>
         <div class="map-container" style="height:280px"><div id="map-main"></div></div>
       </div>
-      <div class="card">
+      <div class="card dashboard-alerts-card">
         <div class="card-header"><span class="card-title">Alertes Récentes (BD)</span></div>
         <div id="dash-alertes-list" style="max-height:280px;overflow-y:auto">
           <div style="padding:20px;text-align:center;color:var(--text3)"><i class="fas fa-spinner fa-spin"></i> Chargement…</div>
         </div>
       </div>
     </div>
-    <div class="grid-3" style="margin-bottom:20px">
+    <div class="grid-3 dashboard-secondary-grid">
       <div class="card">
         <div class="card-header"><span class="card-title">Top 5 Conteneurs Critiques</span></div>
-        <div id="dash-crit-containers" class="zone-scrollable"><div style="padding:20px;text-align:center;color:var(--text3)">Chargement…</div></div>
+        <div id="dash-crit-containers" class="zone-scrollable"><div class="dashboard-empty">Chargement des données…</div></div>
       </div>
       <div class="card">
         <div class="card-header"><span class="card-title">Total d'abonnements mensuels</span></div>
@@ -634,73 +634,58 @@ function buildClientDashboard(){
 //  MAP PAGE
 // ══════════════════════════════════════════════════════
 function buildMapPage(){
-  const ok  = DB_CONTAINERS.filter(c=>c.status==='ok').length;
-  const wa  = DB_CONTAINERS.filter(c=>c.status==='warning').length;
-  const da  = DB_CONTAINERS.filter(c=>c.status==='danger').length;
-  const off = DB_CONTAINERS.filter(c=>c.status==='off').length;
+  MAP_FILTER='all';
   return `
   <div class="page active">
     <div class="page-header">
-      <div class="page-title">Carte Monitoring <small>Temps Réel</small></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <span class="badge badge-ok"><span class="badge-dot"></span>${ok} OK</span>
-        <span class="badge badge-warn">${wa} Alertes</span>
-        <span class="badge badge-danger">${da} Critiques</span>
-        <span class="badge badge-off">${off} Hors ligne</span>
-      </div>
+      <div><div class="page-title">Carte GPS <small>Positions vérifiées</small></div><div id="map-data-status" class="map-data-status" role="status" aria-live="polite">Chargement des positions consolidées…</div></div>
+      <button class="btn-secondary map-refresh-action" type="button" onclick="loadMapPositions()" aria-label="Actualiser les positions GPS" title="Actualiser les positions GPS"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M5.6 9A7 7 0 0 1 18 6.8L20 12M4 12l2 5.2A7 7 0 0 0 18.4 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sr-only">Actualiser</span></button>
     </div>
-    <div class="monitoring-map-layout" style="display:grid;gap:16px;height:calc(250vh - 160px)">
+    <div class="monitoring-map-layout" style="display:grid;gap:16px;height:calc(100vh - 180px)">
       <div class="card monitoring-map-panel" style="padding:0;overflow:hidden;position:relative">
         <div id="map-main" style="height:100%"></div>
+        <div id="map-empty-overlay" class="map-empty-overlay" role="status"><strong>En attente de positions GPS</strong><span>Les marqueurs s’afficheront dès la réception de coordonnées consolidées.</span></div>
         <div class="map-overlay">
           <div class="map-legend">
-            <div style="font-size:11px;font-weight:600;margin-bottom:6px;letter-spacing:1px">LÉGENDE</div>
-            <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Nominal</div>
-            <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Alerte</div>
-            <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Critique</div>
-            <div class="legend-item"><div class="legend-dot" style="background:var(--text3)"></div>Hors ligne</div>
+            <div style="font-weight:600;margin-bottom:6px;letter-spacing:1px">LÉGENDE</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div>Position GPS reçue</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Alerte signalée par l’API</div>
           </div>
         </div>
         <div class="map-controls">
-          <button class="map-btn" onclick="showAllContainers()" title="Vue globale"><i class="fas fa-globe"></i></button>
-          <button class="map-btn" onclick="toggleMapLayer()" title="Changer fond de carte"><i class="fas fa-layer-group"></i></button>
-          <button class="map-btn" onclick="toggleTrails()" title="Traces GPS" id="btn-trails"><i class="fas fa-route"></i></button>
-          <button class="map-btn" onclick="toggleHeatmap()" title="Heatmap alertes" id="btn-heat"><i class="fas fa-fire"></i></button>
-          <button class="map-btn" onclick="fitAllMarkers()" title="Centrer sur tous"><i class="fas fa-compress-arrows-alt"></i></button>
+          <button class="map-btn" id="map-view-all" type="button" onclick="showAllContainers()" title="Vue globale" aria-label="Vue globale"><span aria-hidden="true">◎</span></button>
+          <button class="map-btn" type="button" onclick="toggleMapLayer()" title="Changer fond de carte" aria-label="Changer le fond de carte"><span aria-hidden="true">▧</span></button>
+          <button class="map-btn" type="button" onclick="toggleTrails()" title="Traces GPS" aria-label="Afficher ou masquer les traces GPS" id="btn-trails"><span aria-hidden="true">↝</span></button>
+          <button class="map-btn" id="map-fit-all" type="button" onclick="fitAllMarkers()" title="Centrer sur tous" aria-label="Centrer la carte sur toutes les positions"><span aria-hidden="true">⌖</span></button>
         </div>
       </div>
       <div class="monitoring-resources-panel" style="display:flex;flex-direction:column;gap:12px;overflow-y:auto">
         <div class="card" style="padding:12px">
-          <div class="card-title" id="map-containers-title" style="margin-bottom:8px">Conteneurs (${DB_CONTAINERS.length})</div>
+          <div class="card-title" id="map-containers-title" style="margin-bottom:8px">Positions GPS (${MAP_GPS_POSITIONS.length})</div>
           <div style="position:relative;margin-bottom:8px">
             <i class="fas fa-search" style="position:absolute;left:10px;top:8px;color:var(--text3);font-size:12px"></i>
             <input type="text" placeholder="Rechercher…" style="width:100%;padding:6px 10px 6px 28px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:12px;outline:none" oninput="filterContainersList(this.value)">
           </div>
-          <div id="containers-sidebar-list" class="zone-scrollable" style="max-height: 35vh;">
-            ${DB_CONTAINERS.map(c=>{
-              const col = c.status==='ok'?'var(--green)':c.status==='warning'?'var(--amber)':c.status==='danger'?'var(--red)':'var(--text3)';
-              return `<div class="container-item status-${c.status}" style="margin-bottom:6px;cursor:pointer" onclick="focusContainerDB('${c.id_boite||c.id}')">
-                <div style="width:8px;height:8px;border-radius:50%;background:${col}"></div>
-                <div class="container-info">
-                  <div class="container-id" style="font-size:12px">${boxLabel(c)}</div>
-                  <div style="font-size:10px;color:var(--text3)">${c.type_conteneurs || '—'} • ${c.speed||0} km/h</div>
-                  <div style="font-size:10px;color:var(--text3)">${c.lastUpdate}</div>
-                </div>
-              </div>`;
-            }).join('')}
+          <div class="map-filter-group" role="group" aria-label="Filtrer les positions">
+            <button type="button" data-map-filter="all" aria-pressed="true" onclick="filterMapPositions('all',this)">Toutes</button>
+            <button type="button" data-map-filter="live" aria-pressed="false" onclick="filterMapPositions('live',this)">Récentes</button>
+            <button type="button" data-map-filter="alert" aria-pressed="false" onclick="filterMapPositions('alert',this)">Alertes</button>
+            <button type="button" data-map-filter="stale" aria-pressed="false" onclick="filterMapPositions('stale',this)">Anciennes</button>
           </div>
+          <div id="map-filter-count" class="map-data-status" aria-live="polite"></div>
+          <div id="containers-sidebar-list" class="zone-scrollable" style="max-height:35vh"><div class="map-empty-state">Aucune position GPS chargée.</div></div>
         </div>
         <div class="card" style="padding:12px">
           <div class="card-title" style="margin-bottom:8px">Données Live</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             <div class="sensor-tile" style="--sensor-color:var(--cyan);padding:10px">
               <div class="sensor-unit" style="font-size:10px"><i class="fas fa-thermometer-half"></i></div>
-              <div class="sensor-val" style="font-size:20px" id="map-temp">${DB_CONTAINERS[0]?.temp ?? '--'}</div>
+              <div class="sensor-val" style="font-size:20px" id="map-temp">—</div>
               <div class="sensor-label" style="font-size:10px">Temp</div>
             </div>
             <div class="sensor-tile" style="--sensor-color:var(--amber);padding:10px">
               <div class="sensor-unit" style="font-size:10px"><i class="fas fa-wave-square"></i></div>
-              <div class="sensor-val" style="font-size:20px" id="map-shock">${DB_CONTAINERS.find(c=>c.shock>0)?.shock ?? 0}</div>
+              <div class="sensor-val" style="font-size:20px" id="map-shock">—</div>
               <div class="sensor-label" style="font-size:10px">Choc G</div>
             </div>
           </div>
@@ -708,16 +693,7 @@ function buildMapPage(){
         <div class="card" style="padding:12px">
           <div class="card-title" style="margin-bottom:8px">Alertes Actives (BD)</div>
           <div id="map-alerts-list" class="zone-scrollable" style="max-height: 25vh;">
-            ${DB_CONTAINERS.filter(c=>c.alerts&&c.alerts.length>0).slice(0,8).map(c=>
-              c.alerts.slice(0,2).map(a=>`
-              <div class="timeline-item" style="padding:5px 0">
-                <div class="timeline-dot" style="background:${c.status==='danger'?'var(--red)':'var(--amber)'}"></div>
-                <div class="timeline-content">
-                  <div style="font-size:11px">${boxLabel(c)}: ${a.substring(0,40)}</div>
-                  <div class="timeline-time">${c.lastUpdate}</div>
-                </div>
-              </div>`).join('')
-            ).join('') || '<div style="color:var(--text3);font-size:12px">Aucune alerte active</div>'}
+            <div class="map-empty-state">Chargement des alertes consolidées…</div>
           </div>
         </div>
       </div>
@@ -1030,44 +1006,92 @@ function updateContainerPageUI(){
 }
 
 function updateMapPageUI(){
+  const hasPositions=MAP_GPS_POSITIONS.length>0;
+  const emptyOverlay=document.getElementById('map-empty-overlay');
+  if(emptyOverlay) emptyOverlay.hidden=hasPositions;
+  ['map-view-all','map-fit-all','btn-trails'].forEach(id=>{
+    const control=document.getElementById(id);
+    if(control){
+      control.disabled=!hasPositions;
+      if(id==='btn-trails'){
+        control.style.background=trailsOn?'var(--cyan)':'';
+        control.setAttribute('aria-pressed',String(trailsOn));
+      }
+    }
+  });
   if(currentPage !== 'map') return;
   const title = document.getElementById('map-containers-title');
-  if(title) title.textContent = `Conteneurs (${DB_CONTAINERS.length})`;
+  if(title) title.textContent = `Positions GPS (${MAP_GPS_POSITIONS.length})`;
+  const status = document.getElementById('map-data-status');
+  if(status && !status.dataset.error) status.textContent = MAP_GPS_POSITIONS.length
+    ? `${MAP_GPS_POSITIONS.length} position(s) reçue(s) de l’API consolidée`
+    : 'Aucune position GPS disponible dans les données consolidées.';
 
   const list = document.getElementById('containers-sidebar-list');
   if(list){
-    list.innerHTML = DB_CONTAINERS.length ? DB_CONTAINERS.map(c=>{
-      const col = c.status==='ok'?'var(--green)':c.status==='warning'?'var(--amber)':c.status==='danger'?'var(--red)':'var(--text3)';
-      return `<div class="container-item status-${c.status}" style="margin-bottom:6px;cursor:pointer" onclick="focusContainerDB('${c.id_boite||c.id}')">
-        <div style="width:8px;height:8px;border-radius:50%;background:${col}"></div>
+    list.innerHTML = MAP_GPS_POSITIONS.length ? MAP_GPS_POSITIONS.map(c=>{
+      const id = escapeHTML(String(c.id_boite));
+      const state = mapPositionState(c);
+      const stateLabel = state==='alert' ? 'Alerte' : state==='stale' ? 'Position ancienne' : 'Position récente';
+      return `<button class="map-position-item" type="button" onclick="focusContainerDB('${id}')">
+        <span class="map-position-dot state-${state}" aria-hidden="true"></span>
         <div class="container-info">
-          <div class="container-id" style="font-size:12px">${boxLabel(c)}</div>
-          <div style="font-size:10px;color:var(--text3)">${c.type_conteneurs || '—'} • ${c.speed||0} km/h</div>
-          ${c.local_only || c.bic_classification === 'HORS_BIC' ? '<div style="font-size:10px;color:var(--amber)"><i class="fas fa-exclamation-triangle"></i> HORS BIC</div>' : ''}
-          <div style="font-size:10px;color:var(--text3)">${c.lastUpdate}</div>
+          <span class="container-id">${escapeHTML(String(c.numero_serie || c.id_boite))}</span>
+          <span class="map-position-meta">${stateLabel} · ${Number.isFinite(c.speed) ? `${c.speed} km/h` : 'Vitesse indisponible'} · ${escapeHTML(formatTime(c.ts))}</span>
         </div>
-      </div>`;
-    }).join('') : '<div style="color:var(--text3);font-size:12px">Aucun conteneur</div>';
+      </button>`;
+    }).join('') : '<div style="color:var(--text3);font-size:12px">Aucune position GPS disponible.</div>';
+    applyMapPositionFilters();
   }
 
   const temp = document.getElementById('map-temp');
-  if(temp) temp.textContent = DB_CONTAINERS[0]?.temp ?? '--';
+  if(temp) temp.textContent = MAP_GPS_POSITIONS.find(c=>c.temp!=null)?.temp ?? '—';
   const shock = document.getElementById('map-shock');
-  if(shock) shock.textContent = DB_CONTAINERS.find(c=>c.shock>0)?.shock ?? 0;
+  if(shock) shock.textContent = MAP_GPS_POSITIONS.find(c=>c.shock!=null)?.shock ?? '—';
 
   const alerts = document.getElementById('map-alerts-list');
   if(alerts){
-    alerts.innerHTML = DB_CONTAINERS.filter(c=>c.alerts&&c.alerts.length>0).slice(0,8).map(c=>
+    alerts.innerHTML = MAP_GPS_POSITIONS.filter(c=>c.alerts?.length).slice(0,8).map(c=>
       c.alerts.slice(0,2).map(a=>`
         <div class="timeline-item" style="padding:5px 0">
-          <div class="timeline-dot" style="background:${c.status==='danger'?'var(--red)':'var(--amber)'}"></div>
+          <div class="timeline-dot" style="background:var(--amber)"></div>
           <div class="timeline-content">
-            <div style="font-size:11px">${boxLabel(c)}: ${String(a).substring(0,40)}</div>
-            <div class="timeline-time">${c.lastUpdate}</div>
+            <div style="font-size:12px">${escapeHTML(String(c.id_boite))}: ${escapeHTML(String(a).substring(0,120))}</div>
+            <div class="timeline-time">${escapeHTML(formatTime(c.ts))}</div>
           </div>
         </div>`).join('')
-    ).join('') || '<div style="color:var(--text3);font-size:12px">Aucune alerte active</div>';
+    ).join('') || '<div style="color:var(--text3);font-size:12px">Aucune alerte sur les dernières positions.</div>';
   }
+  refreshMapMarkers();
+}
+
+function mapPositionState(position){
+  if(position.alerts?.length) return 'alert';
+  const stamp=Date.parse(position.ts || position.timestamp || '');
+  const age=Date.now()-stamp;
+  return Number.isFinite(stamp) && age>=0 && age<=15*60*1000 ? 'live' : 'stale';
+}
+
+function filterMapPositions(status,button){
+  MAP_FILTER=status;
+  document.querySelectorAll('[data-map-filter]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));
+  applyMapPositionFilters();
+  refreshMapMarkers();
+  syncMapTrails();
+}
+
+function applyMapPositionFilters(){
+  const search=document.querySelector('#containers-sidebar-list')?.parentElement?.querySelector('input')?.value?.toLowerCase() || '';
+  let visible=0;
+  document.querySelectorAll('#containers-sidebar-list .map-position-item').forEach(item=>{
+    const state=item.querySelector('.map-position-dot')?.className || '';
+    const matchesState=MAP_FILTER==='all' || state.includes(`state-${MAP_FILTER}`);
+    const matchesSearch=!search || item.textContent.toLowerCase().includes(search);
+    item.hidden=!(matchesState && matchesSearch);
+    if(!item.hidden) visible++;
+  });
+  const count=document.getElementById('map-filter-count');
+  if(count) count.textContent=`${visible} position(s) affichée(s) sur ${MAP_GPS_POSITIONS.length}`;
 }
 
 // +++++++++++++++++++++++++++++ vide le conteneurs
@@ -1185,11 +1209,37 @@ async function showContainerDetailDB(id){
           <button class="btn-secondary" onclick="downloadProtectedDocument('/api/containers/${encodeURIComponent(containerId)}/report','rapport_${escapeHTML(containerId)}.pdf')"><i class="fas fa-file-pdf"></i> Export PDF</button>
           <button class="btn-primary" style="width:auto" onclick="closeModal();navigateTo('map')"><i class="fas fa-map-marker-alt"></i> Voir Carte</button>
           <button class="btn-primary" style="width:auto" onclick="openEventsForContainer('${escapeHTML(c.id_boite||c.id)}')"><i class="fas fa-list"></i> Événements</button>
+          <button class="btn-secondary" style="width:auto" onclick="showRegulatoryHistory('${escapeHTML(c.id_boite||c.id)}')"><i class="fas fa-scale-balanced"></i> Dossier & références</button>
           <button class="export-btn" onclick="openAIAssistant('${c.id_boite||c.id}')"><i class="fas fa-robot"></i> Rapport IA</button>
         </div>
       </div>
     </div>`;
   document.getElementById('modal-root').innerHTML = html;
+}
+
+async function showRegulatoryHistory(boxId){
+  const root=document.getElementById('modal-root');
+  if(!root)return;
+  root.innerHTML='<div class="modal-overlay"><div class="modal" style="max-width:900px"><div class="modal-body">Chargement de l’historique sourcé…</div></div></div>';
+  try{
+    const response=await secureApiFetch(`/api/regulatory/history?box_id=${encodeURIComponent(boxId)}`);
+    const data=await response.json();
+    if(!response.ok)throw new Error(data.error||'Historique indisponible');
+    const history=Array.isArray(data.history)?data.history:[];
+    root.innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:900px;width:min(900px,94vw);max-height:90vh;overflow:auto">
+      <div class="modal-header"><div><div class="modal-title">Dossier de décisions · Boîte ${escapeHTML(boxId)}</div><div style="font-size:12px;color:var(--text3)">Actions, réactions IA et références documentaires</div></div><button class="modal-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">${history.length?history.map(item=>{
+        const sources=(item.sources||[]).map(source=>{
+          const url=String(source.official_url||'');
+          const safeUrl=url.startsWith('https://')?url:null;
+          return `<div style="padding:10px;margin-top:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg3)"><strong>${escapeHTML(source.title||source.source_key)}</strong><div style="font-size:11px;color:var(--text3);margin:4px 0">${escapeHTML(source.authority||'')} · ${escapeHTML(source.jurisdiction||'')} · ${escapeHTML(source.legal_status||'')}</div><div style="font-size:12px">${escapeHTML(source.applicability_conditions||source.summary||'')}</div>${safeUrl?`<a href="${escapeHTML(safeUrl)}" target="_blank" rel="noopener noreferrer">Source officielle ↗</a>`:'<span style="color:var(--text3)">Règle interne ARGOS; aucune loi externe citée.</span>'}<div style="font-size:11px;color:var(--amber);margin-top:4px">Applicabilité dans ce dossier : ${escapeHTML(item.applicability_status||'À vérifier')}</div></div>`;
+        }).join('');
+        const remarks=item.ai_remarks&&Object.keys(item.ai_remarks).length?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--cyan)">Remarques et éléments de décision</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;color:var(--text3);padding:8px;background:var(--bg3);border-radius:6px">${escapeHTML(JSON.stringify(item.ai_remarks,null,2))}</pre></details>`:'';
+        return `<article style="padding:14px 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><strong>${escapeHTML(item.action||item.event_type)}</strong><time style="font-size:11px;color:var(--text3)">${item.created_at?new Date(item.created_at).toLocaleString('fr-FR'):'—'}</time></div><div style="margin-top:7px"><b>Réaction / résultat :</b> ${escapeHTML(item.reaction||'—')}</div><div style="margin-top:5px;font-size:12px;color:var(--text3)">Acteur ${escapeHTML(item.actor_role||'—')} · ${escapeHTML(item.actor_id||'—')} · ${escapeHTML(item.event_type||'')}</div>${item.trace_id?`<div style="font-size:11px;color:var(--text3)">Trace IA ${escapeHTML(item.trace_id)}</div>`:''}${remarks}<div style="margin-top:10px"><b>Références :</b>${sources||'<div style="color:var(--amber);margin-top:4px">Aucune source liée à cette entrée.</div>'}</div></article>`;
+      }).join(''):'<div style="padding:20px;color:var(--text3)">Aucune action historisée pour cette boîte.</div>'}</div>
+      <div class="modal-footer"><span style="font-size:11px;color:var(--text3)">Une référence n’implique pas que la règle soit applicable. Vérification humaine requise selon juridiction et opération.</span><button class="btn-secondary" onclick="closeModal()">Fermer</button></div>
+    </div></div>`;
+  }catch(error){root.innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal"><div class="modal-body"><div class="alert alert-warn">${escapeHTML(error.message)}</div><button class="btn-secondary" onclick="closeModal()">Fermer</button></div></div></div>`;}
 }
 
 async function downloadProtectedDocument(url, filename){
@@ -2501,6 +2551,7 @@ function buildEventsPage(){
           <option value="">Tous conteneurs</option>
         </select>
         <button class="btn-icon" onclick="refreshEventTable()"><i class="fas fa-sync"></i></button>
+        <button class="btn-secondary" onclick="showRegulatorySourceCatalog()"><i class="fas fa-scale-balanced"></i> Référentiel des sources</button>
         <button class="export-btn" onclick="openAIAssistant()"><i class="fas fa-robot"></i> Rapport</button>
       </div>
     </div>
@@ -2543,6 +2594,17 @@ function buildEventsPage(){
       <button class="btn-primary" onclick="saveThresholds()"><i class="fas fa-save"></i> Sauvegarder les Seuils (BD)</button>
     </div>
   </div>`;
+}
+
+async function showRegulatorySourceCatalog(){
+  const root=document.getElementById('modal-root');if(!root)return;
+  root.innerHTML='<div class="modal-overlay"><div class="modal"><div class="modal-body">Chargement du registre…</div></div></div>';
+  try{
+    const response=await secureApiFetch('/api/regulatory/sources');const data=await response.json();
+    if(!response.ok)throw new Error(data.error||'Registre indisponible');
+    const sources=data.sources||[];
+    root.innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:1000px;width:min(1000px,94vw);max-height:90vh;overflow:auto"><div class="modal-header"><div><div class="modal-title">Référentiel juridique & normatif</div><div style="font-size:12px;color:var(--text3)">Sources officielles repérées · Applicabilité à évaluer par dossier</div></div><button class="modal-close" onclick="closeModal()">×</button></div><div class="modal-body"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px">${sources.map(source=>{const url=String(source.official_url||'');const link=url.startsWith('https://')?`<a href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer">Ouvrir la source officielle ↗</a>`:'';return `<article style="padding:13px;border:1px solid var(--border);border-radius:10px;background:var(--bg3)"><strong>${escapeHTML(source.title)}</strong><div style="font-size:11px;color:var(--text3);margin:5px 0">${escapeHTML(source.authority)} · ${escapeHTML(source.jurisdiction)} · ${escapeHTML((source.transport_modes||[]).join(', '))}</div><span class="badge badge-warn">${escapeHTML(source.legal_status)}</span><p style="font-size:12px;line-height:1.45">${escapeHTML(source.applicability_conditions||source.summary)}</p><small style="color:var(--text3)">Statut de la source : ${escapeHTML(source.verified_at?'référence consultée':'à vérifier')} · statut d’applicabilité dans un dossier : non établi par le registre.</small><div style="margin-top:8px">${link}</div></article>`;}).join('')}</div></div><div class="modal-footer"><span style="font-size:11px;color:var(--text3)">L’inscription d’une source ne vaut ni avis juridique ni constat de conformité.</span><button class="btn-secondary" onclick="closeModal()">Fermer</button></div></div></div>`;
+  }catch(error){root.innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal"><div class="modal-body"><div class="alert alert-warn">${escapeHTML(error.message)}</div><button class="btn-secondary" onclick="closeModal()">Fermer</button></div></div></div>`;}
 }
 
 async function refreshEventTable(){
@@ -2605,7 +2667,7 @@ async function refreshEventTable(){
           <div style="color:var(--text3)">${escapeHTML(sensorStr)}</div>
         </td>
         <td>${audio}</td>
-        <td><button class="btn-icon" onclick="showContainerDetailDB('${escapeHTML(e.id_boite || e.id || '')}')"><i class="fas fa-box"></i> Ouvrir</button></td>
+        <td><button class="btn-icon" onclick="showContainerDetailDB('${escapeHTML(e.id_boite || e.id || '')}')"><i class="fas fa-box"></i> Ouvrir</button> <button class="btn-icon" onclick="showRegulatoryHistory('${escapeHTML(e.id_boite || e.id || '')}')"><i class="fas fa-scale-balanced"></i> Dossier</button></td>
       </tr>`;
     }).join('');
   } catch(e){
@@ -3044,6 +3106,7 @@ function openSupportChat(){
 
 
 function doLogout() {
+  document.getElementById('argos-ai-widget')?.setAttribute('hidden','');
   if (typeof stopArgosDirectBridge === 'function') stopArgosDirectBridge(true);
   sessionStorage.removeItem('argosAccessToken');
   // Affichage du toast de déconnexion
@@ -3085,8 +3148,9 @@ function initMap(mapId, role){
   const map = L.map(mapId, {center:[5.0, 11.0], zoom: role==='client'?9:6, zoomControl:false});
   maps[mapId] = map;
   L.control.zoom({position:'bottomright'}).addTo(map);
-  tileLayerRef = L.tileLayer(MAP_LAYERS[mapLayerIdx].url, {attribution:'© ARGOS', maxZoom:19}).addTo(map);
-  placeDBMarkersOnMap(map, role);
+  tileLayerRef = L.tileLayer(MAP_LAYERS[mapLayerIdx].url, {attribution:MAP_LAYERS[mapLayerIdx].attribution, maxZoom:19}).addTo(map);
+  if(mapId === 'map-main') loadMapPositions();
+  else placeDBMarkersOnMap(map, role);
   if(role === 'sell'){
     map.on('click', e=>{
       selectedSaleCoords = e.latlng;
@@ -3098,52 +3162,96 @@ function initMap(mapId, role){
   }
 }
 
+async function loadMapPositions(){
+  const status = document.getElementById('map-data-status');
+  if(status){ status.dataset.error=''; status.textContent='Chargement des positions consolidées…'; }
+  try {
+    const response = await secureApiFetch('/api/containers/positions');
+    const data = await response.json();
+    if(!response.ok) throw new Error(data.error || `API GPS indisponible (${response.status})`);
+    if(!Array.isArray(data)) throw new Error('Réponse GPS invalide.');
+    MAP_GPS_POSITIONS = normalizeMapPositions(data, DB_CONTAINERS);
+    if(status) status.textContent=MAP_GPS_POSITIONS.length
+      ? `${MAP_GPS_POSITIONS.length} position(s) reçue(s) de l’API consolidée`
+      : 'Aucune position GPS exploitable dans les données consolidées.';
+    updateMapPageUI();
+    syncMapTrails();
+    if(currentPage !== 'map') refreshMapMarkers();
+  } catch(error){
+    MAP_GPS_POSITIONS=[];
+    if(status){ status.dataset.error='true'; status.textContent=`Positions indisponibles : ${error.message}`; }
+    const title=document.getElementById('map-containers-title');
+    if(title) title.textContent='Positions GPS indisponibles';
+    const list=document.getElementById('containers-sidebar-list');
+    if(list) list.innerHTML=`<div class="map-empty-state" role="status">${escapeHTML(error.message)}. Réessayez avec Actualiser.</div>`;
+    for(const id of ['map-temp','map-shock']){
+      const value=document.getElementById(id);
+      if(value) value.textContent='—';
+    }
+    const alerts=document.getElementById('map-alerts-list');
+    if(alerts) alerts.innerHTML='<div class="map-empty-state">Alertes indisponibles avec la position GPS.</div>';
+    refreshMapMarkers();
+    syncMapTrails();
+  }
+}
+
+function normalizeMapPositions(rows, containers=[]){
+  if(!Array.isArray(rows)) return [];
+  const byId=new Map(containers.map(item=>[String(item.id_boite || item.id),item]));
+  return rows.filter(item=>{
+    const lat=Number(item?.lat), lon=Number(item?.lon);
+    return item?.id_boite!=null && item.lat!=null && item.lon!=null && Number.isFinite(lat) && Number.isFinite(lon) && lat>=-90 && lat<=90 && lon>=-180 && lon<=180;
+  }).map(item=>{
+    const meta=byId.get(String(item.id_boite)) || {};
+    const numeric=(value)=>value==null || value==='' || !Number.isFinite(Number(value)) ? null : Number(value);
+    return {...meta,...item,lat:Number(item.lat),lon:Number(item.lon),speed:numeric(item.speed),temp:numeric(item.temp),shock:numeric(item.shock),alerts:Array.isArray(item.alerts)?item.alerts.map(value=>String(value)):[]};
+  });
+}
+
 function placeDBMarkersOnMap(map, role){
-  const allTrackables = DB_CONTAINERS.concat(typeof MAP_BLACK_BOXES !== 'undefined' ? MAP_BLACK_BOXES : []);
-  const containers = role==='client' ? allTrackables.slice(0,1) : allTrackables;
+  const containers = map.getContainer()?.id === 'map-main'
+    ? MAP_GPS_POSITIONS.filter(c=>MAP_FILTER==='all' || mapPositionState(c)===MAP_FILTER) : [];
   containers.forEach(c=>{
-    if(!c.lat || !c.lon) return;
-    if(c.status==='off' && role!=='superadmin') return;
-    const color = c.status==='ok'?'#00e676':c.status==='warning'?'#ffab00':c.status==='danger'?'#ff4444':'#5a7290';
+    const lat=Number(c.lat), lon=Number(c.lon);
+    if(!Number.isFinite(lat)||!Number.isFinite(lon)) return;
+    const color = c.alerts.length ? '#ffab00' : '#00d4ff';
     const markerHtml = `<div class="marker-pulse">
       <div class="marker-outer" style="border-color:${color}"></div>
       <div class="marker-inner" style="background:${color};box-shadow:0 0 8px ${color}"></div>
     </div>`;
     const icon = L.divIcon({html:markerHtml, className:'', iconSize:[24,24], iconAnchor:[12,12]});
     const marker = L.marker([c.lat, c.lon], {icon}).addTo(map);
-    marker._containerId = c.id_boite || c.id;
-    const alertsHtml = c.alerts && c.alerts.length ? c.alerts.slice(0,2).map(a=>`<div style="color:#ff4444;font-size:10px"><i class="fas fa-exclamation-triangle"></i> ${a.substring(0,35)}</div>`).join('') : '<div style="color:#00e676;font-size:10px"><i class="fas fa-check-circle"></i> Nominal</div>';
+    marker._containerId = c.id_boite;
+    const alertsHtml = c.alerts.length ? c.alerts.slice(0,2).map(a=>`<div style="color:#ff4444;font-size:11px"><i class="fas fa-exclamation-triangle"></i> ${escapeHTML(String(a).substring(0,120))}</div>`).join('') : '<div style="color:#8fa3bc;font-size:11px">Aucune alerte signalée par l’API</div>';
     marker.bindPopup(`
       <div style="font-family:'Space Grotesk',sans-serif;min-width:200px">
-        <div style="font-family:monospace;font-size:15px;color:#00d4ff;margin-bottom:6px">${c.id_boite||c.id}</div>
-        <div style="font-size:12px;color:#ccc">${c.type_conteneurs||'—'}</div>
+        <div style="font-family:monospace;font-size:15px;color:#00d4ff;margin-bottom:6px">${escapeHTML(String(c.numero_serie || c.id_boite))}</div>
+        <div style="font-size:12px;color:#ccc">Boîte ${escapeHTML(String(c.id_boite))}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px">
           <div style="text-align:center;background:rgba(0,0,0,.3);padding:5px;border-radius:4px">
-            <div style="font-size:15px;font-weight:700;color:${c.temp>32?'#ff4444':c.temp>28?'#ffab00':'#00e676'}">${c.temp??'—'}°C</div>
+            <div style="font-size:15px;font-weight:700;color:#00d4ff">${c.temp??'—'}°C</div>
             <div style="font-size:9px;color:#8fa3bc">TEMP</div>
           </div>
           <div style="text-align:center;background:rgba(0,0,0,.3);padding:5px;border-radius:4px">
-            <div style="font-size:15px;font-weight:700;color:#00d4ff">${c.speed??0}</div>
+            <div style="font-size:15px;font-weight:700;color:#00d4ff">${c.speed??'—'}</div>
             <div style="font-size:9px;color:#8fa3bc">KM/H</div>
           </div>
         </div>
         <div style="margin-top:6px">${alertsHtml}</div>
-        <div style="margin-top:6px;font-size:10px;color:#8fa3bc">UID: ${c.device_uid||'—'} · Séq. ${c.sequence??'—'}</div>
-        <div style="font-size:10px;color:#8fa3bc">H: ${c.humidity??'—'}% · P: ${c.pressure??'—'} hPa · Choc: ${c.shock??'—'} G</div>
-        <div style="font-size:10px;color:#8fa3bc">Accel: ${c.acceleration_x??'—'} / ${c.acceleration_y??'—'} / ${c.acceleration_z??'—'}</div>
-        <div style="margin-top:6px;font-size:10px;color:#8fa3bc">MàJ: ${c.lastUpdate}</div>
+        <div style="font-size:12px;color:#8fa3bc">${lat.toFixed(6)}, ${lon.toFixed(6)}</div>
+        <div style="margin-top:6px;font-size:11px;color:#8fa3bc">Mesurée : ${escapeHTML(formatTime(c.ts))}</div>
       </div>`);
-    if(trailsOn){
-      const trail = fetchAndDrawTrail(map, c.id_boite||c.id);
-    }
   });
 }
 
-async function fetchAndDrawTrail(map, id_boite){
+async function fetchAndDrawTrail(map, id_boite, requestVersion=MAP_TRAIL_VERSION){
   try {
-    const res  = await secureApiFetch(`/api/events?container=${id_boite}&limit=500`);
-    const evts = await res.json();
-    const pts  = evts.filter(e=>e.lat&&e.lon).map(e=>[Number(e.lat),Number(e.lon)]);
+    if(!/^\d+$/.test(String(id_boite))) return;
+    const res=await secureApiFetch(`/api/black-boxes/${encodeURIComponent(id_boite)}/history?limit=1200`);
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.error || 'Historique GPS indisponible');
+    if(requestVersion!==MAP_TRAIL_VERSION || !trailsOn) return;
+    const pts=(data.points || []).filter(p=>p.latitude!=null&&p.longitude!=null).map(p=>[Number(p.latitude),Number(p.longitude)]).filter(p=>Number.isFinite(p[0])&&Number.isFinite(p[1])&&p[0]>=-90&&p[0]<=90&&p[1]>=-180&&p[1]<=180);
     if(pts.length>1){
       const line = L.polyline(pts, {color:'#00d4ff', weight:2, opacity:.5, dashArray:'4,4'}).addTo(map);
       trailLayers.push(line);
@@ -3156,15 +3264,25 @@ function refreshMapMarkers(){
   if(!map || typeof L === 'undefined') return;
   // Remove old markers
   map.eachLayer(l=>{ if(l instanceof L.Marker && l._containerId) map.removeLayer(l); });
-  // Re-place from fresh DB_CONTAINERS
+  // Re-place from the consolidated positions only.
   placeDBMarkersOnMap(map, currentRole);
+}
+
+function syncMapTrails(){
+  const map=maps['map-main'];
+  MAP_TRAIL_VERSION++;
+  trailLayers.forEach(layer=>map?.removeLayer(layer));
+  trailLayers=[];
+  if(!trailsOn || !map) return;
+  const version=MAP_TRAIL_VERSION;
+  MAP_GPS_POSITIONS.filter(c=>MAP_FILTER==='all' || mapPositionState(c)===MAP_FILTER)
+    .forEach(c=>{if(c.id_boite) fetchAndDrawTrail(map,c.id_boite,version);});
 }
 
 function showAllContainers(){
   const map = maps['map-main'];
   if(!map || typeof L === 'undefined') return;
-  const allTrackables = DB_CONTAINERS.concat(typeof MAP_BLACK_BOXES !== 'undefined' ? MAP_BLACK_BOXES : []);
-  const pts = allTrackables.filter(c=>c.lat&&c.lon).map(c=>[c.lat,c.lon]);
+  const pts = MAP_GPS_POSITIONS.filter(c=>MAP_FILTER==='all' || mapPositionState(c)===MAP_FILTER).map(c=>[c.lat,c.lon]);
   if(pts.length) map.fitBounds(L.latLngBounds(pts).pad(.2));
 }
 
@@ -3175,7 +3293,7 @@ function toggleMapLayer(){
   if(!map || typeof L === 'undefined') return;
   mapLayerIdx = (mapLayerIdx + 1) % MAP_LAYERS.length;
   if(tileLayerRef) map.removeLayer(tileLayerRef);
-  tileLayerRef = L.tileLayer(MAP_LAYERS[mapLayerIdx].url, {attribution:'© ARGOS', maxZoom:19}).addTo(map);
+  tileLayerRef = L.tileLayer(MAP_LAYERS[mapLayerIdx].url, {attribution:MAP_LAYERS[mapLayerIdx].attribution, maxZoom:19}).addTo(map);
   showToast(`Fond de carte: ${MAP_LAYERS[mapLayerIdx].name}`, 'info');
 }
 
@@ -3184,15 +3302,14 @@ function toggleTrails(){
   if(!map) return;
   trailsOn = !trailsOn;
   if(!trailsOn){
-    trailLayers.forEach(l=>map.removeLayer(l));
-    trailLayers = [];
+    syncMapTrails();
     showToast('Traces GPS désactivées','info');
   } else {
-    DB_CONTAINERS.forEach(c=>{ if(c.id_boite) fetchAndDrawTrail(map, c.id_boite); });
+    syncMapTrails();
     showToast('Traces GPS activées','success');
   }
   const btn = document.getElementById('btn-trails');
-  if(btn) btn.style.background = trailsOn ? 'var(--cyan)' : '';
+  if(btn){ btn.style.background = trailsOn ? 'var(--cyan)' : '';btn.setAttribute('aria-pressed',String(trailsOn)); }
 }
 
 function toggleHeatmap(){
@@ -3205,7 +3322,7 @@ function toggleHeatmap(){
 }
 
 function focusContainerDB(id){
-  const c = DB_CONTAINERS.find(x=>(String(x.id_boite)===String(id)||String(x.id)===String(id))&&x.lat&&x.lon);
+  const c = MAP_GPS_POSITIONS.find(x=>String(x.id_boite)===String(id));
   if(!c || !maps['map-main']) return;
   maps['map-main'].flyTo([c.lat, c.lon], 13, {animate:true, duration:1});
 }

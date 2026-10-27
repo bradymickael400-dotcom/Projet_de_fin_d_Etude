@@ -31,6 +31,8 @@ class Config:
     # ── Google Gemini IA ──
     API_KEY = os.getenv('API_KEY', '')
     GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'models/gemini-2.5-flash')
+    GEMINI_API_BASE_URL = os.getenv('GEMINI_API_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta').rstrip('/')
+    KNOWLEDGE_BASE_PATH = os.getenv('KNOWLEDGE_BASE_PATH', '').strip()
     
     # ── Notifications email / WhatsApp ──
     NOTIFICATION_PROVIDER = os.getenv('NOTIFICATION_PROVIDER', 'smtp').strip().lower()

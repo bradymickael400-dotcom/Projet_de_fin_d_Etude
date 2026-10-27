@@ -211,7 +211,7 @@ function showQRCodeModal(idBoite, numeroSerie) {
   const html = `
     <div class="modal-header">
       <h2>QR Code Généré</h2>
-      <button class="close-btn" onclick="closeModal()">< i class="fas fa-times"></i></button>
+      <button class="close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button>
     </div>
     <div class="modal-content" style="text-align: center;">
       <div style="background: white; padding: 20px; border-radius: 8px; display: inline-block;">
@@ -252,7 +252,7 @@ function openScanQRCodeModal() {
   const html = `
     <div class="modal-header">
       <h2>Scanner QR Code</h2>
-      <button class="close-btn" onclick="closeModal()">< i class="fas fa-times"></i></button>
+      <button class="close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button>
     </div>
     <div class="modal-content">
       <div style="text-align: center; padding: 30px;">
@@ -421,7 +421,7 @@ function openWiFiSettingsModal() {
   const html = `
     <div class="modal-header">
       <h2>📶 Configuration WiFi</h2>
-      <button class="close-btn" onclick="closeModal()">< i class="fas fa-times"></i></button>
+      <button class="close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button>
     </div>
     <div class="modal-content">
       <form id="form-wifi" onsubmit="handleWiFiUpdate(event)">

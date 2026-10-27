@@ -78,6 +78,7 @@ def create_app():
     from app.routes.black_boxes import bb_bp
     from app.modules.iot import iot_bp
     from app.routes.workflows import workflow_bp
+    from app.routes.regulatory import regulatory_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(cnt_bp)
@@ -91,6 +92,7 @@ def create_app():
     app.register_blueprint(bb_bp)
     app.register_blueprint(iot_bp)
     app.register_blueprint(workflow_bp)
+    app.register_blueprint(regulatory_bp)
 
     # ── 5. Initialisation paresseuse de la blockchain (une seule fois) ─
     @app.before_request
