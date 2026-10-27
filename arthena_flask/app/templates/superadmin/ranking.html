@@ -1,7 +1,0 @@
-{% extends "base.html" %}
-{% block content %}
-<h1 class="pg-title">Classement national</h1>
-{% for entry in ranking %}
-  <div class="rank-row">#{{ entry.rank }} {{ entry.school.nom }} — {{ entry.score }}/100</div>
-{% endfor %}
-{% endblock %}
