@@ -1,4 +1,4 @@
-# ARGOS
+# ARGOS — Projet de fin d’étude
 
 ARGOS est une application Flask de supervision logistique, conteneurs, IoT et positions GPS. L’interface utilise les API du serveur; l’assistant passe par l’orchestrateur multi-agents côté backend.
 
@@ -28,7 +28,7 @@ Le parcours Docker du dépôt est `docker compose up -d --build db redis web wor
 
 ```bash
 .venv/bin/python -m pytest -q tests
-node --test tests/js/phase3-ui.test.cjs
+node --test tests/js/*.test.cjs
 ```
 
 Les résultats réellement observés, les échecs, la procédure d’essai navigateur et les limites sont dans [docs/PHASE4_POINT_CONTROLE.md](docs/PHASE4_POINT_CONTROLE.md) et [docs/TESTS_ET_PREUVES.md](docs/TESTS_ET_PREUVES.md).
