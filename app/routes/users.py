@@ -21,6 +21,7 @@ from app.utils import *
 from app.routes.auth import _login_exists, _login_suggestions
 from app.security import roles_required
 from app.modules.iot.iot_service import provision_device
+from app.services.shock_assessment import resolve_shock_threshold
 
 users_bp = Blueprint("users", __name__)
 
@@ -717,6 +718,7 @@ def register_user_file():
                         "pression_max": f.get("pression_max"),
                     }
                     thresholds = {key: float(value) for key,value in thresholds.items() if value not in (None,"")}
+                    thresholds["choc_max"] = resolve_shock_threshold(thresholds.get("choc_max"))
                     db.session.execute(text("""
                         INSERT INTO seuils_alerte(id_boite,temp_min,temp_max,humi_min,humi_max,choc_max,pression_min,pression_max)
                         VALUES(:box,:temp_min,:temp_max,:humi_min,:humi_max,:choc_max,:pression_min,:pression_max)

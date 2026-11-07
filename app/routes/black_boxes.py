@@ -23,6 +23,7 @@ from app.modules.iot.iot_service import provision_device
 from app.modules.iot.security import generate_secret, hash_secret
 from app.services.report_service import generate_container_report_pdf
 from app.services.storage_service import resolve_private_document, store_private_document
+from app.services.shock_assessment import resolve_shock_threshold
 
 bb_bp = Blueprint("black_boxes", __name__)
 
@@ -321,7 +322,7 @@ def create_black_box():
                 "tm": data.get("temp_max", 32),
                 "ti": data.get("temp_min", -10),
                 "hm": data.get("humi_max", 75),
-                "cm": data.get("choc_max", 5),
+                "cm": resolve_shock_threshold(data.get("choc_max", 5)),
                 "pm": data.get("pression_min", 995),
                 "vm": data.get("vitesse_max", 90),
                 "am": data.get("angle_max", 30)
@@ -353,7 +354,7 @@ def create_black_box():
                 "temperatureMax": data.get("temp_max", 32),
                 "temperatureMin": data.get("temp_min", -10),
                 "humidityMax": data.get("humi_max", 75),
-                "shockMax": data.get("choc_max", 5),
+                "shockMax": resolve_shock_threshold(data.get("choc_max", 5)),
                 "pressureMin": data.get("pression_min", 995),
                 "speedMax": data.get("vitesse_max", 90),
                 "angleMax": data.get("angle_max", 30),
@@ -597,7 +598,8 @@ def get_my_black_boxes():
                        sr.sound_level, sr.flame_detected, sr.door_open, sr.modes,
                        sr.quality,
                        pos.latitude, pos.longitude, sr.sequence, sr.security_alarm,
-                       sr.measured_at AS telemetry_at
+                       sr.measured_at AS telemetry_at,
+                       dms.desired_modes, dms.reported_modes, dms.delivery_status
                 FROM boite_noir b
                 LEFT JOIN proprietaire_conteneur p ON b.id_proprietaire = p.id
                 LEFT JOIN conteneurs c ON b.id_conteneurs = c.id_conteneurs
@@ -616,6 +618,7 @@ def get_my_black_boxes():
                     SELECT latitude, longitude FROM positions
                     WHERE device_id=d.id ORDER BY measured_at DESC LIMIT 1
                 ) pos ON TRUE
+                LEFT JOIN argos_device_mode_state dms ON dms.black_box_id=b.id_boite
                 WHERE COALESCE(b.archived, FALSE) = FALSE
                 ORDER BY b.created_at DESC
             """
@@ -636,7 +639,8 @@ def get_my_black_boxes():
                        sr.sound_level, sr.flame_detected, sr.door_open, sr.modes,
                        sr.quality,
                        pos.latitude, pos.longitude, sr.sequence, sr.security_alarm,
-                       sr.measured_at AS telemetry_at
+                       sr.measured_at AS telemetry_at,
+                       dms.desired_modes, dms.reported_modes, dms.delivery_status
                 FROM boite_noir b
                 LEFT JOIN proprietaire_conteneur p ON b.id_proprietaire = p.id
                 LEFT JOIN conteneurs c ON b.id_conteneurs = c.id_conteneurs
@@ -655,6 +659,7 @@ def get_my_black_boxes():
                     SELECT latitude, longitude FROM positions
                     WHERE device_id=d.id ORDER BY measured_at DESC LIMIT 1
                 ) pos ON TRUE
+                LEFT JOIN argos_device_mode_state dms ON dms.black_box_id=b.id_boite
                 WHERE b.id_proprietaire = :owner_id AND COALESCE(b.archived, FALSE) = FALSE
                 ORDER BY b.created_at DESC
             """
@@ -680,6 +685,12 @@ def get_my_black_boxes():
             # désormais une date et une durée dès leur enregistrement.
             days_remaining = max(0, (end_date.date() - now_dt.date()).days) if end_date else None
 
+            reported_modes = row.reported_modes if isinstance(row.reported_modes, dict) else {}
+            desired_modes = row.desired_modes if isinstance(row.desired_modes, dict) else {}
+            telemetry_modes = dict(row.modes) if isinstance(row.modes, dict) else {}
+            telemetry_modes.update(reported_modes)
+            if row.delivery_status == "PENDING":
+                telemetry_modes.update(desired_modes)
             boxes.append({
                 "id_boite": row.id_boite,
                 "container_id": row.id_conteneurs,
@@ -727,10 +738,10 @@ def get_my_black_boxes():
                     "device_uid": row.device_uid,
                     "sequence": row.sequence if role == "superadmin" or row.id_conteneurs else None,
                     "security_alarm": row.security_alarm if role == "superadmin" or row.id_conteneurs else None,
-                    "security_enabled": bool((row.modes or {}).get("securityEnabled"))
-                    if isinstance(row.modes, dict) and (role == "superadmin" or row.id_conteneurs) else None,
-                    "modes": (row.modes or {})
-                    if isinstance(row.modes, dict) and (role == "superadmin" or row.id_conteneurs) else {},
+                    "security_enabled": bool(telemetry_modes.get("securityEnabled"))
+                    if (telemetry_modes and (role == "superadmin" or row.id_conteneurs)) else None,
+                    "modes": telemetry_modes if (role == "superadmin" or row.id_conteneurs) else {},
+                    "modes_delivery_status": row.delivery_status or "UNKNOWN",
                     "quality": (row.quality or {})
                     if isinstance(row.quality, dict) and (role == "superadmin" or row.id_conteneurs) else {},
                     "measured_at": row.telemetry_at.isoformat() if row.telemetry_at and (role == "superadmin" or row.id_conteneurs) else None,
@@ -749,6 +760,79 @@ def get_my_black_boxes():
         print(f"[ERROR] Récupérer boîtes: {e}")
         import traceback; traceback.print_exc()
         return jsonify({"error": f"Erreur: {str(e)}"}), 500
+
+
+@bb_bp.route("/api/black-boxes/<int:box_id>/commands/<command>", methods=["POST"])
+def set_black_box_mode(box_id, command):
+    """Set a persisted device mode and queue it for remote ESP32 delivery."""
+    role, user_id = get_caller_identity()
+    if role not in ("superadmin", "owner", "company"):
+        return jsonify({"error": "Commande réservée aux gestionnaires autorisés"}), 403
+    mode_fields = {
+        "security": ("securityEnabled", "SET_SECURITY_MODE"),
+        "recording": ("audioRecordingEnabled", "SET_AUDIO_RECORDING"),
+        "listening": ("audioListeningEnabled", "SET_AUDIO_LISTENING"),
+        "flame-detection": ("flameDetectionEnabled", "SET_FLAME_DETECTION"),
+    }
+    if command not in mode_fields:
+        return jsonify({"error": "Commande non prise en charge"}), 404
+    body = request.get_json(silent=True) or {}
+    enabled = body.get("enabled")
+    if not isinstance(enabled, bool):
+        return jsonify({"error": "Le champ enabled doit être booléen"}), 400
+    try:
+        ensure_iot_schema()
+        box = db.session.execute(text("""
+            SELECT id_boite,id_proprietaire,id_conteneurs
+            FROM boite_noir WHERE id_boite=:box AND COALESCE(archived,FALSE)=FALSE
+        """), {"box": box_id}).fetchone()
+        if not box:
+            return jsonify({"error": "Boîte inexistante ou archivée"}), 404
+        if role != "superadmin":
+            from app.routes.dashboard import _visible_boites_for
+            visible = _visible_boites_for(role, user_id) or []
+            if str(box_id) not in {str(value) for value in visible}:
+                return jsonify({"error": "Boîte hors périmètre autorisé"}), 404
+
+        field, command_type = mode_fields[command]
+        patch = json.dumps({field: enabled})
+        direct = body.get("delivery") == "direct"
+        db.session.execute(text("""
+            INSERT INTO argos_device_mode_state
+                (black_box_id,desired_modes,reported_modes,delivery_status,updated_by,updated_at)
+            VALUES (:box,CAST(:patch AS JSONB),
+                    CASE WHEN :direct THEN CAST(:patch AS JSONB) ELSE '{}'::JSONB END,
+                    CASE WHEN :direct THEN 'CONFIRMED' ELSE 'PENDING' END,
+                    :actor,NOW())
+            ON CONFLICT (black_box_id) DO UPDATE SET
+                desired_modes=argos_device_mode_state.desired_modes || CAST(:patch AS JSONB),
+                reported_modes=CASE WHEN :direct
+                    THEN argos_device_mode_state.reported_modes || CAST(:patch AS JSONB)
+                    ELSE argos_device_mode_state.reported_modes END,
+                delivery_status=CASE WHEN :direct THEN 'CONFIRMED' ELSE 'PENDING' END,
+                updated_by=:actor,updated_at=NOW()
+        """), {"box": box_id, "patch": patch, "direct": direct,
+                "actor": f"{role}:{user_id}"})
+
+        command_result = None
+        if not direct:
+            from app.modules.iot.iot_command_service import create_device_command
+            command_result = create_device_command(
+                box_id, command_type, {"enabled": enabled},
+                requested_by_user_id=str(user_id), allow_fallback=False,
+            )
+        else:
+            from app.modules.iot.repository import create_audit
+            create_audit("DEVICE_MODE_SET_DIRECT", "black_box", str(box_id),
+                         {"mode": field, "enabled": enabled, "delivery": "direct"},
+                         role, str(user_id))
+            db.session.commit()
+        return jsonify({"status": "success", "delivery_status": "CONFIRMED" if direct else "PENDING",
+                        "mode": field, "enabled": enabled, "command": command_result}), 200
+    except Exception as exc:
+        db.session.rollback()
+        current_app.logger.exception("Commande de mode impossible pour la boîte %s", box_id)
+        return jsonify({"error": str(exc) if role == "superadmin" else "Commande impossible pour cet appareil"}), 503
 
 
 @bb_bp.route("/api/black-boxes/<int:box_id>/history", methods=["GET"])
@@ -862,6 +946,131 @@ def configure_black_box(box_id):
     except Exception as exc:
         db.session.rollback()
         return jsonify({"error": str(exc)}), 400
+
+
+@bb_bp.route("/api/black-boxes/<int:box_id>/planned-route", methods=["GET", "PUT"])
+def planned_route(box_id):
+    """Read or set an expected route, restricted to actors linked to this box."""
+    role, user_id = get_caller_identity()
+    if role not in ("superadmin", "owner", "company"):
+        return jsonify({"error": "Accès réservé au gestionnaire de la boîte"}), 403
+    from app.routes.dashboard import _visible_boites_for
+    visible = _visible_boites_for(role, user_id)
+    if visible is not None and str(box_id) not in {str(value) for value in visible}:
+        return jsonify({"error": "Boîte inexistante ou accès refusé"}), 404
+
+    if request.method == "GET":
+        try:
+            row = db.session.execute(text("""
+                SELECT route_name,mode,waypoints,corridor_width_m,alert_threshold,enabled,updated_at
+                FROM brady.argos_planned_routes WHERE black_box_id=:box
+            """), {"box": box_id}).fetchone()
+            if not row:
+                return jsonify({"status": "not_configured", "black_box_id": box_id}), 200
+            return jsonify({"status": "success", **dict(row._mapping)}), 200
+        except Exception:
+            db.session.rollback()
+            return jsonify({"error": "Configuration de route indisponible"}), 503
+
+    data = request.get_json(silent=True) or {}
+    try:
+        from app.services.route_monitor_service import validate_waypoints
+        waypoints = validate_waypoints(data.get("waypoints"))
+        route_name = str(data.get("route_name") or "").strip()
+        mode = str(data.get("mode") or "").strip().lower()
+        corridor = int(data.get("corridor_width_m", 1000))
+        threshold = int(data.get("alert_threshold", 60))
+        enabled = data.get("enabled", True)
+        if not route_name or len(route_name) > 160:
+            raise ValueError("route_name requis (160 caractères maximum)")
+        if mode not in ("road", "sea", "multimodal"):
+            raise ValueError("mode doit être road, sea ou multimodal")
+        if not 50 <= corridor <= 50000 or not 1 <= threshold <= 100:
+            raise ValueError("corridor_width_m ou alert_threshold hors limites")
+        if not isinstance(enabled, bool):
+            raise ValueError("enabled doit être booléen")
+        db.session.execute(text("""
+            INSERT INTO brady.argos_planned_routes
+                (black_box_id,route_name,mode,waypoints,corridor_width_m,alert_threshold,
+                 enabled,updated_by_role,updated_by_id,updated_at)
+            VALUES (:box,:name,:mode,CAST(:points AS jsonb),:corridor,:threshold,
+                    :enabled,:role,:uid,NOW())
+            ON CONFLICT (black_box_id) DO UPDATE SET
+                route_name=EXCLUDED.route_name, mode=EXCLUDED.mode,
+                waypoints=EXCLUDED.waypoints, corridor_width_m=EXCLUDED.corridor_width_m,
+                alert_threshold=EXCLUDED.alert_threshold, enabled=EXCLUDED.enabled,
+                updated_by_role=EXCLUDED.updated_by_role, updated_by_id=EXCLUDED.updated_by_id,
+                updated_at=NOW()
+        """), {"box": box_id, "name": route_name, "mode": mode,
+               "points": json.dumps(waypoints), "corridor": corridor,
+               "threshold": threshold, "enabled": enabled, "role": role, "uid": str(user_id)})
+        db.session.commit()
+        return jsonify({"status": "success", "black_box_id": box_id,
+                        "route_name": route_name, "waypoint_count": len(waypoints),
+                        "alert_threshold_percent": threshold,
+                        "threshold_semantics": "score opérationnel, non probabiliste"}), 200
+    except (TypeError, ValueError) as exc:
+        db.session.rollback()
+        return jsonify({"error": str(exc)}), 400
+    except Exception:
+        db.session.rollback()
+        return jsonify({"error": "Enregistrement de la route impossible"}), 503
+
+
+def _authorized_tracking_box(box_id):
+    role, user_id = get_caller_identity()
+    if role not in ("superadmin", "owner", "company", "client", "driver", "port_authority"):
+        return None, (jsonify({"error": "Authentification requise"}), 401)
+    box = db.session.execute(text("""
+        SELECT id_boite,id_conteneurs,numero_serie FROM boite_noir WHERE id_boite=:box
+    """), {"box": box_id}).fetchone()
+    if not box:
+        return None, (jsonify({"error": "Boîte introuvable"}), 404)
+    if role != "superadmin":
+        if not box.id_conteneurs:
+            return None, (jsonify({"error": "Boîte hors périmètre autorisé"}), 404)
+        from app.routes.dashboard import _visible_boites_for
+        visible = _visible_boites_for(role, user_id)
+        if visible is None or str(box_id) not in {str(item) for item in visible or []}:
+            return None, (jsonify({"error": "Boîte hors périmètre autorisé"}), 404)
+    return {"role": role, "user_id": user_id, "box": box}, None
+
+
+@bb_bp.route("/api/black-boxes/<int:box_id>/route-tracking", methods=["GET"])
+def route_tracking(box_id):
+    """Position history, planned corridor and explainable per-point deviation scores."""
+    _, error = _authorized_tracking_box(box_id)
+    if error:
+        return error
+    try:
+        limit = min(max(int(request.args.get("limit", 300)), 2), 2000)
+        from app.services.route_intelligence_service import route_tracking_for_box
+        return jsonify(route_tracking_for_box(box_id, limit)), 200
+    except (TypeError, ValueError):
+        return jsonify({"error": "limit invalide"}), 400
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Lecture du suivi de route impossible")
+        return jsonify({"error": "Suivi de route indisponible"}), 503
+
+
+@bb_bp.route("/api/black-boxes/<int:box_id>/port-tracking", methods=["GET"])
+def port_tracking(box_id):
+    """Port reference proximity and configured geofence crossings for a visible box."""
+    _, error = _authorized_tracking_box(box_id)
+    if error:
+        return error
+    try:
+        limit = min(max(int(request.args.get("limit", 500)), 2), 2000)
+        include_points = request.args.get("include_points", "true").strip().lower() not in {"0", "false", "no"}
+        from app.services.route_intelligence_service import port_tracking_for_box
+        return jsonify(port_tracking_for_box(box_id, limit, include_points)), 200
+    except (TypeError, ValueError):
+        return jsonify({"error": "Paramètres de suivi portuaire invalides"}), 400
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Lecture du suivi portuaire impossible")
+        return jsonify({"error": "Suivi portuaire indisponible"}), 503
 
 
 @bb_bp.route("/api/black-boxes/archived", methods=["GET"])

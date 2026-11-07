@@ -60,7 +60,7 @@ def _passages(path: Path, root: Path):
         start = number + 1
 
 
-def search_knowledge(query: str, root=None) -> list[dict]:
+def search_knowledge(query: str, root=None, allowed_sources=None, min_overlap: int = 1) -> list[dict]:
     query_terms = _terms(query)
     if not query_terms:
         return []
@@ -68,15 +68,21 @@ def search_knowledge(query: str, root=None) -> list[dict]:
     if not corpus.is_dir():
         return []
     scored = []
+    source_filter = set(allowed_sources) if allowed_sources is not None else None
     for index, path in enumerate(sorted(corpus.rglob("*"))):
         if index >= MAX_FILES:
             break
         if not path.is_file() or path.suffix.lower() not in SUPPORTED_SUFFIXES:
             continue
+        relative_path = str(path.relative_to(corpus))
+        if source_filter is not None and relative_path not in source_filter:
+            continue
         for item in _passages(path, corpus):
             terms = _terms(item["text"])
             overlap = query_terms & terms
-            if overlap:
+            # Le RAG institutionnel peut demander plusieurs termes concordants
+            # pour réduire les correspondances juridiques génériques.
+            if len(overlap) >= max(1, int(min_overlap)):
                 item["score"] = round(len(overlap) / (len(query_terms) + 0.25 * len(terms)), 4)
                 scored.append(item)
     scored.sort(key=lambda item: (-item["score"], item["source"], item["line_start"]))

@@ -562,6 +562,7 @@ function buildDriverDashboard(){
       <div class="stat-card" style="--accent:var(--amber)"><div class="stat-label"><i class="fas fa-wave-square"></i> Chocs</div>
         <div class="stat-value">${c.shock||0} G</div></div>
     </div>
+    ${etaMarkup(c.estimated_arrival,true)}
     <div class="card"><div class="card-header"><span class="card-title">Position Actuelle</span></div>
       <div class="map-container" style="height:350px"><div id="map-main"></div></div>
     </div>
@@ -573,6 +574,7 @@ function buildClientDashboard(){
   return `
   <div class="page active">
     <div class="page-header"><div class="page-title">Mon Colis <small>Suivi en temps réel</small></div></div>
+    ${etaMarkup(c.estimated_arrival,true)}
     <div class="grid-2 responsive-map-resource-layout" style="margin-bottom:20px">
       <div class="card"><div class="card-header"><span class="card-title">Suivi GPS</span></div>
         <div class="map-container" style="height:300px"><div id="map-main"></div></div>
@@ -639,7 +641,10 @@ function buildMapPage(){
   <div class="page active">
     <div class="page-header">
       <div><div class="page-title">Carte GPS <small>Positions vérifiées</small></div><div id="map-data-status" class="map-data-status" role="status" aria-live="polite">Chargement des positions consolidées…</div></div>
-      <button class="btn-secondary map-refresh-action" type="button" onclick="loadMapPositions()" aria-label="Actualiser les positions GPS" title="Actualiser les positions GPS"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M5.6 9A7 7 0 0 1 18 6.8L20 12M4 12l2 5.2A7 7 0 0 0 18.4 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sr-only">Actualiser</span></button>
+      <div style="display:flex;align-items:center;gap:10px">
+        <label style="font-size:11px;color:var(--text3)"><input id="map-auto-refresh" type="checkbox" checked onchange="toggleMapAutoRefresh(this.checked)"> Actualisation auto (10 s)</label>
+        <button class="btn-secondary map-refresh-action" type="button" onclick="loadMapPositions()" aria-label="Actualiser les positions GPS" title="Actualiser les positions GPS"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M5.6 9A7 7 0 0 1 18 6.8L20 12M4 12l2 5.2A7 7 0 0 0 18.4 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sr-only">Actualiser</span></button>
+      </div>
     </div>
     <div class="monitoring-map-layout" style="display:grid;gap:16px;height:calc(100vh - 180px)">
       <div class="card monitoring-map-panel" style="padding:0;overflow:hidden;position:relative">
@@ -650,6 +655,11 @@ function buildMapPage(){
             <div style="font-weight:600;margin-bottom:6px;letter-spacing:1px">LÉGENDE</div>
             <div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div>Position GPS reçue</div>
             <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Alerte signalée par l’API</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#32d296"></div>Corridor planifié</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#ff3333"></div>Écart détecté</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#ff3333;box-shadow:0 0 0 4px rgba(255,51,51,.2)"></div>Événement sensible</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#ffb020;box-shadow:0 0 0 4px rgba(255,176,32,.2)"></div>Point de vigilance</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#b44dff"></div>Repère / zone portuaire</div>
           </div>
         </div>
         <div class="map-controls">
@@ -660,6 +670,16 @@ function buildMapPage(){
         </div>
       </div>
       <div class="monitoring-resources-panel" style="display:flex;flex-direction:column;gap:12px;overflow-y:auto">
+        ${(currentRole === 'superadmin' || currentRole === 'owner') ? `<div class="card terrestrial-simulation-card" style="padding:12px">
+          <div class="card-title" style="margin-bottom:6px">Simulateur de transport · démonstration</div>
+          <div class="map-data-status" style="margin-bottom:8px">Deux scénarios séparés des données terrain. Session : 60 min · horloge : 5×. ETA fondée sur la durée cartographique, sans trafic réel.</div>
+          <label class="simulation-field">Boîte · Douala → N’Djamena<select id="sim-box-douala"></select></label>
+          <label class="simulation-field">Boîte · Kribi → Bertoua<select id="sim-box-kribi"></select></label>
+          <div class="simulation-controls-row"><label class="simulation-field">Intervalle (s)<input id="sim-interval" type="number" min="10" max="600" value="60"></label><label class="simulation-field">Accélération<input id="sim-scale" type="number" min="1" max="20" value="5"></label></div>
+          <button class="btn-primary" type="button" style="width:100%;margin-top:8px" onclick="startTerrestrialSimulation()">Démarrer les deux scénarios</button>
+          <div id="terrestrial-simulation-sessions" class="simulation-session-list" aria-live="polite"><div class="map-empty-state">Aucune session de simulation chargée.</div></div>
+          <div class="simulation-attribution">Routes cartographiques OSRM / © OpenStreetMap contributors. Routes poids lourds et trafic temps réel non certifiés.</div>
+        </div>` : ''}
         <div class="card" style="padding:12px">
           <div class="card-title" id="map-containers-title" style="margin-bottom:8px">Positions GPS (${MAP_GPS_POSITIONS.length})</div>
           <div style="position:relative;margin-bottom:8px">
@@ -691,7 +711,11 @@ function buildMapPage(){
           </div>
         </div>
         <div class="card" style="padding:12px">
-          <div class="card-title" style="margin-bottom:8px">Alertes Actives (BD)</div>
+          <div class="card-title" style="margin-bottom:8px">Dernière télémétrie</div>
+          <div id="map-live-observation" class="map-data-status" aria-live="polite">En attente des données des boîtes associées.</div>
+        </div>
+        <div class="card" style="padding:12px">
+          <div class="card-title" style="margin-bottom:8px">Alertes des boîtes accessibles</div>
           <div id="map-alerts-list" class="zone-scrollable" style="max-height: 25vh;">
             <div class="map-empty-state">Chargement des alertes consolidées…</div>
           </div>
@@ -699,6 +723,24 @@ function buildMapPage(){
       </div>
     </div>
   </div>`;
+}
+
+let mapRefreshTimer = null;
+let mapRefreshEnabled = true;
+
+function toggleMapAutoRefresh(enabled){
+  mapRefreshEnabled=Boolean(enabled);
+  if(!mapRefreshEnabled && mapRefreshTimer){clearTimeout(mapRefreshTimer);mapRefreshTimer=null;}
+  if(mapRefreshEnabled) scheduleMapRefresh();
+}
+
+function scheduleMapRefresh(){
+  if(!mapRefreshEnabled || currentPage!=='map' || mapRefreshTimer) return;
+  mapRefreshTimer=setTimeout(async()=>{
+    mapRefreshTimer=null;
+    if(currentPage==='map') await loadMapPositions();
+    scheduleMapRefresh();
+  },10000);
 }
 
 // ══════════════════════════════════════════════════════
@@ -946,10 +988,32 @@ async function saveNewContainer(){
   }
 }
 
+function etaStatusText(eta){
+  if(!eta) return 'Aucune estimation disponible';
+  if(eta.status==='estimated' && eta.estimated_arrival_at){
+    const date=new Date(eta.estimated_arrival_at);
+    return `Arrivée estimée ${Number.isFinite(date.getTime())?date.toLocaleString('fr-FR'):'—'} · ${eta.remaining_distance_km??'—'} km · ${eta.estimated_speed_kmh??'—'} km/h`;
+  }
+  if(eta.status==='arrived') return 'À proximité du point final planifié';
+  if(eta.status==='stopped') return 'Conteneur à l’arrêt · estimation suspendue';
+  if(eta.status==='stale') return 'Position GPS trop ancienne · estimation suspendue';
+  return eta.reason || 'Trajet planifié ou vitesse GPS récente indisponible';
+}
+
+function etaMarkup(eta, detailed=false){
+  const status=eta?.status||'unavailable';
+  const color=status==='estimated'?'var(--cyan)':status==='arrived'?'var(--green)':status==='stopped'||status==='stale'?'var(--amber)':'var(--text3)';
+  const confidence=eta?.confidence==='medium'?'moyenne':eta?.confidence==='low'?'faible':null;
+  const caveat=detailed&&eta?.caveat?`<div style="font-size:11px;color:var(--text3);margin-top:5px">${escapeHTML(eta.caveat)}</div>`:'';
+  const meta=detailed&&eta?.status==='estimated'?`<div style="font-size:11px;color:var(--text3);margin-top:4px">${escapeHTML(eta.route_name||'Trajet planifié')} · confiance ${confidence||'—'} · position GPS ${escapeHTML(formatTime(eta.last_position_at))}</div>`:'';
+  return `<div style="padding:10px 12px;border-left:3px solid ${color};border-radius:5px;background:var(--bg3);margin-top:10px"><div style="font-size:11px;color:var(--text3);margin-bottom:3px"><i class="fas fa-flag-checkered"></i> ARRIVÉE ESTIMÉE</div><div style="font-size:13px;color:${color};font-weight:600">${escapeHTML(etaStatusText(eta))}</div>${meta}${caveat}</div>`;
+}
+
 function buildContainerCard(c){
   const statusColors = {ok:'var(--green)',warning:'var(--amber)',danger:'var(--red)',off:'var(--text3)'};
   const col = statusColors[c.status] || 'var(--text3)';
   const hasData = c.temp !== null && c.temp !== undefined;
+  const shockAlert = (c.alerts||[]).some(value=>/choc|shock/i.test(String(value)));
   return `
   <div class="card container-item status-${c.status}" style="display:block;cursor:pointer" onclick="showContainerDetailDB('${c.id_boite||c.id}')">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
@@ -964,6 +1028,7 @@ function buildContainerCard(c){
         <span class="badge badge-danger" title="Ce conteneur n’est pas enregistré dans BIC/BoxTech"><i class="fas fa-times-circle"></i> HORS BIC</span>
       </div>` : ''}
     <div style="font-size:12px;color:var(--text2);margin-bottom:6px"><i class="fas fa-box"></i> ${c.type_conteneurs||'—'} • <i class="fas fa-microchip"></i> ${c.type_boite||'—'}</div>
+    ${etaMarkup(c.estimated_arrival)}
     ${hasData ? `
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
       <div style="text-align:center">
@@ -979,7 +1044,7 @@ function buildContainerCard(c){
         <div style="font-size:10px;color:var(--text3)">km/h</div>
       </div>
       <div style="text-align:center">
-        <div style="font-size:16px;font-weight:700;font-family:var(--mono);color:${c.shock>5?'var(--red)':c.shock>0?'var(--amber)':'var(--green)'}">${c.shock??0}</div>
+        <div style="font-size:16px;font-weight:700;font-family:var(--mono);color:${shockAlert?'var(--red)':'var(--cyan)'}">${c.shock??0}</div>
         <div style="font-size:10px;color:var(--text3)">G</div>
       </div>
     </div>` : '<div style="text-align:center;padding:16px;color:var(--text3)"><i class="fas fa-power-off"></i> Aucune donnée capteur</div>'}
@@ -1007,12 +1072,14 @@ function updateContainerPageUI(){
 
 function updateMapPageUI(){
   const hasPositions=MAP_GPS_POSITIONS.length>0;
+  const hasTrackedBoxes=MAP_TRACKING_BOXES.length>0;
+  const hasSimulatedPosition=MAP_TERRESTRIAL_SIMULATIONS.some(session=>session.scenarios?.some(s=>s.latitude!=null));
   const emptyOverlay=document.getElementById('map-empty-overlay');
-  if(emptyOverlay) emptyOverlay.hidden=hasPositions;
+  if(emptyOverlay) emptyOverlay.hidden=hasPositions || hasTrackedBoxes || hasSimulatedPosition;
   ['map-view-all','map-fit-all','btn-trails'].forEach(id=>{
     const control=document.getElementById(id);
     if(control){
-      control.disabled=!hasPositions;
+      control.disabled=!(hasPositions || hasTrackedBoxes || hasSimulatedPosition);
       if(id==='btn-trails'){
         control.style.background=trailsOn?'var(--cyan)':'';
         control.setAttribute('aria-pressed',String(trailsOn));
@@ -1021,26 +1088,30 @@ function updateMapPageUI(){
   });
   if(currentPage !== 'map') return;
   const title = document.getElementById('map-containers-title');
-  if(title) title.textContent = `Positions GPS (${MAP_GPS_POSITIONS.length})`;
+  if(title) title.textContent = `Conteneurs actifs (${MAP_TRACKING_BOXES.length}) · positions GPS (${MAP_GPS_POSITIONS.length})`;
   const status = document.getElementById('map-data-status');
   if(status && !status.dataset.error) status.textContent = MAP_GPS_POSITIONS.length
-    ? `${MAP_GPS_POSITIONS.length} position(s) reçue(s) de l’API consolidée`
-    : 'Aucune position GPS disponible dans les données consolidées.';
+    ? `${MAP_GPS_POSITIONS.length} position(s) GPS pour ${MAP_TRACKING_BOXES.length} boîte(s) active(s) visible(s)`
+    : `${MAP_TRACKING_BOXES.length} boîte(s) active(s) visible(s), aucune position GPS exploitable pour le moment.`;
 
   const list = document.getElementById('containers-sidebar-list');
   if(list){
-    list.innerHTML = MAP_GPS_POSITIONS.length ? MAP_GPS_POSITIONS.map(c=>{
-      const id = escapeHTML(String(c.id_boite));
-      const state = mapPositionState(c);
-      const stateLabel = state==='alert' ? 'Alerte' : state==='stale' ? 'Position ancienne' : 'Position récente';
-      return `<button class="map-position-item" type="button" onclick="focusContainerDB('${id}')">
+    const positionsById = new Map(MAP_GPS_POSITIONS.map(item=>[String(item.id_boite),item]));
+    list.innerHTML = MAP_TRACKING_BOXES.length ? MAP_TRACKING_BOXES.map(box=>{
+      const id = escapeHTML(String(box.id_boite));
+      const c = positionsById.get(String(box.id_boite));
+      const state = c ? mapPositionState(c) : 'unknown';
+      const stateLabel = !c ? 'Aucune position GPS reçue' : state==='alert' ? 'Alerte' : state==='stale' ? 'Position ancienne' : 'Position récente';
+      const synthetic = c?.quality?.dataOrigin === 'SYNTHETIC' ? ' · rejeu synthétique' : '';
+      return `<button class="map-position-item" type="button" onclick="focusTrackedBox('${id}')">
         <span class="map-position-dot state-${state}" aria-hidden="true"></span>
         <div class="container-info">
-          <span class="container-id">${escapeHTML(String(c.numero_serie || c.id_boite))}</span>
-          <span class="map-position-meta">${stateLabel} · ${Number.isFinite(c.speed) ? `${c.speed} km/h` : 'Vitesse indisponible'} · ${escapeHTML(formatTime(c.ts))}</span>
+          <span class="container-id">${escapeHTML(String(box.numero_serie || `Boîte ${box.id_boite}`))} · ${escapeHTML(String(box.container_id || 'sans conteneur'))}</span>
+          <span class="map-position-meta">${stateLabel}${c && Number.isFinite(c.speed) ? ` · ${c.speed} km/h` : ''}${c ? ` · ${escapeHTML(formatTime(c.ts))}` : ''}${synthetic}</span>
+          ${c ? `<span class="map-position-meta">${escapeHTML(etaStatusText(c.estimated_arrival))}</span>` : ''}
         </div>
       </button>`;
-    }).join('') : '<div style="color:var(--text3);font-size:12px">Aucune position GPS disponible.</div>';
+    }).join('') : '<div style="color:var(--text3);font-size:12px">Aucun conteneur actif dans le périmètre autorisé.</div>';
     applyMapPositionFilters();
   }
 
@@ -1048,13 +1119,20 @@ function updateMapPageUI(){
   if(temp) temp.textContent = MAP_GPS_POSITIONS.find(c=>c.temp!=null)?.temp ?? '—';
   const shock = document.getElementById('map-shock');
   if(shock) shock.textContent = MAP_GPS_POSITIONS.find(c=>c.shock!=null)?.shock ?? '—';
+  const observation=document.getElementById('map-live-observation');
+  if(observation){
+    const latest=[...MAP_GPS_POSITIONS].sort((a,b)=>Date.parse(b.ts||0)-Date.parse(a.ts||0))[0];
+    observation.textContent=latest
+      ? `Boîte ${latest.numero_serie||latest.id_boite} · ${latest.lat.toFixed(5)}, ${latest.lon.toFixed(5)} · ${latest.speed??'—'} km/h · ${latest.temp??'—'} °C · choc ${latest.shock??'—'} G · ${formatTime(latest.ts)}${latest.alerts?.length?` · ${latest.alerts.join(' ; ')}`:''}`
+      : 'En attente des données des boîtes associées.';
+  }
 
   const alerts = document.getElementById('map-alerts-list');
   if(alerts){
     alerts.innerHTML = MAP_GPS_POSITIONS.filter(c=>c.alerts?.length).slice(0,8).map(c=>
       c.alerts.slice(0,2).map(a=>`
         <div class="timeline-item" style="padding:5px 0">
-          <div class="timeline-dot" style="background:var(--amber)"></div>
+          <div class="timeline-dot" style="background:${c.alert_level==='danger'?'var(--red)':c.alert_level==='warning'?'var(--amber)':'var(--cyan)'}"></div>
           <div class="timeline-content">
             <div style="font-size:12px">${escapeHTML(String(c.id_boite))}: ${escapeHTML(String(a).substring(0,120))}</div>
             <div class="timeline-time">${escapeHTML(formatTime(c.ts))}</div>
@@ -1063,6 +1141,7 @@ function updateMapPageUI(){
     ).join('') || '<div style="color:var(--text3);font-size:12px">Aucune alerte sur les dernières positions.</div>';
   }
   refreshMapMarkers();
+  updateTerrestrialSimulationPanel();
 }
 
 function mapPositionState(position){
@@ -1091,7 +1170,7 @@ function applyMapPositionFilters(){
     if(!item.hidden) visible++;
   });
   const count=document.getElementById('map-filter-count');
-  if(count) count.textContent=`${visible} position(s) affichée(s) sur ${MAP_GPS_POSITIONS.length}`;
+  if(count) count.textContent=`${visible} boîte(s) affichée(s) sur ${MAP_TRACKING_BOXES.length}`;
 }
 
 // +++++++++++++++++++++++++++++ vide le conteneurs
@@ -1115,6 +1194,7 @@ async function showContainerDetailDB(id){
   } catch(e){}
 
   const hasData = c.temp !== null && c.temp !== undefined;
+  const shockAlert = Number(c.shock) > Number(seuils.choc_max > 0 ? seuils.choc_max : 5);
   const containerId = c.id_conteneurs || c.id || c.id_boite || '';
   const html = `
     <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
@@ -1133,13 +1213,14 @@ async function showContainerDetailDB(id){
             <span style="font-size:12px;color:var(--text3)"><i class="fas fa-clock"></i> ${c.lastUpdate}</span>
             ${c.resistance?`<span class="badge badge-info">Résistance: ${c.resistance}</span>`:''}
           </div>
+          ${etaMarkup(c.estimated_arrival,true)}
           ${hasData ? `
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
             ${[
               ['fa-thermometer-half','Température',(c.temp??'--')+'°C', c.temp>32?'var(--red)':c.temp>28?'var(--amber)':'var(--green)'],
               ['fa-tint','Humidité',(c.humidity??'--')+'%', c.humidity>75?'var(--red)':c.humidity>65?'var(--amber)':'var(--green)'],
               ['fa-compress-arrows-alt','Pression',(c.pressure??'--')+' hPa','var(--cyan)'],
-              ['fa-wave-square','Chocs',(c.shock??0)+' G', c.shock>5?'var(--red)':c.shock>0?'var(--amber)':'var(--green)'],
+              ['fa-wave-square','Chocs',(c.shock??0)+' G', shockAlert?'var(--red)':'var(--cyan)'],
               ['fa-tachometer-alt','Vitesse',(c.speed??0)+' km/h','var(--text)'],
               ['fa-map-marker-alt','GPS',c.lat&&c.lon?`${Number(c.lat).toFixed(4)},${Number(c.lon).toFixed(4)}`:'—','var(--text2)'],
               ['fa-ruler','Distance',(c.distance??'--')+' cm',c.security_alarm?'var(--red)':'var(--green)'],
@@ -1185,19 +1266,25 @@ async function showContainerDetailDB(id){
                   ['security','Sécurité','fa-shield-alt'],
                   ['listening','Écoute','fa-headphones'],
                   ['flame-detection','Détection de flammes','fa-fire']
-                ].map(([command,label,icon])=>`
+                ].map(([command,label,icon])=>{
+                  const currentModes = c.modes || {};
+                  const checked = command === 'security'
+                    ? (currentModes.securityEnabled ?? c.security_enabled)
+                    : command === 'listening' ? currentModes.audioListeningEnabled
+                    : currentModes.flameDetectionEnabled;
+                  return `
                   <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg3)">
                     <div>
                       <div style="font-size:12px;font-weight:600"><i class="fas ${icon}"></i> ${label}</div>
                       <div style="font-size:11px;color:var(--text3)">Activer / désactiver</div>
                     </div>
                     <label class="toggle-switch">
-                      <input type="checkbox"
+                      <input type="checkbox" ${checked ? 'checked' : ''}
                         ${(command==='security' && !['superadmin','owner','company'].includes(currentRole)) ? 'disabled title="Réservé aux gestionnaires"' : ''}
-                        onchange="sendContainerCommand('${c.id_boite}', '${command}', this.checked)">
+                        onchange="sendContainerCommand('${c.id_boite}', '${command}', this.checked, this)">
                       <span class="toggle-slider"></span>
                     </label>
-                  </div>`).join('')}
+                  </div>`}).join('')}
               </div>
             </div>` : ''}
         </div>
@@ -1210,7 +1297,7 @@ async function showContainerDetailDB(id){
           <button class="btn-primary" style="width:auto" onclick="closeModal();navigateTo('map')"><i class="fas fa-map-marker-alt"></i> Voir Carte</button>
           <button class="btn-primary" style="width:auto" onclick="openEventsForContainer('${escapeHTML(c.id_boite||c.id)}')"><i class="fas fa-list"></i> Événements</button>
           <button class="btn-secondary" style="width:auto" onclick="showRegulatoryHistory('${escapeHTML(c.id_boite||c.id)}')"><i class="fas fa-scale-balanced"></i> Dossier & références</button>
-          <button class="export-btn" onclick="openAIAssistant('${c.id_boite||c.id}')"><i class="fas fa-robot"></i> Rapport IA</button>
+          <button class="export-btn" onclick="openAIAssistant('${c.id_boite||''}')"><i class="fas fa-robot"></i> Rapport IA</button>
         </div>
       </div>
     </div>`;
@@ -1312,7 +1399,7 @@ async function loadDocumentsPage(){
     '<tr><td colspan="6">Aucun document disponible</td></tr>';
 }
 
-async function sendContainerCommand(idBoite, command, enabled) {
+async function sendContainerCommand(idBoite, command, enabled, input = null) {
   try {
     const body = command === 'request-position' ? {} : { enabled };
     // La géolocalisation vient du téléphone/ordinateur avec consentement.
@@ -1329,7 +1416,10 @@ async function sendContainerCommand(idBoite, command, enabled) {
       body: JSON.stringify(body)
     });
     const data = await res.json();
-    if (!res.ok) return showToast(data.error || 'Commande refusée', 'error');
+    if (!res.ok) {
+      if(input) input.checked = !enabled;
+      return showToast(data.error || 'Commande refusée', 'error');
+    }
     showToast(`Commande ${data.command?.status || 'envoyée'}: ${data.command?.commandUid || ''}`, 'success');
     if (command === 'listening') {
       const bridge = window.argosDirectBridge;
@@ -1343,6 +1433,7 @@ async function sendContainerCommand(idBoite, command, enabled) {
       }
     }
   } catch (e) {
+    if(input) input.checked = !enabled;
     showToast('Erreur commande: ' + e.message, 'error');
   }
 }
@@ -2102,7 +2193,7 @@ function buildStatsPage(){
     <div class="grid-4" style="margin-bottom:20px">
       <div class="stat-card" style="--accent:var(--cyan)"><div class="stat-label">Temp. Moy</div><div class="stat-value" id="dyn-stat-temp">--°C</div><div class="stat-sub" id="dyn-sub-temp">Chargement…</div></div>
       <div class="stat-card" style="--accent:var(--amber)"><div class="stat-label">Alertes</div><div class="stat-value" id="dyn-stat-alerts">--</div><div class="stat-sub" id="dyn-sub-alerts">Chargement…</div></div>
-      <div class="stat-card" style="--accent:var(--red)"><div class="stat-label">Chocs</div><div class="stat-value" id="dyn-stat-shocks">--</div><div class="stat-sub" id="dyn-sub-shocks">Chargement…</div></div>
+      <div class="stat-card" style="--accent:var(--cyan)"><div class="stat-label">Mesures avec choc mesuré</div><div class="stat-value" id="dyn-stat-shocks">--</div><div class="stat-sub" id="dyn-sub-shocks">Chargement…</div></div>
       <div class="stat-card" style="--accent:var(--green)"><div class="stat-label">Fiabilité</div><div class="stat-value" id="dyn-stat-fiability">--%</div><div class="stat-sub" id="dyn-sub-fiability">Chargement…</div></div>
     </div>
     <div class="grid-4" style="margin-bottom:20px">
@@ -3166,19 +3257,31 @@ async function loadMapPositions(){
   const status = document.getElementById('map-data-status');
   if(status){ status.dataset.error=''; status.textContent='Chargement des positions consolidées…'; }
   try {
-    const response = await secureApiFetch('/api/containers/positions');
+    const [response, boxesResponse] = await Promise.all([
+      secureApiFetch('/api/containers/positions'),
+      secureApiFetch('/api/black-boxes/my-boxes')
+    ]);
     const data = await response.json();
+    const boxesPayload = await boxesResponse.json().catch(()=>({}));
     if(!response.ok) throw new Error(data.error || `API GPS indisponible (${response.status})`);
     if(!Array.isArray(data)) throw new Error('Réponse GPS invalide.');
+    MAP_SIMULATION_BOXES = boxesResponse.ok && Array.isArray(boxesPayload.boxes)
+      ? boxesPayload.boxes.filter(box=>!box.archived && !['deleted','revoked','off'].includes(String(box.status||'').toLowerCase()))
+      : [];
+    MAP_TRACKING_BOXES = boxesResponse.ok && Array.isArray(boxesPayload.boxes)
+      ? boxesPayload.boxes.filter(box=>String(box.status||'').toLowerCase()==='active' && box.container_id)
+      : DB_CONTAINERS.filter(box=>box.id_boite && box.container_id && String(box.status||'').toLowerCase()==='active');
     MAP_GPS_POSITIONS = normalizeMapPositions(data, DB_CONTAINERS);
     if(status) status.textContent=MAP_GPS_POSITIONS.length
-      ? `${MAP_GPS_POSITIONS.length} position(s) reçue(s) de l’API consolidée`
-      : 'Aucune position GPS exploitable dans les données consolidées.';
+      ? `${MAP_GPS_POSITIONS.length} position(s) GPS · ${MAP_TRACKING_BOXES.length} boîte(s) active(s)`
+      : `${MAP_TRACKING_BOXES.length} boîte(s) active(s), aucune position GPS exploitable.`;
     updateMapPageUI();
+    await loadTerrestrialSimulations();
     syncMapTrails();
     if(currentPage !== 'map') refreshMapMarkers();
   } catch(error){
     MAP_GPS_POSITIONS=[];
+    MAP_TRACKING_BOXES = DB_CONTAINERS.filter(box=>box.id_boite && box.container_id && String(box.status||'').toLowerCase()==='active');
     if(status){ status.dataset.error='true'; status.textContent=`Positions indisponibles : ${error.message}`; }
     const title=document.getElementById('map-containers-title');
     if(title) title.textContent='Positions GPS indisponibles';
@@ -3192,7 +3295,69 @@ async function loadMapPositions(){
     if(alerts) alerts.innerHTML='<div class="map-empty-state">Alertes indisponibles avec la position GPS.</div>';
     refreshMapMarkers();
     syncMapTrails();
+    await loadTerrestrialSimulations();
   }
+}
+
+async function loadTerrestrialSimulations(){
+  try{
+    const response=await secureApiFetch('/api/terrestrial-simulations');
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok) throw new Error(data.error||`Simulations indisponibles (${response.status})`);
+    MAP_TERRESTRIAL_SIMULATIONS=Array.isArray(data.sessions)?data.sessions:[];
+    updateMapPageUI();
+  }catch(error){
+    const target=document.getElementById('terrestrial-simulation-sessions');
+    if(target) target.innerHTML=`<div class="map-empty-state">État des simulations indisponible : ${escapeHTML(error.message)}</div>`;
+  }
+}
+
+function updateTerrestrialSimulationPanel(){
+  const options=MAP_SIMULATION_BOXES.map(box=>`<option value="${escapeHTML(String(box.id_boite))}">${escapeHTML(String(box.numero_serie||`Boîte ${box.id_boite}`))}${box.id_conteneurs?` · ${escapeHTML(String(box.id_conteneurs))}`:' · non affectée'}</option>`).join('');
+  ['sim-box-douala','sim-box-kribi'].forEach(id=>{const select=document.getElementById(id);if(select&&options&&!select.dataset.loaded){select.innerHTML=options;select.dataset.loaded='true';}});
+  const target=document.getElementById('terrestrial-simulation-sessions');
+  if(!target) return;
+  target.innerHTML=MAP_TERRESTRIAL_SIMULATIONS.length?MAP_TERRESTRIAL_SIMULATIONS.map(session=>{
+    const scenarios=(session.scenarios||[]).map(s=>{
+      const eta=s.eta_current_at?new Date(s.eta_current_at).toLocaleString():'en attente du premier point';
+      const events=(s.active_events||[]).map(e=>e.event_type?.replaceAll('_simulated','').replaceAll('_',' ')).join(', ');
+      const progress=s.route_distance_m?Math.max(0,Math.min(100,100*(1-Number(s.remaining_distance_m||0)/Number(s.route_distance_m)))):0;
+      const reference=s.eta_reference_at?new Date(s.eta_reference_at).toLocaleString():'—';
+      return `<div class="simulation-scenario"><strong>${escapeHTML(s.route_name||s.scenario_code)}</strong><span>${escapeHTML(String(s.box_serial||`Boîte ${s.black_box_id}`))} · ${Number(s.speed_kmh||0).toFixed(1)} km/h · progression ${progress.toFixed(1)} %</span><span>Arrivée estimée ${escapeHTML(eta)} · référence ${escapeHTML(reference)}</span><span>${s.stopped_seconds?`À l’arrêt : ${Math.floor(s.stopped_seconds/60)} min · `:''}${s.eta_delay_seconds?`Retard estimé : ${Math.max(0,Math.round(s.eta_delay_seconds/60))} min · `:''}${escapeHTML(events||'Aucun événement actif')}</span></div>`;
+    }).join('');
+    const canControl=['RUNNING','PAUSED'].includes(session.status);
+    return `<div class="simulation-session"><div class="simulation-session-head"><strong>${escapeHTML(session.status)} · ${Math.floor(session.active_elapsed_seconds/60)} / 60 min</strong><span>${Math.ceil(session.remaining_seconds/60)} min restantes · ${session.interval_seconds} s · ${session.time_scale}× · worker ${escapeHTML(session.worker?.status||'inconnu')}</span></div>${scenarios}${canControl?`<div class="simulation-session-actions">${session.status==='RUNNING'?`<button type="button" onclick="controlTerrestrialSimulation('${escapeHTML(session.session_uid)}','pause')">Pause</button>`:`<button type="button" onclick="controlTerrestrialSimulation('${escapeHTML(session.session_uid)}','resume')">Reprendre</button>`}<button type="button" onclick="controlTerrestrialSimulation('${escapeHTML(session.session_uid)}','stop')">Arrêter</button></div>`:''}<details><summary>Journal détaillé · provenance et limites</summary><pre>${escapeHTML(JSON.stringify({scenarios:session.scenarios,episodes:session.episodes,worker:session.worker,last_error:session.last_error},null,2))}</pre></details></div>`;
+  }).join(''):'<div class="map-empty-state">Aucune session au cours des dernières 24 heures.</div>';
+}
+
+async function startTerrestrialSimulation(){
+  const first=document.getElementById('sim-box-douala')?.value, second=document.getElementById('sim-box-kribi')?.value;
+  if(!first||!second||first===second){showToast('Sélectionnez deux boîtes distinctes et accessibles.','warn');return;}
+  try{
+    const response=await secureApiFetch('/api/terrestrial-simulations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'SIMULATION',black_box_ids:[first,second],duration_seconds:3600,interval_seconds:Number(document.getElementById('sim-interval')?.value||60),time_scale:Number(document.getElementById('sim-scale')?.value||5)})});
+    const data=await response.json();if(!response.ok)throw new Error(data.error||'Démarrage impossible');
+    showToast('Simulation démarrée. Les événements sont marqués comme synthétiques.','success');await loadTerrestrialSimulations();
+  }catch(error){showToast(error.message,'warn');}
+}
+
+async function controlTerrestrialSimulation(uid,action){
+  try{const response=await secureApiFetch(`/api/terrestrial-simulations/${encodeURIComponent(uid)}/control`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action})});const data=await response.json();if(!response.ok)throw new Error(data.error||'Commande impossible');showToast(`Simulation : ${action==='stop'?'arrêt':action==='pause'?'pause':'reprise'}.`,'success');await loadTerrestrialSimulations();}
+  catch(error){showToast(error.message,'warn');}
+}
+
+function drawTerrestrialSimulations(){
+  const map=maps['map-main'];if(!map||typeof L==='undefined')return;
+  MAP_SIMULATION_LAYERS.forEach(layer=>map.removeLayer(layer));MAP_SIMULATION_LAYERS=[];
+  MAP_TERRESTRIAL_SIMULATIONS.forEach(session=>(session.scenarios||[]).forEach(s=>{
+    const geometry=s.route_geometry;
+    if(geometry?.type==='LineString'&&Array.isArray(geometry.coordinates)&&geometry.coordinates.length>1){const line=L.geoJSON(geometry,{style:{color:s.scenario_code==='douala_ndjamena'?'#ba74ff':'#ffb020',weight:4,dashArray:'9 7',opacity:.85}}).addTo(map);line.bindPopup(`<strong>ROUTE SIMULÉE · ${escapeHTML(s.route_name||s.scenario_code)}</strong><br>${escapeHTML(String(s.box_serial||`Boîte ${s.black_box_id}`))}<br>${Number(s.route_distance_m/1000).toFixed(0)} km · ETA de référence ${escapeHTML(s.route_duration_s?`${(s.route_duration_s/3600).toFixed(1)} h`:'—')}<br><small>${escapeHTML((s.route_limitations||[]).join(' '))}</small>`);MAP_SIMULATION_LAYERS.push(line);}
+    if(s.latitude==null||s.longitude==null)return;
+    const icon=L.divIcon({html:'<div style="width:19px;height:19px;border:3px solid white;border-radius:50%;background:#9c62ff;box-shadow:0 0 0 5px #9c62ff55"></div>',className:'simulation-map-icon',iconSize:[24,24],iconAnchor:[12,12]});
+    const marker=L.marker([Number(s.latitude),Number(s.longitude)],{icon}).addTo(map);marker._containerId=`simulation-${session.session_uid}-${s.scenario_code}`;
+    const event=(s.active_events||[]).map(e=>e.event_type?.replaceAll('_simulated','').replaceAll('_',' ')).join(', ')||'Aucun événement actif';
+    const progress=s.route_distance_m?Math.max(0,Math.min(100,100*(1-Number(s.remaining_distance_m||0)/Number(s.route_distance_m)))):0;
+    marker.bindPopup(`<strong style="color:#9c62ff">POSITION SIMULÉE · ${escapeHTML(s.route_name||s.scenario_code)}</strong><div>${escapeHTML(String(s.box_serial||`Boîte ${s.black_box_id}`))}</div><div>${progress.toFixed(1)} % · ${Number(s.speed_kmh||0).toFixed(1)} km/h · ${Number((s.remaining_distance_m||0)/1000).toFixed(1)} km restants</div><div>Arrivée estimée : ${escapeHTML(s.eta_current_at?new Date(s.eta_current_at).toLocaleString():'—')}</div><div>Référence cartographique : ${escapeHTML(s.eta_reference_at?new Date(s.eta_reference_at).toLocaleString():'—')} · arrêt ${Math.floor(Number(s.stopped_seconds||0)/60)} min</div><div>${escapeHTML(event)}</div><small>Ces coordonnées ne proviennent pas d’un dispositif physique.</small>`);
+  }));
 }
 
 function normalizeMapPositions(rows, containers=[]){
@@ -3214,7 +3379,7 @@ function placeDBMarkersOnMap(map, role){
   containers.forEach(c=>{
     const lat=Number(c.lat), lon=Number(c.lon);
     if(!Number.isFinite(lat)||!Number.isFinite(lon)) return;
-    const color = c.alerts.length ? '#ffab00' : '#00d4ff';
+    const color = c.alerts.length ? (c.alert_level==='danger'?'#ff4444':'#ffab00') : '#00d4ff';
     const markerHtml = `<div class="marker-pulse">
       <div class="marker-outer" style="border-color:${color}"></div>
       <div class="marker-inner" style="background:${color};box-shadow:0 0 8px ${color}"></div>
@@ -3223,6 +3388,9 @@ function placeDBMarkersOnMap(map, role){
     const marker = L.marker([c.lat, c.lon], {icon}).addTo(map);
     marker._containerId = c.id_boite;
     const alertsHtml = c.alerts.length ? c.alerts.slice(0,2).map(a=>`<div style="color:#ff4444;font-size:11px"><i class="fas fa-exclamation-triangle"></i> ${escapeHTML(String(a).substring(0,120))}</div>`).join('') : '<div style="color:#8fa3bc;font-size:11px">Aucune alerte signalée par l’API</div>';
+    const originLabel = c.quality?.dataOrigin === 'SYNTHETIC'
+      ? `<div style="margin-top:6px;padding:4px 6px;border-radius:4px;background:#553b16;color:#ffd27a;font-size:10px">Données synthétiques de démonstration · ${escapeHTML(c.quality.datasetId || 'rejeu')} · scénario ${escapeHTML(c.quality.scenarioId || '—')} · étiquette simulée : ${escapeHTML(c.quality.sampleLabel || '—')}</div>`
+      : '';
     marker.bindPopup(`
       <div style="font-family:'Space Grotesk',sans-serif;min-width:200px">
         <div style="font-family:monospace;font-size:15px;color:#00d4ff;margin-bottom:6px">${escapeHTML(String(c.numero_serie || c.id_boite))}</div>
@@ -3238,6 +3406,8 @@ function placeDBMarkersOnMap(map, role){
           </div>
         </div>
         <div style="margin-top:6px">${alertsHtml}</div>
+        ${originLabel}
+        <div style="font-size:11px;color:#8fa3bc;margin-top:5px">${escapeHTML(etaStatusText(c.estimated_arrival))}</div>
         <div style="font-size:12px;color:#8fa3bc">${lat.toFixed(6)}, ${lon.toFixed(6)}</div>
         <div style="margin-top:6px;font-size:11px;color:#8fa3bc">Mesurée : ${escapeHTML(formatTime(c.ts))}</div>
       </div>`);
@@ -3247,16 +3417,60 @@ function placeDBMarkersOnMap(map, role){
 async function fetchAndDrawTrail(map, id_boite, requestVersion=MAP_TRAIL_VERSION){
   try {
     if(!/^\d+$/.test(String(id_boite))) return;
-    const res=await secureApiFetch(`/api/black-boxes/${encodeURIComponent(id_boite)}/history?limit=1200`);
+    const res=await secureApiFetch(`/api/black-boxes/${encodeURIComponent(id_boite)}/route-tracking?limit=300`);
     const data=await res.json();
     if(!res.ok) throw new Error(data.error || 'Historique GPS indisponible');
     if(requestVersion!==MAP_TRAIL_VERSION || !trailsOn) return;
-    const pts=(data.points || []).filter(p=>p.latitude!=null&&p.longitude!=null).map(p=>[Number(p.latitude),Number(p.longitude)]).filter(p=>Number.isFinite(p[0])&&Number.isFinite(p[1])&&p[0]>=-90&&p[0]<=90&&p[1]>=-180&&p[1]<=180);
-    if(pts.length>1){
-      const line = L.polyline(pts, {color:'#00d4ff', weight:2, opacity:.5, dashArray:'4,4'}).addTo(map);
+    const history=data.points || [];
+    const segments=data.summary?.segments||[];
+    for(const segment of segments){
+      if(segment.coordinates?.length<2) continue;
+      const line=L.polyline(segment.coordinates,{color:segment.state==='deviation'?'#ff3333':'#00d4ff',weight:segment.state==='deviation'?5:3,opacity:.9,dashArray:segment.state==='deviation'?'':'4,4'}).addTo(map);
       trailLayers.push(line);
     }
-  } catch(e){}
+    if(!segments.length){
+      const observedTrack=(history||[])
+        .filter(point=>Number.isFinite(Number(point.latitude))&&Number.isFinite(Number(point.longitude)))
+        .map(point=>[Number(point.latitude),Number(point.longitude)]);
+      if(observedTrack.length>1){
+        const line=L.polyline(observedTrack,{color:'#00d4ff',weight:3,opacity:.85,dashArray:'5,5'}).addTo(map);
+        line._containerId=`history-${id_boite}`;
+        trailLayers.push(line);
+      }
+    }
+    const route=data.route;
+    if(route?.enabled && Array.isArray(route.waypoints) && route.waypoints.length>1){
+      const waypoints=route.waypoints.map(point=>Array.isArray(point)?point.map(Number):null).filter(point=>point&&point.length===2&&point.every(Number.isFinite));
+      if(waypoints.length>1){
+        const line=L.polyline(waypoints,{color:data.summary.alert_active?'#ff3333':'#32d296',weight:5,opacity:.9,dashArray:data.summary.alert_active?'':'8,6'}).addTo(map);
+        trailLayers.push(line);
+      }
+    }
+    (data.sensitive_events||[]).forEach(event=>{
+      const lat=Number(event.latitude), lon=Number(event.longitude);
+      if(!Number.isFinite(lat)||!Number.isFinite(lon)) return;
+      const danger=event.severity==='danger';
+      const color=danger?'#ff3333':'#ffb020';
+      const radius=Math.max(150,Math.min(Number(event.accuracy_m)||250,1000));
+      const zone=L.circle([lat,lon],{radius,color,weight:2,opacity:.95,fillColor:color,fillOpacity:.18}).addTo(map);
+      zone._containerId=`sensitive-${id_boite}-${event.sequence||event.measured_at}`;
+      const details=(event.details||[]).map(detail=>`<li>${escapeHTML(detail)}</li>`).join('');
+      zone.bindPopup(`<div style="min-width:210px"><strong style="color:${color}">${escapeHTML(event.title||'Événement sensible')}</strong><div style="margin:5px 0;font-size:11px">Boîte ${escapeHTML(String(id_boite))} · séquence ${escapeHTML(String(event.sequence??'—'))}</div><ul style="padding-left:18px;margin:6px 0">${details}</ul><div style="font-size:11px;color:#8fa3bc">${escapeHTML(formatTime(event.measured_at))} · zone indicative ~${Math.round(radius)} m</div></div>`);
+      trailLayers.push(zone);
+    });
+    if(requestVersion!==MAP_TRAIL_VERSION || !trailsOn) return;
+    const portResponse=await secureApiFetch(`/api/black-boxes/${encodeURIComponent(id_boite)}/port-tracking?limit=300&include_points=false`);
+    if(!portResponse.ok) return;
+    const portData=await portResponse.json();
+    (portData.events||[]).filter(event=>['port_proximity_entry','geofence_entry','port_near_at_window_start','geofence_present_at_window_start'].includes(event.kind)&&Number.isFinite(Number(event.latitude))&&Number.isFinite(Number(event.longitude))).forEach(event=>{
+      const label=event.port_name||event.zone_name||'Zone portuaire';
+      const marker=L.marker([Number(event.latitude),Number(event.longitude)],{icon:L.divIcon({html:'<div style="width:24px;height:24px;border-radius:50%;background:#b44dff;color:white;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 0 9px #b44dff"><i class="fas fa-anchor" style="font-size:11px"></i></div>',className:'',iconSize:[24,24],iconAnchor:[12,12]})}).addTo(map);
+      marker._containerId=`port-${id_boite}-${event.sequence||event.measured_at}-${label}`;
+      marker.bindPopup(`<div style="min-width:190px"><strong style="color:#b44dff">${escapeHTML(label)}</strong><div>${escapeHTML(event.country||'')}</div><div>${escapeHTML(event.certainty||'Proximité / traversée configurée')}</div><div>${event.distance_m!=null?`${Math.round(event.distance_m)} m du repère · `:''}${escapeHTML(formatTime(event.measured_at))}</div></div>`);
+    });
+  } catch(e){
+    console.warn(`Historique GPS indisponible pour la boîte ${id_boite}`,e);
+  }
 }
 
 function refreshMapMarkers(){
@@ -3266,6 +3480,7 @@ function refreshMapMarkers(){
   map.eachLayer(l=>{ if(l instanceof L.Marker && l._containerId) map.removeLayer(l); });
   // Re-place from the consolidated positions only.
   placeDBMarkersOnMap(map, currentRole);
+  drawTerrestrialSimulations();
 }
 
 function syncMapTrails(){
@@ -3275,14 +3490,46 @@ function syncMapTrails(){
   trailLayers=[];
   if(!trailsOn || !map) return;
   const version=MAP_TRAIL_VERSION;
-  MAP_GPS_POSITIONS.filter(c=>MAP_FILTER==='all' || mapPositionState(c)===MAP_FILTER)
-    .forEach(c=>{if(c.id_boite) fetchAndDrawTrail(map,c.id_boite,version);});
+  const ids = new Set([
+    ...MAP_TRACKING_BOXES.map(box=>box.id_boite),
+    ...MAP_GPS_POSITIONS.filter(c=>MAP_FILTER==='all' || mapPositionState(c)===MAP_FILTER).map(c=>c.id_boite)
+  ].filter(Boolean).map(String));
+  mapWithConcurrency([...ids],6,id=>fetchAndDrawTrail(map,id,version));
 }
 
-function showAllContainers(){
+async function mapWithConcurrency(items, limit, callback){
+  let next=0;
+  const workers=Array.from({length:Math.min(limit,items.length)},async()=>{
+    while(next<items.length){
+      const index=next++;
+      await callback(items[index],index);
+    }
+  });
+  await Promise.all(workers);
+}
+
+async function showAllContainers(){
   const map = maps['map-main'];
   if(!map || typeof L === 'undefined') return;
   const pts = MAP_GPS_POSITIONS.filter(c=>MAP_FILTER==='all' || mapPositionState(c)===MAP_FILTER).map(c=>[c.lat,c.lon]);
+  MAP_TERRESTRIAL_SIMULATIONS.forEach(session=>(session.scenarios||[]).forEach(s=>{
+    if(Number.isFinite(Number(s.latitude))&&Number.isFinite(Number(s.longitude)))pts.push([Number(s.latitude),Number(s.longitude)]);
+    const coords=s.route_geometry?.coordinates||[];coords.forEach(([lon,lat])=>{if(Number.isFinite(Number(lat))&&Number.isFinite(Number(lon)))pts.push([Number(lat),Number(lon)]);});
+  }));
+  if(MAP_TRACKING_BOXES.length){
+    const routeResults=Array(MAP_TRACKING_BOXES.length);
+    await mapWithConcurrency(MAP_TRACKING_BOXES,8,async(box,index)=>{
+      try{
+        const response=await secureApiFetch(`/api/black-boxes/${encodeURIComponent(box.id_boite)}/route-tracking?limit=300`);
+        if(!response.ok) return;
+        const data=await response.json();
+        const history=(data.points||[]).map(point=>[Number(point.latitude),Number(point.longitude)]).filter(point=>point.every(Number.isFinite));
+        const planned=(data.route?.waypoints||[]).map(point=>Array.isArray(point)?point.map(Number):[]).filter(point=>point.length===2&&point.every(Number.isFinite));
+        routeResults[index]=history.length ? history : planned;
+      }catch(_){routeResults[index]=[];}
+    });
+    routeResults.forEach(points=>pts.push(...(points||[])));
+  }
   if(pts.length) map.fitBounds(L.latLngBounds(pts).pad(.2));
 }
 
@@ -3325,6 +3572,25 @@ function focusContainerDB(id){
   const c = MAP_GPS_POSITIONS.find(x=>String(x.id_boite)===String(id));
   if(!c || !maps['map-main']) return;
   maps['map-main'].flyTo([c.lat, c.lon], 13, {animate:true, duration:1});
+}
+
+async function focusTrackedBox(id){
+  const position = MAP_GPS_POSITIONS.find(item=>String(item.id_boite)===String(id));
+  if(position) return focusContainerDB(id);
+  const map = maps['map-main'];
+  if(!map) return;
+  try{
+    const response=await secureApiFetch(`/api/black-boxes/${encodeURIComponent(id)}/route-tracking?limit=300`);
+    const data=await response.json();
+    if(!response.ok) throw new Error(data.error||'Trajet indisponible');
+    const points=(data.points||[]).filter(point=>Number.isFinite(Number(point.latitude))&&Number.isFinite(Number(point.longitude))).map(point=>[Number(point.latitude),Number(point.longitude)]);
+    const planned=(data.route?.waypoints||[]).map(point=>Array.isArray(point)?point.map(Number):null).filter(point=>point&&point.length===2&&point.every(Number.isFinite));
+    const coordinates=points.length?points:planned;
+    if(coordinates.length){
+      if(!trailsOn) toggleTrails();
+      map.fitBounds(L.latLngBounds(coordinates).pad(.2));
+    }else showToast('Aucune position GPS ni route planifiée pour cette boîte.', 'info');
+  }catch(error){ showToast(error.message,'warn'); }
 }
 
 async function fetchOSRMRoute(waypoints, mode='driving'){

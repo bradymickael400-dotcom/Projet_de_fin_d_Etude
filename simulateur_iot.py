@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
-"""Simulateur ESP32 pour le flux backend IoT ARGOS.
+"""Simulateur IoT ARGOS : télémétrie asynchrone Douala–Yaoundé–Bertoua.
 
-Exemples:
-  python simulateur_iot.py provision --black-box-id 1
-  python simulateur_iot.py enroll --device-uid ARGOS-ESP32-ABCD1234 --token TOKEN
-  python simulateur_iot.py telemetry --device-uid ARGOS-ESP32-ABCD1234 --container-id MSCU1234566 --api-key KEY
-  python simulateur_iot.py ack --device-uid ARGOS-ESP32-ABCD1234 --api-key KEY --command-uid UUID --status SUCCEEDED
+Exemple (boîtier déjà enrôlé et affecté côté ARGOS) :
+  python3 simulateur_iot.py simulate-route --device-uid ARGOS-ESP32-001 \
+    --api-key CLE_APPAREIL --black-box-id 1 --container-id MSCU1234566
+
+La génération est cadencée à 1 Hz. Une file et un thread d'envoi HTTP séparés
+évitent que les appels réseau bloquent l'horloge de simulation. Les erreurs
+réseau sont journalisées; chaque message garde le même UUID lors des reprises.
 """
 
 import argparse
 import json
+import math
+import queue
 import random
+import threading
 import time
 import uuid
 from datetime import datetime, timezone
@@ -18,18 +23,30 @@ from datetime import datetime, timezone
 import requests
 
 
+ROUTE = (
+    (4.0511, 9.7679),    # Douala
+    (3.8480, 11.5021),   # Yaoundé
+    (4.5773, 13.6846),   # Bertoua
+)
+DURATION_SECONDS = 600
+DEVIATION_METERS = 8_000
+
+
+def _utc_now():
+    return datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+
+
 def post_json(base_url, path, payload, headers=None):
     response = requests.post(
-        f"{base_url.rstrip('/')}{path}",
-        json=payload,
-        headers=headers or {},
-        timeout=15,
+        f"{base_url.rstrip('/')}{path}", json=payload,
+        headers=headers or {}, timeout=15,
     )
     try:
         body = response.json()
     except ValueError:
         body = {"raw": response.text}
-    print(json.dumps({"status_code": response.status_code, "body": body}, indent=2, ensure_ascii=False))
+    print(json.dumps({"status_code": response.status_code, "body": body},
+                     ensure_ascii=False), flush=True)
     response.raise_for_status()
     return body
 
@@ -49,67 +66,217 @@ def cmd_provision(args):
     access_token = login.json().get("access_token")
     if not access_token:
         raise RuntimeError("Jeton d'authentification absent")
-    headers = {"Authorization": f"Bearer {access_token}"}
-    post_json(args.base_url, "/api/iot/devices/provision", payload, headers)
+    post_json(args.base_url, "/api/iot/devices/provision", payload,
+              {"Authorization": f"Bearer {access_token}"})
 
 
 def cmd_enroll(args):
-    payload = {"deviceUid": args.device_uid, "enrollmentToken": args.token}
-    post_json(args.base_url, "/api/iot/enroll", payload)
+    post_json(args.base_url, "/api/iot/enroll", {
+        "deviceUid": args.device_uid, "enrollmentToken": args.token,
+    })
 
 
-def telemetry_payload(device_uid, container_id, sequence, lat, lon):
+def _distance_m(a, b):
+    lat1, lon1 = map(math.radians, a)
+    lat2, lon2 = map(math.radians, b)
+    dlat, dlon = lat2 - lat1, lon2 - lon1
+    h = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+    return 6_371_000 * 2 * math.atan2(math.sqrt(h), math.sqrt(1 - h))
+
+
+def _route_point(progress):
+    """Interpolation linéaire par distance le long des 3 villes du corridor."""
+    lengths = [_distance_m(ROUTE[i], ROUTE[i + 1]) for i in range(len(ROUTE) - 1)]
+    remaining = max(0.0, min(1.0, progress)) * sum(lengths)
+    for index, length in enumerate(lengths):
+        if remaining <= length or index == len(lengths) - 1:
+            ratio = min(1.0, remaining / length) if length else 0.0
+            a, b = ROUTE[index], ROUTE[index + 1]
+            return (a[0] + (b[0] - a[0]) * ratio,
+                    a[1] + (b[1] - a[1]) * ratio,
+                    _bearing(a, b))
+        remaining -= length
+    return ROUTE[-1][0], ROUTE[-1][1], 0.0
+
+
+def _bearing(a, b):
+    lat1, lat2 = math.radians(a[0]), math.radians(b[0])
+    dlon = math.radians(b[1] - a[1])
+    y = math.sin(dlon) * math.cos(lat2)
+    x = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(dlon)
+    return (math.degrees(math.atan2(y, x)) + 360) % 360
+
+
+def _offset_lateral(lat, lon, heading, distance_m):
+    """Décale une position perpendiculairement à la route (approximation locale)."""
+    side = math.radians(heading + 90)
+    north_m = math.cos(side) * distance_m
+    east_m = math.sin(side) * distance_m
+    lat2 = lat + north_m / 111_320
+    lon2 = lon + east_m / (111_320 * max(0.1, math.cos(math.radians(lat))))
+    return lat2, lon2
+
+
+def scenario_state(t_seconds):
+    door_open = t_seconds == 120
+    shock_event = t_seconds == 270
+    stopped = 400 <= t_seconds < 520
+    is_deviated = 500 <= t_seconds < 580
+    events = []
+    if door_open:
+        events.append({"code": "SUSPICIOUS_DOOR_OPEN", "label": "Ouverture de porte suspecte"})
+    if shock_event:
+        events.append({"code": "ABNORMAL_SHOCK", "label": "Secousse / Choc anormal"})
+    if stopped:
+        events.append({"code": "UNPLANNED_STOP", "label": "Arrêt prolongé non planifié"})
+    if is_deviated:
+        events.append({"code": "ROUTE_DEVIATION", "label": "Décalage de route / Sortie d'itinéraire"})
+    speed_kmh = 0.0 if stopped else 55.0 + 4.0 * math.sin(t_seconds / 17)
+    return {
+        "door_open": door_open,
+        "shock_event": shock_event,
+        "stopped": stopped,
+        "is_deviated": is_deviated,
+        "speed_kmh": round(speed_kmh, 1),
+        "events": events,
+        "event_code": ",".join(event["code"] for event in events),
+        "event": " · ".join(event["label"] for event in events),
+    }
+
+
+def telemetry_payload(args, t_seconds, started_monotonic):
+    lat, lon, heading = _route_point(t_seconds / (DURATION_SECONDS - 1))
+    state = scenario_state(t_seconds)
+    if state["is_deviated"]:
+        lat, lon = _offset_lateral(lat, lon, heading, DEVIATION_METERS)
+
+    shock_g = 12.0 if state["shock_event"] else round(random.uniform(0.05, 0.35), 2)
+    scenario_id = f"douala-yaounde-bertoua-{int(started_monotonic)}"
     return {
         "messageId": str(uuid.uuid4()),
-        "deviceUid": device_uid,
-        "containerId": container_id,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "sequence": sequence,
         "type": "telemetry",
+        "deviceUid": args.device_uid,
+        "blackBoxId": args.black_box_id,
+        "containerId": args.container_id,
+        "timestamp": _utc_now(),
+        "sequence": args.start_sequence + t_seconds,
         "position": {
             "latitude": round(lat, 6),
             "longitude": round(lon, 6),
-            "accuracy": 8,
-            "speed": round(random.uniform(0, 80), 1),
-            "heading": round(random.uniform(0, 359), 1),
+            "accuracy": 8.0,
+            "speed": state["speed_kmh"],
+            "heading": round(heading, 1),
+            "source": "ARGOS_SIMULATOR",
         },
         "sensors": {
-            "temperature": round(random.uniform(18, 38), 1),
-            "humidity": round(random.uniform(35, 90), 1),
-            "shock": round(random.choice([0, 0.2, 0.8, random.uniform(2, 8)]), 2),
-            "pressure": round(random.uniform(985, 1025), 1),
-            "flameDetected": random.random() < 0.03,
-            "doorOpen": random.random() < 0.05,
-            "batteryLevel": round(random.uniform(40, 100), 1),
-            "lightLevel": random.randint(0, 4095),
-            "soundLevel": random.randint(0, 4095),
-            "distanceCm": round(random.uniform(5, 120), 1),
-            "accelerationX": round(random.uniform(-2, 2), 2),
-            "accelerationY": round(random.uniform(-2, 2), 2),
-            "accelerationZ": round(random.uniform(8, 12), 2),
+            "temperature": 28.0,
+            "humidity": 68.0,
+            "shock": shock_g,
+            "pressure": 1013.0,
+            "flameDetected": False,
+            "doorOpen": state["door_open"],
+            "batteryLevel": 96.0,
+            "lightLevel": 1200,
+            "soundLevel": 350,
+            "distanceCm": 40.0,
+            "accelerationX": 12.0 if state["shock_event"] else 0.1,
+            "accelerationY": 10.0 if state["shock_event"] else -0.1,
+            "accelerationZ": 18.0 if state["shock_event"] else 9.8,
             "securityAlarm": False,
         },
         "modes": {
-            "securityEnabled": False,
+            "securityEnabled": True,
             "audioRecordingEnabled": False,
             "audioListeningEnabled": False,
-            "flameDetectionEnabled": True,
+            "flameDetectionEnabled": False,
+        },
+        "quality": {
+            "dhtValid": True,
+            "mpuValid": True,
+            "gpsValid": True,
+            "distanceValid": True,
+            "sdReady": False,
+            "pressureMeasured": False,
+            "batteryMeasured": False,
+            "timestampSource": "SIMULATION",
+            "dataOrigin": "SYNTHETIC",
+            "datasetId": scenario_id,
+            "scenarioId": "douala-yaounde-bertoua",
+            "sampleLabel": "simulation temporelle; données synthétiques",
+        },
+        "scenario": {
+            "simulation_id": scenario_id,
+            "t_seconds": t_seconds,
+            "event_code": state["event_code"],
+            "event": state["event"],
+            "events": state["events"],
+            "door_open": state["door_open"],
+            "shock_event": state["shock_event"],
+            "stopped": state["stopped"],
+            "is_deviated": state["is_deviated"],
+            "speed_kmh": state["speed_kmh"],
         },
     }
 
 
-def cmd_telemetry(args):
+def _send_worker(args, outbox, headers):
+    session = requests.Session()
+    url = f"{args.base_url.rstrip('/')}/api/iot/telemetry"
+    while True:
+        item = outbox.get()
+        try:
+            if item is None:
+                return
+            for attempt in range(3):
+                try:
+                    response = session.post(url, json=item, headers=headers, timeout=8)
+                    if response.status_code >= 500 or response.status_code == 429:
+                        response.raise_for_status()
+                    if response.status_code >= 400:
+                        print(f"[{item['sequence']}] HTTP {response.status_code}: {response.text[:300]}",
+                              flush=True)
+                    else:
+                        print(f"[{item['sequence']}] envoyé — HTTP {response.status_code}", flush=True)
+                    break
+                except requests.RequestException as exc:
+                    if attempt == 2:
+                        print(f"[{item['sequence']}] échec après 3 essais: {exc}", flush=True)
+                    else:
+                        time.sleep(0.25 * (2 ** attempt))
+        finally:
+            outbox.task_done()
+
+
+def cmd_simulate_route(args):
     headers = {"X-Device-Key": args.api_key}
-    lat = args.lat
-    lon = args.lon
-    for sequence in range(args.start_sequence, args.start_sequence + args.count):
-        lat += random.uniform(-0.002, 0.002)
-        lon += random.uniform(-0.002, 0.002)
-        payload = telemetry_payload(args.device_uid, args.container_id, sequence, lat, lon)
-        payload["sensors"]["securityAlarm"] = payload["sensors"]["distanceCm"] > args.distance_threshold
-        post_json(args.base_url, "/api/iot/telemetry", payload, headers)
-        if sequence < args.start_sequence + args.count - 1:
-            time.sleep(args.interval)
+    outbox = queue.Queue()  # non bornée pour ne jamais ralentir/abandonner la simulation
+    worker = threading.Thread(target=_send_worker, args=(args, outbox, headers),
+                              name="argos-telemetry-uploader", daemon=True)
+    worker.start()
+    started = time.monotonic()
+    print("Simulation Douala → Yaoundé → Bertoua : 600 points à 1 Hz", flush=True)
+    print("Point vert normal; déviation rouge; données marquées SYNTHETIC.", flush=True)
+    try:
+        for t_seconds in range(DURATION_SECONDS):
+            deadline = started + t_seconds
+            delay = deadline - time.monotonic()
+            if delay > 0:
+                time.sleep(delay)
+            payload = telemetry_payload(args, t_seconds, started)
+            outbox.put(payload)
+            if t_seconds in {120, 270, 400, 500, 520, 580}:
+                if payload["scenario"]["event"]:
+                    print(f"t={t_seconds:03d}s {payload['scenario']['event']}", flush=True)
+                elif t_seconds in {520, 580}:
+                    print(f"t={t_seconds:03d}s fin d'un événement de scénario", flush=True)
+        print("600 trames générées; vidage de la file d'envoi...", flush=True)
+        outbox.join()
+    except KeyboardInterrupt:
+        print("Interruption demandée; envoi des trames déjà en file...", flush=True)
+        outbox.join()
+    finally:
+        outbox.put(None)
+        worker.join(timeout=10)
 
 
 def cmd_ack(args):
@@ -117,44 +284,42 @@ def cmd_ack(args):
         "commandUid": args.command_uid,
         "deviceUid": args.device_uid,
         "status": args.status,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": _utc_now(),
         "result": json.loads(args.result),
     }
-    headers = {"X-Device-Key": args.api_key}
-    post_json(args.base_url, "/api/iot/acknowledgements", payload, headers)
+    post_json(args.base_url, "/api/iot/acknowledgements", payload,
+              {"X-Device-Key": args.api_key})
 
 
 def build_parser():
-    parser = argparse.ArgumentParser(description="Simulateur ESP32 ARGOS")
-    parser.add_argument("--base-url", default="http://127.0.0.1:5002")
+    parser = argparse.ArgumentParser(description="Simulateur IoT ARGOS")
+    parser.add_argument("--base-url", default="http://127.0.0.1:5002",
+                        help="URL du backend ARGOS")
     sub = parser.add_subparsers(required=True)
 
-    provision = sub.add_parser("provision")
-    provision.add_argument("--black-box-id", type=int)
+    provision = sub.add_parser("provision", help="Préparer un appareil dans ARGOS")
+    provision.add_argument("--black-box-id", type=int, required=True)
     provision.add_argument("--hardware-serial", default=f"SIM-{uuid.uuid4().hex[:8].upper()}")
-    provision.add_argument("--firmware-version", default="sim-1.0.0")
+    provision.add_argument("--firmware-version", default="sim-2.0.0")
     provision.add_argument("--username", required=True)
     provision.add_argument("--password", required=True)
     provision.set_defaults(func=cmd_provision)
 
-    enroll = sub.add_parser("enroll")
+    enroll = sub.add_parser("enroll", help="Enrôler un appareil provisionné")
     enroll.add_argument("--device-uid", required=True)
     enroll.add_argument("--token", required=True)
     enroll.set_defaults(func=cmd_enroll)
 
-    telemetry = sub.add_parser("telemetry")
-    telemetry.add_argument("--device-uid", required=True)
-    telemetry.add_argument("--api-key", required=True)
-    telemetry.add_argument("--container-id", required=True)
-    telemetry.add_argument("--distance-threshold", type=float, default=50.0)
-    telemetry.add_argument("--count", type=int, default=1)
-    telemetry.add_argument("--interval", type=float, default=2)
-    telemetry.add_argument("--start-sequence", type=int, default=1)
-    telemetry.add_argument("--lat", type=float, default=4.0511)
-    telemetry.add_argument("--lon", type=float, default=9.7679)
-    telemetry.set_defaults(func=cmd_telemetry)
+    simulate = sub.add_parser("simulate-route", aliases=["telemetry"],
+                              help="Simuler le trajet de 10 minutes, 1 point/s")
+    simulate.add_argument("--device-uid", required=True)
+    simulate.add_argument("--api-key", required=True)
+    simulate.add_argument("--black-box-id", type=int, required=True)
+    simulate.add_argument("--container-id", required=True)
+    simulate.add_argument("--start-sequence", type=int, default=1)
+    simulate.set_defaults(func=cmd_simulate_route)
 
-    ack = sub.add_parser("ack")
+    ack = sub.add_parser("ack", help="Accuser réception d'une commande appareil")
     ack.add_argument("--device-uid", required=True)
     ack.add_argument("--api-key", required=True)
     ack.add_argument("--command-uid", required=True)
@@ -165,5 +330,5 @@ def build_parser():
 
 
 if __name__ == "__main__":
-    args = build_parser().parse_args()
-    args.func(args)
+    parsed = build_parser().parse_args()
+    parsed.func(parsed)

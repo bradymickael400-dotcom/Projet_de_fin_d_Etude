@@ -99,6 +99,7 @@ def validate_telemetry_payload(payload):
     modes = _require_mapping(payload, "modes")
     quality = payload.get("quality") if isinstance(payload.get("quality"), dict) else {}
     alert = payload.get("alert") if isinstance(payload.get("alert"), dict) else {}
+    scenario = payload.get("scenario") if isinstance(payload.get("scenario"), dict) else {}
 
     normalized = {
         "message_id": str(payload["messageId"]),
@@ -150,6 +151,36 @@ def validate_telemetry_payload(payload):
             "pressureMeasured": _optional_bool(quality, "pressureMeasured"),
             "batteryMeasured": _optional_bool(quality, "batteryMeasured"),
             "timestampSource": str(quality.get("timestampSource") or "DEVICE")[:40],
+            # Provenance survives normalization so demonstrations are visible
+            # in the UI and cannot be mistaken for measured field data.
+            "dataOrigin": (
+                str(quality.get("dataOrigin") or "FIELD").upper()[:20]
+                if str(quality.get("dataOrigin") or "FIELD").upper() in {"FIELD", "SYNTHETIC"}
+                else "UNKNOWN"
+            ),
+            "datasetId": str(quality.get("datasetId") or "")[:100],
+            "scenarioId": str(quality.get("scenarioId") or "")[:100],
+            "sampleLabel": str(quality.get("sampleLabel") or "")[:80],
+            # Optional synthetic scenario metadata is retained for authorized
+            # live clients; it never changes operational rule decisions.
+            "scenario": {
+                "simulationId": str(scenario.get("simulation_id") or "")[:100],
+                "simulationSecond": int(scenario.get("t_seconds", -1))
+                if str(scenario.get("t_seconds", "-1")).lstrip("-").isdigit() else -1,
+                "eventCode": str(scenario.get("event_code") or "")[:80],
+                "event": str(scenario.get("event") or "")[:160],
+                "events": [
+                    {"code": str(item.get("code") or "")[:80],
+                     "label": str(item.get("label") or "")[:160]}
+                    for item in scenario.get("events", [])[:5]
+                    if isinstance(item, dict)
+                ] if isinstance(scenario.get("events"), list) else [],
+                "doorOpen": bool(scenario.get("door_open", False)),
+                "shockEvent": bool(scenario.get("shock_event", False)),
+                "stopped": bool(scenario.get("stopped", False)),
+                "isDeviated": bool(scenario.get("is_deviated", False)),
+                "speedKmh": _optional_number(scenario, "speed_kmh", 0, 0, 1000),
+            },
         },
         "alert": {
             "raised": bool(alert.get("raised", False)),

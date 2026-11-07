@@ -9,12 +9,14 @@ from datetime import datetime, timezone
 
 from sqlalchemy import text
 
+from app.services.shock_assessment import assess_shock_level, resolve_shock_threshold
+
 
 def assess_window(readings, speeds, thresholds, positions=None):
     """Summarize recent incidents and provide conditional, explainable actions."""
     rows = list(readings or [])
     speed_values = [float(value) for value in (speeds or []) if value is not None]
-    shock_limit = float((thresholds or {}).get("choc_max") or 5.0)
+    shock_limit = resolve_shock_threshold((thresholds or {}).get("choc_max"))
     speed_limit = float((thresholds or {}).get("vitesse_max") or 90.0)
     shock_values = [float(row.get("shock")) for row in rows if row.get("shock") is not None]
     shock_events = [value for value in shock_values if value > shock_limit]
@@ -27,9 +29,12 @@ def assess_window(readings, speeds, thresholds, positions=None):
     rate_available = window_seconds >= 60
     hours = window_seconds / 3600 if rate_available else 0
     peak_shock = max(shock_values, default=0.0)
+    shock_assessment = assess_shock_level(peak_shock if shock_values else None,
+                                          shock_limit, len(shock_events))
     peak_speed = max(speed_values, default=0.0)
     stationary_minutes = 0.0
     stationary_zone = None
+    stationary_confirmed = False
     track = [point for point in (positions or []) if point.get("latitude") is not None
              and point.get("longitude") is not None and point.get("measured_at")]
     if len(track) >= 2 and all(float(point.get("speed") or 0) <= 3 for point in track[:7]):
@@ -41,7 +46,8 @@ def assess_window(readings, speeds, thresholds, positions=None):
                         float(point["latitude"]), float(point["longitude"])) <= 250
             for point in track[:7]
         )
-        if close and stationary_minutes >= 6:
+        stationary_confirmed = close and stationary_minutes >= 6
+        if stationary_confirmed:
             stationary_zone = _zone_at(float(first["latitude"]), float(first["longitude"]))
     projected_shocks_per_hour = round(len(shock_events) / hours, 1) if hours else None
     projected_speed_violations_per_hour = round(len(speed_events) / hours, 1) if hours else None
@@ -50,7 +56,7 @@ def assess_window(readings, speeds, thresholds, positions=None):
     recommendations = []
     if shock_events:
         signals.append("chocs_au_dessus_du_seuil")
-        recommendations.append("Limiter les manœuvres, inspecter l’arrimage et vérifier le capteur avant de poursuivre.")
+        recommendations.append(shock_assessment["recommended_action"])
     if speed_events:
         signals.append("vitesse_au_dessus_du_seuil")
         recommendations.append("Demander au conducteur de ralentir et vérifier la limite locale applicable au tronçon.")
@@ -60,14 +66,14 @@ def assess_window(readings, speeds, thresholds, positions=None):
     if any(bool(row.get("security_alarm")) for row in rows[:3]):
         signals.append("alarme_securite_recente")
         recommendations.append("Vérifier l’alarme et appliquer le protocole de sûreté de l’entreprise.")
-    if stationary_zone is not None:
-        signals.append("immobilisation_prolongee_dans_une_zone")
-        place = f" dans « {stationary_zone} »" if stationary_zone else ""
+    if stationary_confirmed:
+        signals.append("immobilisation_prolongee")
+        place = f" dans « {stationary_zone} »" if stationary_zone else " hors zone nommée"
         recommendations.append(f"Vérifier la cause et la sécurité du véhicule{place}, puis confirmer la reprise du trajet.")
 
     level = "critical" if peak_shock >= max(shock_limit * 2, shock_limit + 1) or any(
         bool(row.get("security_alarm")) for row in rows[:3]
-    ) else "warning" if len(shock_events) >= 2 or speed_events or stationary_zone is not None or any(
+    ) else "warning" if len(shock_events) >= 2 or speed_events or stationary_confirmed or any(
         bool(row.get("door_open")) for row in rows[:3]
     ) else "normal" if rows else "unknown"
     return {
@@ -81,16 +87,19 @@ def assess_window(readings, speeds, thresholds, positions=None):
         "shock_count_above_threshold": len(shock_events),
         "shock_g_sum_above_threshold": round(sum(shock_events), 2),
         "peak_shock_g": round(peak_shock, 2),
+        "shock_assessment": shock_assessment,
         "projected_shocks_per_hour_if_rate_continues": projected_shocks_per_hour,
         "speed_exceedance_count": len(speed_events),
         "peak_speed_kmh": round(peak_speed, 1),
         "stationary_minutes": round(stationary_minutes, 1),
+        "stationary_confirmed": stationary_confirmed,
         "stationary_zone": stationary_zone,
         "projected_speed_exceedances_per_hour_if_rate_continues": projected_speed_violations_per_hour,
         "recommendations": recommendations,
         "limitations": [
             "Projection descriptive et conditionnelle; ce n’est pas une probabilité de panne ou d’accident.",
             "Seuil ARGOS configuré; les limites réglementaires dépendent du trajet et restent à vérifier.",
+            "Les charges d'essai CSC/ISO ne définissent pas un seuil universel de choc capteur; aucune probabilité de dommage structurel n'est déduite du seul signal en G.",
         ],
     }
 
@@ -162,9 +171,15 @@ def create_proactive_risk_notification(black_box_id, device_uid=None, sequence=N
         f"pic {assessment['peak_shock_g']} G. Vitesses au-dessus du seuil: "
         f"{assessment['speed_exceedance_count']}, pic {assessment['peak_speed_kmh']} km/h."
     )
+    shock_triage = assessment.get("shock_assessment") or {}
+    if shock_triage.get("level") not in {None, "unknown", "within_operational_threshold"}:
+        summary += (f" Niveau de vérification choc : {shock_triage['level']}. "
+                    "Cela recommande une inspection; aucun dommage n'est confirmé par le capteur seul.")
     if assessment.get("stationary_zone"):
         summary += (f" Immobilisation observée {assessment['stationary_minutes']} minutes dans "
                     f"{assessment['stationary_zone']}.")
+    elif assessment.get("stationary_confirmed"):
+        summary += f" Immobilisation prolongée observée {assessment['stationary_minutes']} minutes hors zone nommée."
     if assessment.get("projected_shocks_per_hour_if_rate_continues") is not None:
         summary += (" Si la cadence de la fenêtre observée se maintient : environ "
                     f"{assessment['projected_shocks_per_hour_if_rate_continues']} dépassements de choc/heure "

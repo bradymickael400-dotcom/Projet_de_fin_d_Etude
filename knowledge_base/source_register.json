@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "last_reviewed": "2026-11-07",
+  "sources": [
+    {
+      "doc_id": "WTO_TFA_SELECTED_ARTICLES_2026_10_29",
+      "path": "wto_trade_facilitation_selected_articles.md",
+      "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+      "authority": "Organisation mondiale du commerce",
+      "jurisdiction": "international",
+      "language": "fr",
+      "source_type": "team_authored_summary_of_primary_text",
+      "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+      "consulted_at": "2026-10-29",
+      "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+      "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION",
+      "license_or_access": "Official treaty text; local document contains a bounded explanatory summary, not the full instrument",
+      "partitions": [
+        "operator",
+        "customs_port",
+        "legal_adviser"
+      ],
+      "domains": [
+        "customs",
+        "transit",
+        "risk_management",
+        "appeal",
+        "single_window"
+      ]
+    },
+    {
+      "doc_id": "CAM_LAW_2024_017_PERSONAL_DATA",
+      "path": "cameroon_law_2024_017_excerpts.md",
+      "title": "Loi camerounaise n° 2024/017 du 23 décembre 2024 relative à la protection des données à caractère personnel au Cameroun",
+      "authority": "Présidence de la République du Cameroun",
+      "jurisdiction": "Cameroon",
+      "language": "fr",
+      "source_type": "manually_transcribed_excerpts_from_primary_official_scan",
+      "official_url": "https://www.prc.cm/files/2b/9f/21/1055fa3c2251b4c4248fd301f584daaf.pdf",
+      "consulted_at": "2026-10-29",
+      "verification_status": "VERIFIED_PRIMARY_EXCERPT_MANUALLY_TRANSCRIBED",
+      "applicability_to_cameroon": "ARTICLE_LEVEL_REVIEW_REQUIRED",
+      "license_or_access": "Official law scan; bounded excerpts transcribed and visually checked; confirm permitted reuse",
+      "partitions": [
+        "data_protection",
+        "legal_adviser"
+      ],
+      "domains": [
+        "personal_data",
+        "retention",
+        "transfer",
+        "rights"
+      ]
+    },
+    {
+      "doc_id": "CM_RAIL_LAW_2023_010_SUMMARY",
+      "path": "cameroon_railway_law_2023_010.md",
+      "title": "Cameroun — Loi n° 2023/010 régissant le secteur ferroviaire (synthèse sourcée)",
+      "authority": "Présidence de la République du Cameroun",
+      "jurisdiction": "Cameroon",
+      "language": "fr",
+      "source_type": "team_authored_summary_of_official_primary_reference",
+      "official_url": "https://www.prc.cm/en/news/the-acts/laws/6654-law-no-2023-010-of-25-july-2023-governing-the-railway-sector-in-cameroon",
+      "consulted_at": "2026-11-07",
+      "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+      "applicability_to_cameroon": "NATIONAL_TEXT_FULL_TEXT_AND_IMPLEMENTING_DECREES_REVIEW_REQUIRED",
+      "license_or_access": "Official law PDF archived locally; scanned PDF, no complete OCR transcription",
+      "partitions": [
+        "legal_adviser",
+        "operator",
+        "customs_port"
+      ],
+      "domains": [
+        "rail_freight",
+        "rail_safety",
+        "multimodal",
+        "container_tracking"
+      ]
+    },
+    {
+      "doc_id": "CEMAC_MARINE_CODE_2012_SUMMARY",
+      "path": "cemac_marine_merchant_code_2012.md",
+      "title": "CEMAC — Code communautaire de la Marine marchande (Règlement 08/12, synthèse)",
+      "authority": "Conseil des ministres de la CEMAC; texte reproduit par NATLEX/OIT",
+      "jurisdiction": "CEMAC",
+      "language": "fr",
+      "source_type": "team_authored_summary_of_primary_instrument",
+      "official_url": "https://natlex.ilo.org/dyn/natlex2/natlex2/files/download/116282/ORG-116282.pdf",
+      "consulted_at": "2026-11-07",
+      "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+      "applicability_to_cameroon": "MEMBER_STATE_IMPLEMENTATION_AND_LATER_AMENDMENTS_REVIEW_REQUIRED",
+      "license_or_access": "Primary regional instrument reproduced in ILO NATLEX; direct automated PDF retrieval was denied",
+      "partitions": [
+        "legal_adviser",
+        "operator",
+        "customs_port"
+      ],
+      "domains": [
+        "maritime_freight",
+        "port_operations",
+        "maritime_safety",
+        "container_tracking"
+      ]
+    },
+    {
+      "doc_id": "OHADA_ROAD_FREIGHT_ACT_SUMMARY",
+      "path": "ohada_road_freight_act.md",
+      "title": "OHADA — Acte uniforme sur le transport de marchandises par route (synthèse)",
+      "authority": "OHADA",
+      "jurisdiction": "OHADA member states",
+      "language": "fr",
+      "source_type": "team_authored_summary_of_official_primary_reference",
+      "official_url": "https://www.ohada.org/contrats-de-transport-de-marchandises-par-route/",
+      "consulted_at": "2026-11-07",
+      "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+      "applicability_to_cameroon": "SCOPE_DEPENDS_ON_CONTRACT_AND_STATE_MEMBERSHIP; EXCLUSIONS_REVIEW_REQUIRED",
+      "license_or_access": "Official institutional summary; signed instrument available through OHADA digital library",
+      "partitions": [
+        "legal_adviser",
+        "operator",
+        "customs_port"
+      ],
+      "domains": [
+        "road_freight",
+        "contract_of_carriage",
+        "liability",
+        "multimodal"
+      ]
+    },
+    {
+      "doc_id": "CEMAC_CUSTOMS_CONTAINER_TRANSIT_SUMMARY",
+      "path": "cemac_customs_code_container_transit.md",
+      "title": "CEMAC — Code des douanes, repères sur conteneurs et transit (synthèse)",
+      "authority": "CEMAC; copy published by Cameroon Customs",
+      "jurisdiction": "CEMAC",
+      "language": "fr",
+      "source_type": "team_authored_summary_of_primary_text_reference",
+      "official_url": "https://www.douanes.cm/douanes-cameroun/wp-content/uploads/2022/06/code_des_douanes.pdf",
+      "consulted_at": "2026-11-07",
+      "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+      "applicability_to_cameroon": "EDITION_AND_AMENDMENTS_REVIEW_REQUIRED_BEFORE_OPERATIONAL_USE",
+      "license_or_access": "PDF indexed on official Cameroon Customs domain; direct download failed TLS during corpus setup",
+      "partitions": [
+        "legal_adviser",
+        "operator",
+        "customs_port"
+      ],
+      "domains": [
+        "customs",
+        "container_identification",
+        "transit",
+        "seals",
+        "multimodal"
+      ]
+    },
+    {
+      "doc_id": "CM_CEMAC_REGIONAL_TRANSPORT_LAW_INVENTORY",
+      "path": "cameroon_transport_law_map.md",
+      "title": "Référentiel de départ — textes de transport conteneurisé au Cameroun et en Afrique centrale (inventaire à compléter)",
+      "authority": "ARGOS — équipe projet; références citées depuis sources institutionnelles et catalogues juridiques",
+      "jurisdiction": "Cameroon and Central Africa",
+      "language": "fr",
+      "source_type": "team_authored_research_inventory",
+      "official_url": "https://cameroontradehub.cm/accueil/fr/contenu",
+      "consulted_at": "2026-11-07",
+      "verification_status": "TO_VERIFY",
+      "applicability_to_cameroon": "RESEARCH_MAP_ONLY_NOT_A_VERIFIED_LEGAL_CORPUS",
+      "license_or_access": "Research index with official and secondary links; each item needs source-level validation",
+      "partitions": [
+        "operator"
+      ],
+      "domains": [
+        "road_freight",
+        "rail_freight",
+        "maritime_freight",
+        "customs",
+        "transit",
+        "multimodal",
+        "central_africa"
+      ]
+    }
+  ]
+}

@@ -442,6 +442,16 @@ def get_all_containers():
             "battery_level":    float(m["battery_level"]) if m.get("battery_level") is not None else None,
             "heading":          float(m["heading"]) if m.get("heading") is not None else None,
         })
+
+    # L'estimation est calculée en lot uniquement pour les boîtes déjà filtrées
+    # par le périmètre d'accès de ce profil.
+    box_ids = list({int(item["id_boite"]) for item in result
+                    if str(item.get("id_boite") or "").isdigit()})
+    if box_ids:
+        from app.services.route_intelligence_service import estimate_arrivals_for_boxes
+        arrivals = estimate_arrivals_for_boxes(box_ids)
+        for item in result:
+            item["estimated_arrival"] = arrivals.get(str(item.get("id_boite")))
         
     return jsonify(result)
 
@@ -659,7 +669,10 @@ def create_container_direct():
 @cnt_bp.route("/api/containers/positions", methods=["GET"])
 def get_positions():
     role, user_id = get_caller_identity()
-    role = role or "superadmin"
+    if not role:
+        return jsonify({"error": "Authentification requise"}), 401
+    from app.modules.iot.repository import ensure_iot_schema
+    ensure_iot_schema()
     boites_filter = None
     if role == "owner":   boites_filter = get_boites_for_owner(user_id)
     elif role == "company": boites_filter = get_boites_for_agency(user_id)
@@ -668,34 +681,81 @@ def get_positions():
     elif role == "port_authority": boites_filter = get_boites_for_port_authority(user_id)
 
     sql = """
-        SELECT DISTINCT ON (id_boite)
-            id_boite, lat, lon, temperature, vitesse, chocs, notif, horodatage
-        FROM evenement_save
-        WHERE lat IS NOT NULL AND lon IS NOT NULL
+        WITH ranked_positions AS (
+            SELECT p.black_box_id, p.raw_message_id, p.latitude, p.longitude,
+                   p.speed, p.accuracy, p.measured_at, p.source,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY p.black_box_id
+                       ORDER BY p.measured_at DESC, p.id DESC
+                   ) AS position_rank
+            FROM positions p
+            WHERE p.black_box_id IS NOT NULL
+              AND p.latitude IS NOT NULL AND p.longitude IS NOT NULL
     """
     params = {}
     if boites_filter is not None:
         if not boites_filter:
             return jsonify([])
         placeholders = ",".join([f":b{i}" for i in range(len(boites_filter))])
-        sql += f" AND id_boite IN ({placeholders})"
+        sql += f" AND p.black_box_id IN ({placeholders})"
         params = {f"b{i}": v for i, v in enumerate(boites_filter)}
-    sql += " ORDER BY id_boite, horodatage DESC"
-
+    sql += """
+        )
+        SELECT p.black_box_id AS id_boite, b.numero_serie,
+               p.latitude AS lat, p.longitude AS lon, p.speed,
+               p.accuracy, p.measured_at, p.source,
+               COALESCE(sr.temperature, e.temperature) AS temperature,
+               COALESCE(sr.humidity, e.humidite) AS humidity,
+               COALESCE(sr.shock, e.chocs) AS shock,
+               sr.sequence, sr.quality,
+               COALESCE(e.notif, '[]') AS notif
+        FROM ranked_positions p
+        LEFT JOIN boite_noir b ON b.id_boite=p.black_box_id
+        LEFT JOIN sensor_readings sr ON sr.raw_message_id=p.raw_message_id
+        LEFT JOIN LATERAL (
+            SELECT temperature, humidite, chocs, notif
+            FROM evenement_save
+            WHERE id_boite=p.black_box_id
+              AND ((sr.sequence IS NOT NULL AND sequence=sr.sequence)
+                   OR (sr.sequence IS NULL AND horodatage<=p.measured_at))
+            ORDER BY horodatage DESC NULLS LAST, created_at DESC
+            LIMIT 1
+        ) e ON TRUE
+        WHERE p.position_rank=1
+        ORDER BY p.black_box_id
+    """
     rows = db.session.execute(text(sql), params).fetchall()
     result = []
     for r in rows:
-        alerts = []
-        if r[6]:
-            try: alerts = json.loads(r[6])
-            except: pass
+        row = dict(r._mapping)
+        alerts = row.get("notif") or []
+        if isinstance(alerts, str):
+            try:
+                alerts = json.loads(alerts)
+            except (TypeError, ValueError):
+                alerts = [alerts] if alerts.strip() else []
+        if not isinstance(alerts, list):
+            alerts = [str(alerts)]
+        measured_at = row.get("measured_at")
         result.append({
-            "id_boite": r[0], "lat": float(r[1]), "lon": float(r[2]),
-            "temp": float(r[3]) if r[3] else None,
-            "speed": float(r[4]) if r[4] else 0,
-            "shock": float(r[5]) if r[5] else 0,
-            "alerts": alerts, "ts": str(r[7]),
+            "id_boite": row["id_boite"], "numero_serie": row.get("numero_serie"),
+            "lat": float(row["lat"]), "lon": float(row["lon"]),
+            "temp": float(row["temperature"]) if row.get("temperature") is not None else None,
+            "humidity": float(row["humidity"]) if row.get("humidity") is not None else None,
+            "speed": float(row["speed"]) if row.get("speed") is not None else None,
+            "shock": float(row["shock"]) if row.get("shock") is not None else None,
+            "accuracy": float(row["accuracy"]) if row.get("accuracy") is not None else None,
+            "sequence": row.get("sequence"),
+            "source": row.get("source"),
+            "quality": row.get("quality") if isinstance(row.get("quality"), dict) else {},
+            "alerts": [str(value) for value in alerts if value],
+            "ts": measured_at.isoformat() if measured_at else None,
         })
+    if result:
+        from app.services.route_intelligence_service import estimate_arrivals_for_boxes
+        arrivals = estimate_arrivals_for_boxes([row["id_boite"] for row in result])
+        for item in result:
+            item["estimated_arrival"] = arrivals.get(str(item["id_boite"]))
     return jsonify(result)
 
 #  route 
@@ -888,18 +948,19 @@ def get_notifications():
                     placeholders.append(f":{key}")
                 # Le JOIN sur boite_noir impose une affectation à un conteneur.
                 scope_filter = f"""(
-                    id_boite IS NULL OR id_boite IN (
+                    (id_boite IS NULL AND cible_role IN (:role, :uid))
+                    OR id_boite IN (
                       SELECT id_boite FROM boite_noir
                       WHERE id_conteneurs IS NOT NULL
                         AND id_boite IN ({','.join(placeholders)})
                     )
                 )"""
             else:
-                scope_filter = "id_boite IS NULL"
+                scope_filter = "(id_boite IS NULL AND cible_role IN (:role, :uid))"
         sql = f"""
             SELECT * FROM notifications
             WHERE status='unread' AND {target_filter} AND {scope_filter}
-            ORDER BY horodatage DESC LIMIT 15
+            ORDER BY horodatage DESC LIMIT 50
         """
         rows = db.session.execute(text(sql), params).fetchall()
         
@@ -907,6 +968,11 @@ def get_notifications():
         for r in rows:
             d = dict(r._mapping)
             d['horodatage'] = d['horodatage'].isoformat() if d['horodatage'] else None
+            from app.services.notification_severity import notification_severity
+            from app.services.notification_presentation import notification_presentation
+            d["severity"] = notification_severity(d.get("type"), d.get("message"))
+            d.update(notification_presentation(d.get("type"), d.get("message")))
+            d["container_label"] = f"Boîte #{d['id_boite']}" if d.get("id_boite") else "Compte ARGOS"
             results.append(d)
         return jsonify(results)
     except Exception as e:
@@ -1179,33 +1245,9 @@ def api_lier_container():
 @cnt_bp.route('/api/ai/deepseek', methods=['POST'])
 @limiter.limit("20/hour")
 def ai_chat_deepseek():
-    """Compatibilité historique; partage le même registre et le même LLM Gemini."""
-    from app.agents.audit import persist_agent_run
-    from app.agents.orchestrator import run_agent_request
-    from app.llm.gemini import GeminiToolProvider
+    """Alias historique; applique les mêmes contrôles que /api/ai/chat."""
+    from app.routes.dashboard import _process_ai_chat_request
     from app.security import current_identity
 
     data = request.get_json(silent=True) or {}
-    user_message = data.get("message")
-    if not isinstance(user_message, str) or not user_message.strip():
-        return jsonify({"error": "Le message est requis."}), 400
-    if len(user_message) > 4000:
-        return jsonify({"error": "Le message dépasse la limite de 4000 caractères."}), 413
-    if not current_app.config.get("API_KEY"):
-        return jsonify({"error": "Assistant IA non configuré côté serveur."}), 503
-
-    from uuid import uuid4
-    trace_id = str(uuid4())
-    try:
-        identity = current_identity()
-        result = run_agent_request(
-            user_message.strip(), identity, GeminiToolProvider(),
-            black_box_id=data.get("black_box_id"), trace_id=trace_id,
-        )
-        persist_agent_run(trace_id, identity, "success", result["agents_consulted"], result["sources"])
-        return jsonify(result), 200
-    except Exception:
-        current_app.logger.exception("Échec alias assistant ARGOS trace_id=%s", trace_id)
-        identity = current_identity()
-        persist_agent_run(trace_id, identity, "error", [], [], "LLM_OR_AGENT_ERROR")
-        return jsonify({"error": "Échec de l'assistant ARGOS.", "trace_id": trace_id}), 502
+    return _process_ai_chat_request(current_identity(), data)

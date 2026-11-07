@@ -117,9 +117,14 @@ class AgentRegistry:
         return self._specs.get(agent_id)
 
 
-def build_registry() -> AgentRegistry:
+def build_registry(include_institutional: bool = False, knowledge_root=None) -> AgentRegistry:
     from app.agents.specialists import register_specialists
+    from app.agents.regional_data_catalog import register_regional_data_agent
 
     registry = AgentRegistry()
     register_specialists(registry)
+    register_regional_data_agent(registry)
+    if include_institutional:
+        from app.agents.institutional import register_institutional_agents
+        register_institutional_agents(registry, corpus_root=knowledge_root)
     return registry

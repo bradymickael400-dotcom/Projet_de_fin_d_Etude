@@ -728,20 +728,44 @@ async function buildNotificationsFromDB(){
   const listEl  = document.getElementById('notif-list');
   const countEl = document.getElementById('notif-count');
   if(!listEl) return;
+  let notifs = [];
+  const detailItems = [];
 
-  // 1. Récupérer les alertes matérielles des conteneurs
-  let notifs = DB_CONTAINERS.filter(c=>c.alerts&&c.alerts.length>0).slice(0,6).flatMap(c=>
-    c.alerts.slice(0,2).map(a=>({
-      text:`<i class="fas fa-exclamation-triangle" style="color:var(--amber)"></i> ${c.id_boite}: ${a.substring(0,40)}`,
-      sub:c.lastUpdate, 
-      sev:'warn',
-      action: "navigateTo('events')"
-    }))
-  );
+  // Les notifications ARGOS viennent de l'API authentifiée, filtrée côté
+  // serveur selon le rôle et les boîtes reliées au profil.
+  try {
+    const response = await secureApiFetch('/api/notifications');
+    if(response.ok) {
+      const rows = await response.json();
+      (Array.isArray(rows) ? rows : []).forEach(row => {
+        const detailIndex=detailItems.push({
+          title:row.title||row.type||'Notification ARGOS',
+          reason:row.reason||row.message||'Aucun déclencheur détaillé fourni.',
+          details:row.details||row.message||'Aucun détail complémentaire.',
+          type:row.type||'ARGOS',
+          container:row.container_label||(row.id_boite?`Boîte #${row.id_boite}`:'Compte ARGOS'),
+          timestamp:row.horodatage||null,
+          severity:['danger','warning','info','success'].includes(row.severity)?row.severity:'info'
+        })-1;
+        notifs.push({
+          message:row.summary||row.title||'Notification ARGOS',
+          // La liste reste concise; la cause et les mesures sont dans la fiche.
+          container:row.container_label||(row.id_boite?`Boîte #${row.id_boite}`:'Compte ARGOS'),
+          sub:row.horodatage?new Date(row.horodatage).toLocaleString('fr-FR'):'Maintenant',
+          severity:['danger','warning','info','success'].includes(row.severity)?row.severity:'info',
+          action:`openNotificationDetail(${detailIndex})`
+        });
+      });
+    }
+  } catch(e) {
+    console.error('Erreur chargement notifications ARGOS', e);
+  }
+
+  window.argosNotificationDetails=detailItems;
 
   // 2. Récupérer les publications et annonces
   try {
-    const res = await fetch('/api/publications');
+    const res = await secureApiFetch('/api/publications');
     if(res.ok) {
         const pubs = await res.json();
         
@@ -759,11 +783,10 @@ async function buildNotificationsFromDB(){
             }
 
             if(canSee) {
-                let icon = pub.niveau === 'Urgent' ? '<i class="fas fa-exclamation-circle" style="color:var(--red)"></i>' : '<i class="fas fa-bullhorn" style="color:var(--cyan)"></i>';
                 notifs.unshift({
-                    text: `${icon} <strong>Nouveau message :</strong> ${pub.titre}`,
+                    message: `Nouveau message : ${pub.titre}`,
                     sub: new Date(pub.date_pub).toLocaleString('fr-FR'),
-                    sev: pub.niveau === 'Urgent' ? 'danger' : 'info',
+                    severity: pub.niveau === 'Urgent' ? 'danger' : 'info',
                     // MODIFICATION ICI : Appel de la modale au lieu de la redirection
                     action: `openPublicationModal(${pub.id})` 
                 });
@@ -775,24 +798,45 @@ async function buildNotificationsFromDB(){
   }
 
   // 3. Affichage final
-  notifs = notifs.slice(0, 10);
+  notifs = notifs.slice(0, 50);
   if(!notifs.length){
     notifs = [{
-        text:'<i class="fas fa-check-circle" style="color:var(--green)"></i> Aucune nouvelle notification', 
+        message:'Aucune nouvelle notification',
         sub:'Maintenant', 
-        sev:'ok', 
+        severity:'success',
         action: ""
     }];
   }
 
-  listEl.innerHTML  = notifs.map(n=>`
-    <div class="notif-item" onclick="closeNotif(); ${n.action}">
-        <div style="font-size:13px;color:var(--text)">${n.text}</div>
-        <div class="notif-time">${n.sub}</div>
-    </div>
-  `).join('');
+  const severityStyle = {
+    danger: {color:'var(--red)', icon:'fa-circle-exclamation', label:'DANGER'},
+    warning: {color:'var(--amber)', icon:'fa-triangle-exclamation', label:'VIGILANCE'},
+    info: {color:'var(--cyan)', icon:'fa-circle-info', label:'INFO'},
+    success: {color:'var(--green)', icon:'fa-circle-check', label:'OK'}
+  };
+  listEl.innerHTML = notifs.map(n=>{
+    const level = severityStyle[n.severity] || severityStyle.info;
+    return `
+      <div class="notif-item" onclick="closeNotif(); ${n.action || ''}" style="border-left:3px solid ${level.color};padding-left:10px">
+        <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--text)">
+          <i class="fas ${level.icon}" style="color:${level.color};margin-top:2px" aria-hidden="true"></i>
+          <div style="min-width:0;flex:1"><strong>${escapeHTML(n.message)}</strong><div style="font-size:11px;color:var(--text3);margin-top:3px">${escapeHTML(n.container||'')} · Ouvrir pour voir le déclencheur et les détails</div></div>
+          <strong style="margin-left:auto;color:${level.color};font-size:9px;white-space:nowrap">${level.label}</strong>
+        </div>
+        <div class="notif-time">${escapeHTML(n.sub)}</div>
+      </div>`;
+  }).join('');
   
-  if(countEl) countEl.textContent = Math.max(0, notifs.filter(n=>n.sev!=='ok').length);
+  if(countEl) countEl.textContent = Math.max(0, notifs.filter(n=>n.severity!=='success').length);
+}
+
+function openNotificationDetail(index){
+  const item=window.argosNotificationDetails?.[Number(index)];
+  if(!item) return;
+  const severityColor={danger:'var(--red)',warning:'var(--amber)',info:'var(--cyan)',success:'var(--green)'}[item.severity]||'var(--cyan)';
+  const root=document.getElementById('modal-root');
+  if(!root) return;
+  root.innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:620px;width:min(620px,94vw)"><div class="modal-header"><div><div class="modal-title" style="color:${severityColor}">${escapeHTML(item.title)}</div><div style="font-size:11px;color:var(--text3);margin-top:4px">${escapeHTML(item.container)} · ${escapeHTML(item.timestamp?new Date(item.timestamp).toLocaleString('fr-FR'):'Date indisponible')}</div></div><button class="modal-close" onclick="closeModal()" aria-label="Fermer">×</button></div><div class="modal-body"><section style="padding:12px;border-left:3px solid ${severityColor};background:var(--bg3);border-radius:6px;margin-bottom:12px"><strong>Déclencheur</strong><div style="margin-top:5px;font-size:13px">${escapeHTML(item.reason)}</div></section><section><div style="font-size:11px;color:var(--text3);letter-spacing:.5px;margin-bottom:5px">DÉTAILS DE LA NOTIFICATION · ${escapeHTML(item.type)}</div><div style="font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere">${escapeHTML(item.details)}</div></section></div><div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">Fermer</button><button class="btn-primary" onclick="closeModal();navigateTo('events')">Historique des événements</button></div></div></div>`;
 }
 
 
@@ -1463,7 +1507,7 @@ function openAIAssistant(containerId=null){
   }
   if(containerId && !panel.dataset.initializedFor){
     panel.dataset.initializedFor=String(containerId);
-    addAIMessage(`Boîte ${formatAIReply(containerId)} sélectionnée. Posez votre question pour lancer l’analyse.`);
+    addAIMessage('La boîte associée à cette fiche est sélectionnée pour l’analyse.');
   }
   setTimeout(()=>document.getElementById('ai-chat-input')?.focus(),0);
 }
@@ -1673,10 +1717,10 @@ function renderAIContainerSelection(containers){
   }
   const options=containers.map(item=>{
     const id=String(item.black_box_id);
-    const label=String(item.label || item.container_id || `Boîte ${id}`);
+    const label=String(item.container_id || item.label || 'Conteneur autorisé');
     const safeId=formatAIReply(id), safeLabel=formatAIReply(label);
     const checked=AI_CHAT_BLACK_BOX_ID && String(AI_CHAT_BLACK_BOX_ID)===id ? ' checked' : '';
-    return `<label class="argos-ai-container-option"><input type="checkbox" name="ai-container" value="${safeId}"${checked}><span><strong>${safeLabel}</strong><small>Boîte ARGOS ${safeId}</small></span></label>`;
+    return `<label class="argos-ai-container-option"><input type="checkbox" name="ai-container" value="${safeId}"${checked}><span><strong>${safeLabel}</strong><small>Conteneur actif de votre profil</small></span></label>`;
   }).join('');
   block.innerHTML=`<form onsubmit="event.preventDefault();submitAIContainerSelection(this)"><strong>Choisissez le périmètre d’analyse</strong><div class="argos-ai-container-options">${options}</div><button class="argos-ai-scope-submit" type="submit">Analyser les conteneurs sélectionnés</button></form>`;
   messages.appendChild(block);

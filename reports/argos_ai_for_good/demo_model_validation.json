@@ -1,0 +1,77 @@
+{
+  "model_id": "argos_demo_anomaly_logistic_v1",
+  "dataset": "datasets/argos_demo_two_routes.json",
+  "dataset_synthetic": true,
+  "sample_count": 240,
+  "scenario_count": 4,
+  "class_counts": {
+    "stable": 173,
+    "simulated_anomaly": 67
+  },
+  "validation": "leave_one_scenario_out",
+  "folds": [
+    {
+      "held_out_scenario": "bertoua_yaounde",
+      "samples": 60,
+      "positive_samples": 22,
+      "accuracy": 0.9167,
+      "precision": 1.0,
+      "recall": 0.7727,
+      "confusion_matrix": {
+        "true_positive": 17,
+        "true_negative": 38,
+        "false_positive": 0,
+        "false_negative": 5
+      }
+    },
+    {
+      "held_out_scenario": "china_cameroon",
+      "samples": 60,
+      "positive_samples": 16,
+      "accuracy": 0.9,
+      "precision": 1.0,
+      "recall": 0.625,
+      "confusion_matrix": {
+        "true_positive": 10,
+        "true_negative": 44,
+        "false_positive": 0,
+        "false_negative": 6
+      }
+    },
+    {
+      "held_out_scenario": "douala_owendo_live",
+      "samples": 60,
+      "positive_samples": 9,
+      "accuracy": 0.9333,
+      "precision": 1.0,
+      "recall": 0.5556,
+      "confusion_matrix": {
+        "true_positive": 5,
+        "true_negative": 51,
+        "false_positive": 0,
+        "false_negative": 4
+      }
+    },
+    {
+      "held_out_scenario": "douala_port_cold_chain",
+      "samples": 60,
+      "positive_samples": 20,
+      "accuracy": 0.7667,
+      "precision": 1.0,
+      "recall": 0.3,
+      "confusion_matrix": {
+        "true_positive": 6,
+        "true_negative": 40,
+        "false_positive": 0,
+        "false_negative": 14
+      }
+    }
+  ],
+  "mean_metrics": {
+    "accuracy": 0.8792,
+    "precision": 1.0,
+    "recall": 0.5633
+  },
+  "artifact": "models/argos_demo_anomaly_logistic_v1.json",
+  "interpretation": "Pipeline demonstration only; metrics measure agreement with synthetic scenario labels, not real shipment performance."
+}

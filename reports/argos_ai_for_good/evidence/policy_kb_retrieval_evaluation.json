@@ -1,0 +1,298 @@
+{
+  "evaluation_id": "argos-policy-kb-v1",
+  "queries": [
+    {
+      "id": "Q01",
+      "partition": "customs_port",
+      "query": "Article 7 section 4 risk management customs",
+      "expected": "source_found_as_international_comparator",
+      "outcome": "PASS",
+      "retrieved": [
+        {
+          "source": "wto_trade_facilitation_selected_articles.md",
+          "lines": [
+            15,
+            15
+          ],
+          "score": 0.3077
+        },
+        {
+          "source": "wto_trade_facilitation_selected_articles.md",
+          "lines": [
+            13,
+            13
+          ],
+          "score": 0.2353
+        }
+      ]
+    },
+    {
+      "id": "Q02",
+      "partition": "customs_port",
+      "query": "arbitrary or unjustifiable discrimination risk management",
+      "expected": "source_found_as_international_comparator",
+      "outcome": "PASS",
+      "retrieved": [
+        {
+          "source": "wto_trade_facilitation_selected_articles.md",
+          "lines": [
+            13,
+            13
+          ],
+          "score": 0.1667
+        },
+        {
+          "source": "wto_trade_facilitation_selected_articles.md",
+          "lines": [
+            15,
+            15
+          ],
+          "score": 0.1429
+        }
+      ]
+    },
+    {
+      "id": "Q03",
+      "partition": "customs_port",
+      "query": "guichet unique technologies information échanges commerce",
+      "expected": "source_found_as_international_comparator",
+      "outcome": "PASS",
+      "retrieved": [
+        {
+          "source": "wto_trade_facilitation_selected_articles.md",
+          "lines": [
+            19,
+            19
+          ],
+          "score": 0.2667
+        }
+      ]
+    },
+    {
+      "id": "Q04",
+      "partition": "customs_port",
+      "query": "Article 11 freedom of transit formalities",
+      "expected": "source_found_as_international_comparator",
+      "outcome": "PASS",
+      "retrieved": [
+        {
+          "source": "wto_trade_facilitation_selected_articles.md",
+          "lines": [
+            23,
+            23
+          ],
+          "score": 0.1791
+        }
+      ]
+    },
+    {
+      "id": "Q05",
+      "partition": "legal_adviser",
+      "query": "article 4 procédures appel réexamen douanières",
+      "expected": "source_found_as_international_comparator",
+      "outcome": "PASS",
+      "retrieved": [
+        {
+          "source": "wto_trade_facilitation_selected_articles.md",
+          "lines": [
+            9,
+            9
+          ],
+          "score": 0.2985
+        }
+      ]
+    },
+    {
+      "id": "Q06",
+      "partition": "data_protection",
+      "query": "données personnelles consentement obligation légale finalité traitement",
+      "expected": "source_found_requires_human_legal_review",
+      "outcome": "PASS",
+      "retrieved": [
+        {
+          "source": "cameroon_law_2024_017_excerpts.md",
+          "lines": [
+            13,
+            17
+          ],
+          "score": 0.1562
+        },
+        {
+          "source": "cameroon_law_2024_017_excerpts.md",
+          "lines": [
+            21,
+            24
+          ],
+          "score": 0.1224
+        },
+        {
+          "source": "cameroon_law_2024_017_excerpts.md",
+          "lines": [
+            9,
+            9
+          ],
+          "score": 0.0964
+        },
+        {
+          "source": "cameroon_law_2024_017_excerpts.md",
+          "lines": [
+            37,
+            41
+          ],
+          "score": 0.0684
+        }
+      ]
+    },
+    {
+      "id": "Q07",
+      "partition": "data_protection",
+      "query": "données personnelles durée conservation nécessaire finalités",
+      "expected": "source_found_requires_full_text_and_implementation_review",
+      "outcome": "PASS",
+      "retrieved": [
+        {
+          "source": "cameroon_law_2024_017_excerpts.md",
+          "lines": [
+            28,
+            28
+          ],
+          "score": 0.1778
+        },
+        {
+          "source": "cameroon_law_2024_017_excerpts.md",
+          "lines": [
+            13,
+            17
+          ],
+          "score": 0.129
+        },
+        {
+          "source": "cameroon_law_2024_017_excerpts.md",
+          "lines": [
+            37,
+            41
+          ],
+          "score": 0.0708
+        }
+      ]
+    },
+    {
+      "id": "Q08",
+      "partition": "customs_port",
+      "query": "Cameroon port customs seal handover responsibility",
+      "expected": "insufficient_evidence_national_text_not_ingested",
+      "outcome": "PASS",
+      "retrieved": []
+    },
+    {
+      "id": "Q09",
+      "partition": "customs_port",
+      "query": "CNCC BESC suspension June 15",
+      "expected": "insufficient_evidence_primary_notice_not_ingested",
+      "outcome": "PASS",
+      "retrieved": []
+    },
+    {
+      "id": "Q10",
+      "partition": "legal_adviser",
+      "query": "Cameroon WTO acceptance notifications trade facilitation agreement",
+      "expected": "comparator_found_applicability_to_verify",
+      "outcome": "PASS",
+      "retrieved": [
+        {
+          "source": "wto_trade_facilitation_selected_articles.md",
+          "lines": [
+            3,
+            5
+          ],
+          "score": 0.2174
+        }
+      ]
+    },
+    {
+      "id": "Q11",
+      "partition": "data_protection",
+      "query": "droit décision individuelle automatisée profilage information personne concernée",
+      "expected": "source_found_not_an_automated_decision_compliance_finding",
+      "outcome": "PASS",
+      "retrieved": [
+        {
+          "source": "cameroon_law_2024_017_excerpts.md",
+          "lines": [
+            28,
+            28
+          ],
+          "score": 0.2041
+        },
+        {
+          "source": "cameroon_law_2024_017_excerpts.md",
+          "lines": [
+            21,
+            24
+          ],
+          "score": 0.1176
+        },
+        {
+          "source": "cameroon_law_2024_017_excerpts.md",
+          "lines": [
+            32,
+            33
+          ],
+          "score": 0.0889
+        },
+        {
+          "source": "cameroon_law_2024_017_excerpts.md",
+          "lines": [
+            37,
+            41
+          ],
+          "score": 0.0661
+        }
+      ]
+    },
+    {
+      "id": "Q12",
+      "partition": "data_protection",
+      "query": "violation données personnelles informer autorité personne concernée sans délai",
+      "expected": "source_found_breach_response_still_requires_context",
+      "outcome": "PASS",
+      "retrieved": [
+        {
+          "source": "cameroon_law_2024_017_excerpts.md",
+          "lines": [
+            32,
+            33
+          ],
+          "score": 0.2553
+        },
+        {
+          "source": "cameroon_law_2024_017_excerpts.md",
+          "lines": [
+            21,
+            24
+          ],
+          "score": 0.1509
+        },
+        {
+          "source": "cameroon_law_2024_017_excerpts.md",
+          "lines": [
+            37,
+            41
+          ],
+          "score": 0.096
+        },
+        {
+          "source": "cameroon_law_2024_017_excerpts.md",
+          "lines": [
+            13,
+            17
+          ],
+          "score": 0.0588
+        }
+      ]
+    }
+  ],
+  "passed": 12,
+  "total": 12,
+  "note": "PASS only checks source presence/absence for this small control set; it does not establish legal answer accuracy or comprehensive retrieval quality."
+}

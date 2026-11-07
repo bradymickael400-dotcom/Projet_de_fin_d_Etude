@@ -106,6 +106,8 @@ test('assistant presents its multi-agent identity and container selection UI', (
   assert.match(ui, /function mountGlobalAIAssistant\(/);
   assert.match(ui, /function renderAIContainerSelection\(containers\)/);
   assert.match(ui, /Analyser les conteneurs sélectionnés/);
+  assert.match(ui, /Conteneur actif de votre profil/);
+  assert.doesNotMatch(ui, /Boîte ARGOS \$\{safeId\}/);
   assert.match(ui, /argos-ai-hero-mark/);
   assert.match(css, /\.argos-ai-hero-mark svg/);
   assert.match(css, /\.argos-ai-toggle\s*\{/);

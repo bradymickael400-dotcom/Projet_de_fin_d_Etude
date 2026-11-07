@@ -32,11 +32,14 @@
 .argos-ai-suggestions>span { flex:none;color:var(--text3);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em; }
 .argos-ai-suggestions button { flex:none;min-height:32px;padding:6px 10px;border:1px solid var(--border2);border-radius:999px;background:var(--bg3);color:var(--text2);font:600 11px var(--font);cursor:pointer;white-space:nowrap; }
 .argos-ai-suggestions button:hover,.argos-ai-suggestions button:focus-visible { border-color:var(--cyan);color:var(--cyan); }
-.argos-ai-messages .ai-msg { margin:0 0 12px; }
-.argos-ai-messages .msg-bubble { max-width:95%;padding:11px 13px;border:1px solid var(--border);border-radius:13px;background:var(--bg3);color:var(--text);font-size:13px;line-height:1.55;overflow-wrap:anywhere; }
-.argos-ai-messages .ai-msg.user { display:flex;justify-content:flex-end; }
+.argos-ai-messages .ai-msg { display:flex;min-width:0;margin:0 0 12px; }
+.argos-ai-messages .ai-msg.ai { flex-direction:column;align-items:flex-start; }
+.argos-ai-messages .msg-bubble { box-sizing:border-box;width:fit-content;min-width:0;max-width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:13px;background:var(--bg3);color:var(--text);font-size:13px;line-height:1.55;overflow-wrap:anywhere;word-break:normal; }
+.argos-ai-messages .ai-msg.user { justify-content:flex-end; }
+.argos-ai-messages .ai-msg.user .msg-bubble { max-width:min(95%, 38rem); }
 .argos-ai-messages .ai-msg.user .msg-bubble { background:color-mix(in srgb,var(--cyan) 16%,var(--bg3));border-color:color-mix(in srgb,var(--cyan) 35%,var(--border)); }
-.argos-ai-metadata { margin-top:10px;padding-top:8px;border-top:1px solid var(--border);color:var(--text3);font-size:12px;line-height:1.5; }
+.argos-ai-metadata { box-sizing:border-box;width:min(95%, 38rem);min-width:0;margin-top:8px;padding:8px 2px 0;border-top:1px solid var(--border);color:var(--text3);font-size:12px;line-height:1.5;overflow-wrap:anywhere; }
+.argos-ai-metadata div { min-width:0;overflow-wrap:anywhere; }
 .argos-ai-metadata div+div { margin-top:3px; }
 .argos-ai-form { display:flex;align-items:flex-end;gap:8px;padding:12px;border-top:1px solid var(--border);background:var(--bg); }
 .argos-ai-form textarea { flex:1;min-width:0;resize:vertical;max-height:120px;padding:10px 12px;border:1px solid var(--border2);border-radius:11px;background:var(--bg3);color:var(--text);font:inherit;font-size:13px;line-height:1.4; }
@@ -47,6 +50,8 @@
 @media(max-width:600px) {
   .argos-ai-widget { right:12px;bottom:12px; }
   .argos-ai-panel { position:fixed;right:12px;bottom:72px;width:calc(100vw - 24px);height:min(70dvh,620px); }
+  .argos-ai-messages { min-width:0;padding:12px; }
+  .argos-ai-messages .msg-bubble,.argos-ai-metadata { width:100%;max-width:100%; }
 }
 @media(prefers-reduced-motion:reduce) {
   .argos-ai-widget * { scroll-behavior:auto !important;animation:none !important;transition:none !important; }

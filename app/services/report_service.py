@@ -468,6 +468,15 @@ def collect_container_report(container_id):
             "La référence interne ARGOS ne constitue pas une loi ou une certification de conformité.",
         ]
 
+    transport_skills = [
+        "Surveillance télémétrique : mesures, fraîcheur et événements IoT",
+        "Analyse géographique : position, itinéraire et qualité/fraîcheur GPS",
+        "Évaluation des risques : rapprochement déterministe des signaux disponibles",
+        "Revue réglementaire transport : repérage par juridiction, mode, trajet, marchandise et date",
+        "Expertise portuaire : ports/terminaux, trafic sourcé, EVP vs conteneurs uniques et proximité GPS indicative",
+        "Recherche documentaire : passages locaux avec fichier et lignes de provenance",
+    ]
+
     return {
         "title": f"Rapport conteneur {container_id}",
         "sections": [
@@ -477,6 +486,7 @@ def collect_container_report(container_id):
             ("Prototype ESP32", box.device_uid if box and box.device_uid else "Non lie"),
             ("Evenements chronologiques", event_lines or ["Aucun evenement enregistre"]),
             ("Historique des actions et réactions IA", history_lines or ["Aucune action tracée avant ce rapport"]),
+            ("Compétences IA de transport disponibles", transport_skills),
             ("Sources, règles et applicabilité", source_lines),
             ("Réserve réglementaire", "Les sources ci-dessus sont des références documentaires. ARGOS ne conclut pas à la conformité juridique sans vérification du champ, de la juridiction, du trajet, de la marchandise, des amendements et des preuves métier."),
             ("Synthese", "Rapport genere depuis les donnees autorisees disponibles dans ARGOS."),

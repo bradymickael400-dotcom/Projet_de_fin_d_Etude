@@ -9,6 +9,7 @@ from app.utils import get_public_base_url, send_email_background
 
 
 ALERT_COOLDOWN_MINUTES = 45
+BATTERY_LOW_THRESHOLD_PERCENT = 15
 
 
 def add_configured_threshold_alerts(event_payload, thresholds):
@@ -26,15 +27,22 @@ def add_configured_threshold_alerts(event_payload, thresholds):
     pressure = float(pressure) if pressure is not None else None
     speed = event_payload.get("vitesse")
     speed = float(speed) if speed is not None else None
+    battery = event_payload.get("battery_level")
+    battery = float(battery) if battery is not None else None
     temp_min = getattr(thresholds, "temp_min", None)
     temp_max = getattr(thresholds, "temp_max", None)
     shock_max = getattr(thresholds, "choc_max", None)
+    from app.services.shock_assessment import resolve_shock_threshold
+    shock_max = resolve_shock_threshold(shock_max)
     if temperature is not None and temp_min is not None and temperature < float(temp_min):
         alerts.append(f"Température trop basse : {temperature:.1f} °C (min. {float(temp_min):.1f} °C)")
     if temperature is not None and temp_max is not None and temperature > float(temp_max):
         alerts.append(f"Température trop élevée : {temperature:.1f} °C (max. {float(temp_max):.1f} °C)")
     if shock is not None and shock_max is not None and shock > float(shock_max):
-        alerts.append(f"Choc excessif : {shock:.2f} g (max. {float(shock_max):.2f} g)")
+        if shock >= 2 * shock_max:
+            alerts.append(f"Choc sévère : {shock:.2f} G (seuil opérationnel ARGOS {shock_max:.2f} G); inspection prioritaire recommandée, dommage non confirmé")
+        else:
+            alerts.append(f"Choc au-dessus du seuil opérationnel ARGOS : {shock:.2f} G (seuil {shock_max:.2f} G); inspection recommandée, dommage non confirmé")
     if humidity is not None and getattr(thresholds, "humi_min", None) is not None and humidity < float(thresholds.humi_min):
         alerts.append(f"Humidité trop basse : {humidity:.1f} % (min. {float(thresholds.humi_min):.1f} %)")
     if humidity is not None and getattr(thresholds, "humi_max", None) is not None and humidity > float(thresholds.humi_max):
@@ -45,6 +53,10 @@ def add_configured_threshold_alerts(event_payload, thresholds):
         alerts.append(f"Pression trop élevée : {pressure:.1f} hPa (max. {float(thresholds.pression_max):.1f} hPa)")
     if speed is not None and getattr(thresholds, "vitesse_max", None) is not None and speed > float(thresholds.vitesse_max):
         alerts.append(f"Vitesse excessive : {speed:.1f} km/h (max. {float(thresholds.vitesse_max):.1f} km/h)")
+    if battery is not None and battery <= BATTERY_LOW_THRESHOLD_PERCENT:
+        alerts.append(
+            f"Batterie faible : {battery:.0f} % (seuil interne ARGOS {BATTERY_LOW_THRESHOLD_PERCENT} %)"
+        )
     event_payload["notif"] = list(dict.fromkeys(alerts))
     return event_payload["notif"]
 
