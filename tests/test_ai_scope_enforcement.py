@@ -99,7 +99,7 @@ def test_selected_scope_does_not_remove_box_id_parameter_for_explicit_comparison
     assert tools[0]["parameters"]["required"] == ["black_box_id"]
 
 
-def test_ai_picker_only_queries_active_assigned_boxes_for_the_profile(monkeypatch):
+def test_ai_picker_lists_all_non_archived_boxes_in_the_profile_scope(monkeypatch):
     from types import SimpleNamespace
     import app.routes.dashboard as dashboard
 
@@ -109,19 +109,29 @@ def test_ai_picker_only_queries_active_assigned_boxes_for_the_profile(monkeypatc
         def execute(self, statement, parameters):
             captured["sql"] = str(statement).lower()
             captured["parameters"] = parameters
-            return SimpleNamespace(fetchall=lambda: [(17, "CONT-17", "SN-17")])
+            return SimpleNamespace(fetchall=lambda: [
+                (17, "CONT-17", "SN-17"),
+                (18, None, "SN-18"),
+            ])
 
     monkeypatch.setattr(dashboard.db, "session", Session())
     monkeypatch.setattr(dashboard, "_visible_boites_for", lambda role, user_id: [17, 18])
 
     available = dashboard._ai_available_containers({"role": "client", "user_id": "client-1"})
 
-    assert available == [{
-        "black_box_id": "17", "container_id": "CONT-17", "label": "CONT-17",
-    }]
+    assert available == [
+        {
+            "black_box_id": "17", "container_id": "CONT-17", "box_label": "SN-17",
+            "label": "SN-17 — conteneur CONT-17",
+        },
+        {
+            "black_box_id": "18", "container_id": None, "box_label": "SN-18",
+            "label": "SN-18 — sans conteneur associé",
+        },
+    ]
     assert "coalesce(b.archived, false) = false" in captured["sql"]
-    assert "lower(coalesce(b.status, '')) = 'active'" in captured["sql"]
-    assert "b.id_conteneurs is not null" in captured["sql"]
+    assert "lower(coalesce(b.status, '')) = 'active'" not in captured["sql"]
+    assert "b.id_conteneurs is not null" not in captured["sql"]
     assert "lower(coalesce(a.status, '')) = 'actif'" in captured["sql"]
     assert captured["parameters"]["actor_id"] == "client-1"
 

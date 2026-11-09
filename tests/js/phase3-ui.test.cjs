@@ -92,7 +92,7 @@ test('assistant exposes explicit multi-container choice and a visible 3D ARGOS m
   const ui = fs.readFileSync(path.join(root, 'app/static/js/ui-navigation.js'), 'utf8');
   const css = fs.readFileSync(path.join(root, 'app/static/css/ai-assistant.css'), 'utf8');
   assert.match(ui, /function renderAIContainerSelection\(containers\)/);
-  assert.match(ui, /Analyser les conteneurs sélectionnés/);
+  assert.match(ui, /Analyser les boîtes sélectionnées/);
   assert.match(ui, /black_box_ids:/);
   assert.match(ui, /argos-ai-hero-mark/);
   assert.match(css, /\.argos-ai-hero-mark svg/);
@@ -103,6 +103,17 @@ test('GPS map provides operational recency, alert and stale-position filters', (
   assert.match(dataPages, /function mapPositionState\(position\)/);
   assert.match(dataPages, /function filterMapPositions\(status,button\)/);
   for(const filter of ["'all'","'live'","'alert'","'stale'"]) assert.ok(dataPages.includes(`filterMapPositions(${filter}`));
+});
+
+test('GPS map provides a synthetic route replay with movement, event markers and sound controls', () => {
+  const css=fs.readFileSync(path.join(root,'app/static/css/style.css'),'utf8');
+  assert.match(dataPages,/Rejeu de présentation/);
+  assert.match(dataPages,/function startDemoReplay\(\)/);
+  assert.match(dataPages,/function seekDemoReplay\(index\)/);
+  assert.match(dataPages,/latestSyntheticRun\(history\)/);
+  assert.match(dataPages,/color:segmentState\?'#ff3333':'#32d296'/);
+  assert.match(dataPages,/toggleDemoReplaySound/);
+  assert.match(css,/\.demo-moving-pulse\.is-deviated/);
 });
 
 test('assistant asks first, then sends only the two boxes explicitly checked by the user', async () => {

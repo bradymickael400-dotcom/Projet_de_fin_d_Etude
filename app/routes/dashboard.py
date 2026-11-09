@@ -992,6 +992,11 @@ def _process_ai_chat_request(identity, data):
             db.session.commit()
         except Exception:
             db.session.rollback()
+        if getattr(getattr(e, "response", None), "status_code", None) == 429:
+            return jsonify({
+                "error": "Le service Gemini a atteint sa limite de requêtes. Réessayez plus tard.",
+                "code": "LLM_RATE_LIMITED", "trace_id": trace_id,
+            }), 429
         return jsonify({"error": "Échec de l'assistant ARGOS.", "trace_id": trace_id}), 502
 
 
@@ -1085,7 +1090,7 @@ def _ai_out_of_scope_sector(message):
 
 
 def _ai_available_containers(identity):
-    """Boîtes actives, affectées et visibles pour l'identité authentifiée."""
+    """Boîtes non archivées visibles par l'identité, même sans conteneur associé."""
     role, user_id = identity.get("role"), identity.get("user_id")
     if role not in {"superadmin", "owner", "company", "client", "driver", "port_authority"}:
         return []
@@ -1094,9 +1099,7 @@ def _ai_available_containers(identity):
         SELECT b.id_boite, c.id_conteneurs, b.numero_serie
         FROM boite_noir b
         LEFT JOIN conteneurs c ON c.id_conteneurs = b.id_conteneurs
-        WHERE b.id_conteneurs IS NOT NULL
-          AND COALESCE(b.archived, FALSE) = FALSE
-          AND LOWER(COALESCE(b.status, '')) = 'active'
+        WHERE COALESCE(b.archived, FALSE) = FALSE
     """
     params = {}
     if visible is not None:
@@ -1116,8 +1119,16 @@ def _ai_available_containers(identity):
         """
         params["actor_id"] = str(user_id)
     rows = db.session.execute(text(query + " ORDER BY b.id_boite"), params).fetchall()
-    return [{
-        "black_box_id": str(row[0]),
-        "container_id": str(row[1]) if row[1] is not None else None,
-        "label": str(row[1] or row[2] or f"Boîte {row[0]}"),
-    } for row in rows]
+    available = []
+    for row in rows:
+        box_id, container_id, serial = row
+        box_label = str(serial or f"Boîte #{box_id}")
+        container_ref = str(container_id) if container_id is not None else None
+        label = f"{box_label} — conteneur {container_ref}" if container_ref else f"{box_label} — sans conteneur associé"
+        available.append({
+            "black_box_id": str(box_id),
+            "container_id": container_ref,
+            "box_label": box_label,
+            "label": label,
+        })
+    return available

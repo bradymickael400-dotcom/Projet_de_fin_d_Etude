@@ -2,14 +2,48 @@
 
 ## Lancement
 
-Le backend doit être démarré. L'appareil simulé doit être enrôlé, actif et
-affecté à la boîte noire et au conteneur correspondants. La génération émet 600
-trames à 1 Hz; le POST HTTP est réalisé dans un thread d'envoi séparé.
+Le backend doit être démarré. L'appareil doit exister dans ARGOS, être enrôlé,
+actif et affecté à la boîte noire et au conteneur correspondants. Les valeurs
+`ARGOS-ESP32-001` et `CLE_APPAREIL` de l'exemple ne sont pas des identifiants
+créés automatiquement par le simulateur : les utiliser telles quelles produit
+`HTTP 401: Prototype inconnu` si aucun appareil portant cet UID n'a été provisionné.
+
+### 1. Provisionner l'appareil
+
+Connectez-vous avec un compte autorisé à gérer la boîte. L'API choisit/génère
+l'UID et le jeton d'enrôlement; conservez-les depuis la réponse sans les publier.
+
+```bash
+python3 simulateur_iot.py --base-url http://127.0.0.1:5002 provision \
+  --black-box-id 1 \
+  --username NOM_UTILISATEUR \
+  --password MOT_DE_PASSE
+```
+
+### 2. Enrôler et obtenir la clé appareil
+
+Utilisez exactement l'UID et le jeton renvoyés par le provisionnement :
+
+```bash
+python3 simulateur_iot.py --base-url http://127.0.0.1:5002 enroll \
+  --device-uid UID_RENVOYE \
+  --token JETON_RENVOYE
+```
+
+La réponse fournit la vraie `apiKey` appareil. Gardez-la privée. Le script
+`enroll` affiche cette réponse dans le terminal; évitez de partager ou
+d'enregistrer sa sortie dans un journal public.
+
+### 3. Démarrer la simulation
+
+Renseignez l'UID et la clé effectivement retournés par les étapes précédentes,
+ainsi que les identifiants exacts de la boîte et du conteneur auxquels
+l'appareil est lié :
 
 ```bash
 python3 simulateur_iot.py --base-url http://127.0.0.1:5002 simulate-route \
-  --device-uid ARGOS-ESP32-001 \
-  --api-key CLE_APPAREIL \
+  --device-uid UID_RENVOYE \
+  --api-key CLE_APPAREIL_RENVOYEE \
   --black-box-id 1 \
   --container-id MSCU1234566
 ```
@@ -19,6 +53,38 @@ Le script envoie vers `POST /api/iot/telemetry`, avec l'en-tête
 déjà utilisée par le projet. La lecture navigateur se fait par
 `GET /api/stats/live`, authentifiée par le jeton ARGOS. Le dépôt n'embarque pas
 de serveur Socket.IO; ce flux REST est la voie déjà disponible.
+
+Chaque nouvelle exécution du simulateur recommence le scénario à `t=0`, donc
+à Douala. Les numéros `sequence` continuent toutefois à augmenter, car l'API
+rejette tout numéro déjà reçu ou inférieur au dernier accepté pour l'appareil.
+Le simulateur réserve automatiquement une plage de 600 numéros par exécution
+et la mémorise dans `~/.local/state/argos/simulator_sequences.json` (un fichier
+par UID appareil). Ainsi, relancer exactement la même commande n'envoie pas
+une seconde fois les anciennes séquences. La plage réservée est enregistrée
+avant l'envoi, même si l'exécution est interrompue; les éventuels trous sont
+normaux et autorisés.
+
+Ne passez pas `--start-sequence` pour un lancement normal. Cette option existe
+uniquement pour un démarrage manuel; sa valeur doit être supérieure à la
+dernière plage que le fichier local a réservée et au dernier numéro accepté
+par le serveur. L'option `--sequence-state-file CHEMIN` permet de choisir un
+autre emplacement persistant, par exemple si le simulateur est lancé depuis
+une autre machine.
+
+Un `401 Prototype inconnu` signifie que l'UID envoyé ne correspond à aucun
+appareil provisionné dans l'instance utilisée. Un UID reconnu mais une clé
+incorrecte/inactive échoue également à l'authentification; vérifiez la clé
+retournée à l'enrôlement. L'identifiant `black-box-id` et `container-id` du
+simulateur doivent correspondre à l'affectation serveur. En cas d'erreur, le
+thread d'envoi journalise les échecs; la simulation continue, mais ces trames
+ne sont alors pas enregistrées.
+
+Après réception des trames, ouvrez dans l'application la page **Carte GPS** ou
+le tableau de bord live en vous connectant à un compte autorisé pour cette
+boîte. La carte et ses indicateurs lisent les données côté serveur : démarrer
+le simulateur seul ne crée pas de données si l'enrôlement ou l'affectation est
+incorrect. Les positions et capteurs de ce scénario sont synthétiques et
+portent le marqueur `SYNTHETIC`.
 
 ## Chronologie exacte
 

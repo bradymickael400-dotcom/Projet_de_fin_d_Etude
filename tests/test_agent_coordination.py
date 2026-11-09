@@ -126,6 +126,53 @@ def test_llm_one_request_invokes_multiple_agents_and_receives_results():
     assert all("data" in part["functionResponse"]["response"] for part in function_responses)
 
 
+def test_gemini_rate_limit_returns_deterministic_selected_box_analysis():
+    from types import SimpleNamespace
+
+    registry = AgentRegistry()
+    calls = []
+
+    def assess(arguments, _identity, _registry):
+        calls.append(arguments["black_box_id"])
+        return AgentResult("risk_assessor", "success", {
+            "black_box_id": 17,
+            "risk_level": "warning",
+            "signals": ["door_open"],
+            "stale_position": False,
+        })
+
+    registry.register(_agent("risk_assessor", assess))
+
+    class RateLimitedProvider:
+        def generate(self, **_kwargs):
+            error = RuntimeError("Gemini quota exceeded")
+            error.response = SimpleNamespace(status_code=429)
+            raise error
+
+    outcome = run_agent_request(
+        "Analyse les dernières alertes de porte.", IDENTITY, RateLimitedProvider(),
+        registry=registry, black_box_ids=["17"], selected_container_refs={"17": "CONT-17"},
+    )
+
+    assert calls == ["17"]
+    assert outcome["agents_consulted"] == ["risk_assessor"]
+    assert "Gemini est temporairement limité" in outcome["reply"]
+    assert "CONT-17" in outcome["reply"]
+    assert "door_open" in outcome["reply"]
+    assert outcome["agent_results"][0]["agent_id"] == "risk_assessor"
+
+    class AvailableProvider:
+        def generate(self, **_kwargs):
+            return {"reply": "Analyse LLM reçue.", "tool_results": []}
+
+    normal_outcome = run_agent_request(
+        "Analyse les dernières alertes de porte.", IDENTITY, AvailableProvider(),
+        registry=registry, black_box_ids=["17"], selected_container_refs={"17": "CONT-17"},
+    )
+    assert normal_outcome["reply"] == "Analyse LLM reçue."
+    assert normal_outcome["agents_consulted"] == ["risk_assessor"]
+
+
 def test_knowledge_search_returns_only_local_cited_passages(tmp_path):
     from app.knowledge.rag import search_knowledge
 
@@ -202,6 +249,35 @@ def test_ai_api_requests_scope_before_provider_even_when_not_configured(monkeypa
 
     assert response.status_code == 200
     assert response.get_json()["status"] == "needs_container_selection"
+
+
+def test_ai_available_boxes_include_demo_label_and_unassigned_visible_boxes(monkeypatch):
+    from app.routes import dashboard
+
+    class Result:
+        def fetchall(self):
+            return [
+                (5, "ARGU0000012", "ARGOS-DEMO-01"),
+                (6, None, "ARGOS-SPARE-06"),
+            ]
+
+    monkeypatch.setattr(dashboard.db.session, "execute", lambda *_args, **_kwargs: Result())
+    boxes = dashboard._ai_available_containers({"role": "superadmin", "user_id": None})
+
+    assert boxes == [
+        {
+            "black_box_id": "5",
+            "container_id": "ARGU0000012",
+            "box_label": "ARGOS-DEMO-01",
+            "label": "ARGOS-DEMO-01 — conteneur ARGU0000012",
+        },
+        {
+            "black_box_id": "6",
+            "container_id": None,
+            "box_label": "ARGOS-SPARE-06",
+            "label": "ARGOS-SPARE-06 — sans conteneur associé",
+        },
+    ]
 
 
 def test_chat_api_uses_server_registry_and_ignores_browser_context(monkeypatch):

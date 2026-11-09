@@ -680,6 +680,14 @@ function buildMapPage(){
           <div id="terrestrial-simulation-sessions" class="simulation-session-list" aria-live="polite"><div class="map-empty-state">Aucune session de simulation chargée.</div></div>
           <div class="simulation-attribution">Routes cartographiques OSRM / © OpenStreetMap contributors. Routes poids lourds et trafic temps réel non certifiés.</div>
         </div>` : ''}
+        <div class="card map-demo-replay-card" id="map-demo-replay-card" style="padding:12px">
+          <div class="map-demo-replay-heading"><div><div class="card-title" style="margin-bottom:3px">Rejeu de présentation</div><div class="map-demo-replay-note">Trajet et événements simulés · balisés SYNTHETIC</div></div><span class="map-demo-badge">DÉMO</span></div>
+          <label class="simulation-field">Boîte de démonstration<select id="demo-replay-box" aria-label="Boîte à rejouer" onchange="prepareDemoReplay()"></select></label>
+          <div class="map-demo-replay-actions"><button type="button" class="btn-primary" id="demo-replay-start" onclick="startDemoReplay()">▶ Lancer</button><button type="button" class="btn-secondary" id="demo-replay-pause" onclick="toggleDemoReplayPause()" disabled>Ⅱ Pause</button><button type="button" class="btn-secondary" onclick="resetDemoReplay()" aria-label="Recommencer le rejeu">↺</button><label class="map-demo-speed">Vitesse<select id="demo-replay-speed" aria-label="Vitesse du rejeu"><option value="200">5×</option><option value="100" selected>10×</option><option value="50">20×</option></select></label><button type="button" class="btn-secondary map-demo-sound" id="demo-replay-sound" aria-pressed="true" onclick="toggleDemoReplaySound()" title="Activer ou couper le son des événements">🔊 Son</button></div>
+          <input id="demo-replay-seek" class="map-demo-seek" type="range" min="0" max="0" value="0" aria-label="Avancement du rejeu" oninput="seekDemoReplay(Number(this.value))" disabled>
+          <div id="demo-replay-status" class="map-demo-replay-status" role="status" aria-live="polite">Chargement des positions synthétiques…</div>
+          <div id="demo-replay-event-feed" class="map-demo-event-feed" aria-live="polite"><span>Les événements apparaîtront ici pendant le rejeu.</span></div>
+        </div>
         <div class="card" style="padding:12px">
           <div class="card-title" id="map-containers-title" style="margin-bottom:8px">Positions GPS (${MAP_GPS_POSITIONS.length})</div>
           <div style="position:relative;margin-bottom:8px">
@@ -1142,6 +1150,132 @@ function updateMapPageUI(){
   }
   refreshMapMarkers();
   updateTerrestrialSimulationPanel();
+  updateDemoReplayOptions();
+  const replayBox=document.getElementById('demo-replay-box');
+  if(!demoReplayBoxId&&replayBox?.value)prepareDemoReplay();
+}
+
+function updateDemoReplayOptions(){
+  const select=document.getElementById('demo-replay-box');
+  if(!select)return;
+  const previous=select.value;
+  select.innerHTML=MAP_TRACKING_BOXES.map(box=>{
+    const id=String(box.id_boite),label=String(box.numero_serie||`Boîte ${id}`),container=box.container_id?` · ${box.container_id}`:'';
+    return `<option value="${escapeHTML(id)}">${escapeHTML(label+container)}</option>`;
+  }).join('');
+  const preferred=MAP_TRACKING_BOXES.find(box=>/demo|synthet/i.test(`${box.numero_serie||''} ${box.container_id||''}`));
+  if(previous&&MAP_TRACKING_BOXES.some(box=>String(box.id_boite)===previous))select.value=previous;
+  else if(preferred)select.value=String(preferred.id_boite);
+  else if(MAP_TRACKING_BOXES.length)select.value=String(MAP_TRACKING_BOXES[0].id_boite);
+  const start=document.getElementById('demo-replay-start');
+  if(start)start.disabled=!MAP_TRACKING_BOXES.length;
+  if(demoReplayBoxId&&select.value!==String(demoReplayBoxId))resetDemoReplay();
+}
+
+function latestSyntheticRun(points){
+  const runs=new Map();
+  for(const point of points||[]){
+    const quality=point.quality||{},scenario=quality.scenario||{};
+    const runId=String(scenario.simulationId||quality.datasetId||'');
+    if(quality.dataOrigin!=='SYNTHETIC'||!runId.startsWith('douala-yaounde-bertoua-'))continue;
+    if(!runs.has(runId))runs.set(runId,[]);
+    runs.get(runId).push(point);
+  }
+  const candidates=[...runs.values()].filter(items=>items.length>1);
+  candidates.sort((a,b)=>Date.parse(b[b.length-1].measured_at||0)-Date.parse(a[a.length-1].measured_at||0));
+  return candidates[0]||[];
+}
+
+async function prepareDemoReplay(){
+  stopDemoReplayTimer();demoReplayPoints=[];demoReplayEvents=new Set();demoReplayIndex=0;
+  const id=document.getElementById('demo-replay-box')?.value;
+  const status=document.getElementById('demo-replay-status'),seek=document.getElementById('demo-replay-seek');
+  if(!id||!status)return;
+  demoReplayBoxId=String(id);status.textContent='Chargement de la trace de démonstration…';
+  try{
+    const response=await secureApiFetch(`/api/black-boxes/${encodeURIComponent(id)}/route-tracking?limit=2000`);
+    const data=await response.json();if(!response.ok)throw new Error(data.error||'Historique GPS indisponible');
+    demoReplayPoints=latestSyntheticRun(data.points||[]).filter(point=>Number.isFinite(Number(point.latitude))&&Number.isFinite(Number(point.longitude)));
+    if(demoReplayPoints.length<2){status.textContent='Aucun rejeu synthétique Douala–Yaoundé–Bertoua disponible pour cette boîte.';if(seek)seek.disabled=true;return;}
+    let transitions=0,prior='';
+    demoReplayPoints.forEach(point=>{const code=String(point.quality?.scenario?.eventCode||'');if(code&&code!==prior)transitions++;prior=code;});
+    if(seek){seek.max=String(demoReplayPoints.length-1);seek.value='0';seek.disabled=false;}
+    status.textContent=`${demoReplayPoints.length} points prêts · ${transitions} transitions d’événement · données SYNTHETIC`;
+    resetDemoReplay(false);
+  }catch(error){status.textContent=`Rejeu indisponible : ${error.message}`;if(seek)seek.disabled=true;}
+}
+
+function stopDemoReplayTimer(){if(demoReplayTimer){clearInterval(demoReplayTimer);demoReplayTimer=null;}}
+function demoEventLabel(point){
+  const labels={SUSPICIOUS_DOOR_OPEN:'Ouverture de porte suspecte',ABNORMAL_SHOCK:'Choc anormal détecté',UNPLANNED_STOP:'Arrêt non planifié',ROUTE_DEVIATION:'Déviation du trajet'};
+  return String(point.quality?.scenario?.eventCode||'').split(',').filter(Boolean).map(code=>labels[code]||code.replaceAll('_',' ').toLowerCase()).join(' · ');
+}
+function addDemoReplayEvent(point,index){
+  const label=demoEventLabel(point);if(!label)return;
+  const code=String(point.quality?.scenario?.eventCode||`${point.sequence}:${label}`);if(demoReplayEvents.has(code))return;
+  demoReplayEvents.add(code);
+  const seconds=Number(point.quality?.scenario?.simulationSecond);
+  const elapsed=Number.isFinite(seconds)?`T+${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`:`Point ${index+1}`;
+  const severe=label.includes('Choc')||label.includes('Déviation');
+  showToast(`SYNTHETIC · ${elapsed} · ${label}`,severe?'danger':'warn',demoReplaySoundEnabled);
+  const feed=document.getElementById('demo-replay-event-feed');
+  if(feed){if(feed.querySelector('span'))feed.innerHTML='';const item=document.createElement('div');item.className=`map-demo-event ${severe?'is-danger':'is-warning'}`;item.textContent=`${elapsed} — ${label} · notification de démonstration`;feed.prepend(item);while(feed.children.length>6)feed.lastElementChild.remove();}
+  const map=maps['map-main'];
+  if(map&&typeof L!=='undefined'){
+    const marker=L.circleMarker([Number(point.latitude),Number(point.longitude)],{radius:9,color:'#fff',weight:2,fillColor:severe?'#ff3333':'#ffb020',fillOpacity:1}).addTo(map);
+    marker._containerId=`demo-event-${code}`;
+    marker.bindPopup(`<strong>${escapeHTML(label)}</strong><br><span>SYNTHETIC · ${escapeHTML(elapsed)} · séquence ${escapeHTML(String(point.sequence||''))}</span>`);
+    marker.openPopup();trailLayers.push(marker);demoReplayEventMarkers.push(marker);
+  }
+}
+function renderDemoReplayPoint(index,announce=true){
+  const point=demoReplayPoints[index];if(!point)return;
+  demoReplayIndex=index;
+  const map=maps['map-main'],scenario=point.quality?.scenario||{},latlng=[Number(point.latitude),Number(point.longitude)],deviated=Boolean(scenario.isDeviated);
+  const icon=L.divIcon({className:'demo-moving-marker',html:`<span class="demo-moving-pulse ${deviated?'is-deviated':''}"><span></span></span>`,iconSize:[34,34],iconAnchor:[17,17]});
+  if(map){
+    if(!demoReplayMarker)demoReplayMarker=L.marker(latlng,{icon,zIndexOffset:1200}).addTo(map);
+    else demoReplayMarker.setLatLng(latlng).setIcon(icon);
+    demoReplayMarker.bindPopup(`<strong>Douala → Yaoundé → Bertoua</strong><div>${deviated?'Déviation simulée':'Trajet nominal simulé'}</div><div>${Number(point.speed||0).toFixed(0)} km/h · ${latlng[0].toFixed(5)}, ${latlng[1].toFixed(5)}</div><small>Données synthétiques · séquence ${escapeHTML(String(point.sequence||''))}</small>`);
+    if(index===0)map.fitBounds(L.latLngBounds(demoReplayPoints.map(p=>[Number(p.latitude),Number(p.longitude)])).pad(.16));else map.panTo(latlng,{animate:false});
+  }
+  const seek=document.getElementById('demo-replay-seek');if(seek)seek.value=String(index);
+  const seconds=Number(scenario.simulationSecond),status=document.getElementById('demo-replay-status');
+  if(status)status.textContent=`${index+1} / ${demoReplayPoints.length} · T+${Number.isFinite(seconds)?`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`:'—'} · ${deviated?'DÉVIATION':'ROUTE NORMALE'} · ${Number(point.speed||0).toFixed(0)} km/h · SYNTHETIC`;
+  if(announce){const code=String(scenario.eventCode||''),previous=index?String(demoReplayPoints[index-1].quality?.scenario?.eventCode||''):'';if(code&&code!==previous)addDemoReplayEvent(point,index);}
+}
+function startDemoReplay(){
+  if(!demoReplayPoints.length){prepareDemoReplay().then(()=>{if(demoReplayPoints.length)startDemoReplay();});return;}
+  if(demoReplaySoundEnabled&&typeof soundAlert!=='undefined'){soundAlert.currentTime=0;soundAlert.play().then(()=>{soundAlert.pause();soundAlert.currentTime=0;}).catch(()=>{});}
+  stopDemoReplayTimer();if(demoReplayIndex>=demoReplayPoints.length-1)resetDemoReplay();
+  const pause=document.getElementById('demo-replay-pause');if(pause){pause.disabled=false;pause.textContent='Ⅱ Pause';}
+  renderDemoReplayPoint(demoReplayIndex,true);
+  demoReplayTimer=setInterval(()=>{const next=demoReplayIndex+1;if(next>=demoReplayPoints.length){stopDemoReplayTimer();if(pause)pause.textContent='▶ Rejouer';return;}renderDemoReplayPoint(next,true);},Number(document.getElementById('demo-replay-speed')?.value)||100);
+}
+function toggleDemoReplayPause(){
+  const pause=document.getElementById('demo-replay-pause');
+  if(demoReplayTimer){stopDemoReplayTimer();if(pause)pause.textContent='▶ Reprendre';}
+  else if(demoReplayPoints.length){if(pause)pause.textContent='Ⅱ Pause';startDemoReplay();}
+}
+function resetDemoReplay(clearFeed=true){
+  stopDemoReplayTimer();demoReplayIndex=0;demoReplayEvents=new Set();
+  if(demoReplayMarker&&maps['map-main']){maps['map-main'].removeLayer(demoReplayMarker);demoReplayMarker=null;}
+  if(maps['map-main'])demoReplayEventMarkers.forEach(marker=>{if(maps['map-main'].hasLayer(marker))maps['map-main'].removeLayer(marker);});
+  trailLayers=trailLayers.filter(layer=>!demoReplayEventMarkers.includes(layer));demoReplayEventMarkers=[];
+  const seek=document.getElementById('demo-replay-seek');if(seek)seek.value='0';
+  const pause=document.getElementById('demo-replay-pause');if(pause){pause.disabled=true;pause.textContent='Ⅱ Pause';}
+  if(clearFeed){const feed=document.getElementById('demo-replay-event-feed');if(feed)feed.innerHTML='<span>Les événements apparaîtront ici pendant le rejeu.</span>';}
+  if(demoReplayPoints.length)renderDemoReplayPoint(0,false);
+}
+function seekDemoReplay(index){
+  if(!demoReplayPoints.length)return;
+  const clamped=Math.max(0,Math.min(demoReplayPoints.length-1,Math.round(index))),point=demoReplayPoints[clamped];
+  const code=String(point.quality?.scenario?.eventCode||''),previous=clamped?String(demoReplayPoints[clamped-1].quality?.scenario?.eventCode||''):'';
+  renderDemoReplayPoint(clamped,false);if(code&&code!==previous)addDemoReplayEvent(point,clamped);
+}
+function toggleDemoReplaySound(){
+  demoReplaySoundEnabled=!demoReplaySoundEnabled;
+  const button=document.getElementById('demo-replay-sound');if(button){button.textContent=demoReplaySoundEnabled?'🔊 Son':'🔇 Son coupé';button.setAttribute('aria-pressed',String(demoReplaySoundEnabled));}
 }
 
 function mapPositionState(position){
@@ -3224,6 +3358,14 @@ function doLogout() {
 //  MAP INIT & CONTROLS
 // ══════════════════════════════════════════════════════
 let tileLayerRef = null;
+let demoReplayPoints = [];
+let demoReplayMarker = null;
+let demoReplayTimer = null;
+let demoReplayIndex = 0;
+let demoReplayEvents = new Set();
+let demoReplayEventMarkers = [];
+let demoReplaySoundEnabled = true;
+let demoReplayBoxId = null;
 
 function initMap(mapId, role){
   const el = document.getElementById(mapId);
@@ -3417,11 +3559,34 @@ function placeDBMarkersOnMap(map, role){
 async function fetchAndDrawTrail(map, id_boite, requestVersion=MAP_TRAIL_VERSION){
   try {
     if(!/^\d+$/.test(String(id_boite))) return;
-    const res=await secureApiFetch(`/api/black-boxes/${encodeURIComponent(id_boite)}/route-tracking?limit=300`);
+    const res=await secureApiFetch(`/api/black-boxes/${encodeURIComponent(id_boite)}/route-tracking?limit=2000`);
     const data=await res.json();
     if(!res.ok) throw new Error(data.error || 'Historique GPS indisponible');
     if(requestVersion!==MAP_TRAIL_VERSION || !trailsOn) return;
     const history=data.points || [];
+    const syntheticRun=latestSyntheticRun(history);
+    if(syntheticRun.length>1){
+      let segmentState=null,segmentCoordinates=[],previousCode='';
+      const flushSegment=()=>{if(segmentCoordinates.length<2)return;const line=L.polyline(segmentCoordinates,{color:segmentState?'#ff3333':'#32d296',weight:segmentState?5:4,opacity:.95,dashArray:segmentState?'':'8 6'}).addTo(map);line._containerId=`synthetic-trail-${id_boite}`;trailLayers.push(line);};
+      syntheticRun.forEach((point,index)=>{
+        const deviated=Boolean(point.quality?.scenario?.isDeviated);
+        const coordinate=[Number(point.latitude),Number(point.longitude)];
+        if(segmentState===null){segmentState=deviated;segmentCoordinates=[coordinate];}
+        else if(segmentState!==deviated){segmentCoordinates.push(coordinate);flushSegment();segmentState=deviated;segmentCoordinates=[coordinate];}
+        else segmentCoordinates.push(coordinate);
+        const scenario=point.quality?.scenario||{},code=String(scenario.eventCode||'');
+        if(code&&code!==previousCode){
+          const label=demoEventLabel(point)||code.replaceAll('_',' ');
+          const marker=L.circleMarker(coordinate,{radius:8,color:'#fff',weight:2,fillColor:deviated?'#ff3333':'#ffb020',fillOpacity:1}).addTo(map);
+          marker._containerId=`synthetic-event-${id_boite}-${code}-${index}`;
+          marker.bindPopup(`<strong>${escapeHTML(label)}</strong><br><span>SYNTHETIC · T+${Number(scenario.simulationSecond||0)} s · séquence ${escapeHTML(String(point.sequence||''))}</span>`);
+          trailLayers.push(marker);
+        }
+        previousCode=code;
+      });
+      flushSegment();
+      return;
+    }
     const segments=data.summary?.segments||[];
     for(const segment of segments){
       if(segment.coordinates?.length<2) continue;

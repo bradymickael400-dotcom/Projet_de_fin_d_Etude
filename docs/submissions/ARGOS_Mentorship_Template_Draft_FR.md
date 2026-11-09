@@ -1,0 +1,75 @@
+# AI for Good Sandbox Hackathon — ARGOS Transit Agents
+
+**Responsable d’équipe :** à confirmer · **Membres :** à confirmer · **Contact :** à confirmer  
+**Dépôt :** https://github.com/bradymickael400-dotcom/Projet_de_fin_d_Etude (accès public à vérifier avant soumission)  
+**État des preuves :** projet de soumission, 7 novembre 2026. Le texte distingue les preuves du dépôt, les démonstrations simulées et les vérifications encore ouvertes.
+
+## 1. Introduction
+
+Le transport de conteneurs de Douala vers l’intérieur du pays implique plusieurs organisations et changements de mode. Lorsque les positions, l’état du chargement, les scellés et les documents arrivent séparément ou tardivement, les personnes responsables peuvent ne pas disposer des mêmes faits au moment de décider d’une vérification. ARGOS Transit Agents est une démonstration d’analyse et de coordination des politiques fondée sur des événements de transport mis en scène. Quatre rôles institutionnels simulés — opérateur logistique, douane/port, protection des données et conseiller en politiques — examinent uniquement les faits et la partition de sources qui leur sont attribués. Un coordinateur déterministe libère les événements par étapes et consigne les évaluations. Toute recommandation reste soumise à une décision humaine; les agents ne représentent aucune autorité publique et n’exécutent aucune action juridique ou physique.
+
+L’application de suivi IoT ARGOS constitue une source de preuve complémentaire, et non l’affirmation centrale de la soumission. Le dépôt contient des composants d’ingestion et d’affichage de télémétrie, tandis que le rejeu `silent_container_v1` utilise des événements synthétiques. La soumission démontre un prototype et des scénarios contrôlés; elle ne prouve ni un système douanier opérationnel, ni la conformité juridique, ni une certification, ni une IA validée sur le terrain.
+
+## 2. Description du cas d’usage
+
+La démonstration examine le trajet fictif d’un conteneur de Douala vers un yard intérieur. La question est de savoir comment des acteurs distincts peuvent évaluer un événement tardif ou contradictoire, identifier les preuves manquantes et décider si une information peut être partagée. La base locale comprend un registre de sources, certaines dispositions de l’Accord de l’OMC sur la facilitation des échanges et des extraits de la loi camerounaise n° 2024/017 contrôlés visuellement. Ces extraits sont limités et n’ont pas fait l’objet d’une revue juridique indépendante. Le système doit signaler lorsque ses sources ne permettent pas de répondre.
+
+Un rejeu par étapes introduit une déclaration et un scellé, la sortie du terminal, une alerte de porte/température avec une position GPS incertaine, une demande de partage de localisation, un événement tardif au yard et une inspection proposée. Les évaluations propres à chaque rôle sont rapprochées par un coordinateur. Dans la démonstration, la demande de transfert reste en attente d’une revue humaine. Les marchandises, personnes et télémétries du scénario sont entièrement synthétiques; les sorties ne prouvent que le comportement dans ce scénario.
+
+Le projet traite la fragmentation du contexte en présentant des évaluations sourcées et limitées par rôle, avec provenance, incertitude et état de revue explicites. Il n’établit pas le statut juridique d’une preuve IoT privée, ne remplace pas les systèmes douaniers ou des transporteurs et ne détermine pas quelle institution est compétente lors d’un transfert.
+
+## 3. Exigences du cas d’usage
+
+- **SRC — Sources :** chaque événement de scénario devrait comporter l’heure, une référence d’expédition et une origine (`SIMULATED` ou `DEVICE`); les sources de politiques devraient indiquer autorité, date/version et provenance. Le rejeu est synthétique; la couverture complète des sources et la qualité des métadonnées restent incomplètes.
+- **C — Collecteur :** un coordinateur déterministe met en file et libère les événements par étape. L’API IoT ARGOS collecte séparément la télémétrie des appareils. Le rejeu fonctionne sans LLM externe; le comportement d’un fournisseur externe n’est pas garanti.
+- **PP — Prétraitement :** valider les champs et l’ordre des événements, conserver la provenance et éviter d’exposer les identifiants personnels inutiles. Les textes devraient être découpés avec des métadonnées d’article et de page. Les extraits de loi sont limités; la pseudonymisation de bout en bout et l’exhaustivité du corpus juridique ne sont pas établies ici.
+- **M — Méthodes :** quatre rôles simulés recherchent et évaluent des sources locales partitionnées; des règles déterministes coordonnent les étapes et garde-fous. La formulation facultative par LLM n’est pas nécessaire au rejeu déterministe. Les agents ne sont pas des modèles institutionnels entraînés et l’exactitude générale de leurs réponses juridiques n’est pas revendiquée.
+- **P — Politiques et décision :** répartir l’information par rôle, suspendre le partage sensible de localisation pour une revue humaine, garder une trace d’audit et permettre approbation, rejet ou dérogation humaine. Il s’agit d’un contrôle prototype, et non d’une conclusion sur la légalité d’un transfert.
+- **D — Distribution :** fournir à chaque rôle une évaluation circonscrite, les passages cités, les informations manquantes et l’état de revue. Des documents de soumission existent en français et en anglais; l’équivalence bilingue complète de l’interface produit n’est pas vérifiée.
+- **SINK — Destinataires :** une personne chargée de la revue, par exemple un opérateur ou un agent compétent, évalue les éléments et reste responsable de la décision. Les rôles simulés n’agissent pas au nom d’institutions réelles.
+
+## 4. Cartographie ITU-T Y.3172, AI Readiness 2.0 et politiques sectorielles
+
+Le modèle fourni demande une cartographie de chaque nœud du pipeline, des dimensions de préparation au-delà des données et modèles, ainsi que des textes sectoriels pertinents. Les entrées ci-dessous distinguent les preuves implémentées des exigences restant à vérifier. Y.3172 sert de référence d’organisation; ARGOS n’est pas certifié selon cette recommandation. AI Readiness 2.0 est un cadre de préparation, et non un score du projet; aucun score n’est revendiqué.
+
+| Nœud | Cas d’usage ARGOS et preuves | Dimensions de préparation | Politiques/normes à examiner et état |
+|---|---|---|---|
+| SRC | Événements de scénario synthétiques; corpus de politiques locales et registre de sources. Le simulateur/appareil IoT est une source distincte et facultative. | Accès, provenance, qualité, représentativité des données, participation de l’écosystème. | Registre de sources; extraits de la loi camerounaise n° 2024/017 (partiels); sources officielles douanières, de transit et portuaires à établir. Étiqueter chaque événement rejoué `SIMULATED`; ne pas le présenter comme donnée terrain. |
+| C | Le coordinateur déterministe libère les faits par étape; l’API IoT collecte séparément la télémétrie. | Connectivité, infrastructure numérique, fiabilité de collecte, coordination organisationnelle. | Contrôles d’API/authentification et procédure de panne/rejeu; vérifier les règles de cybersécurité à partir de sources officielles. |
+| PP | Validation et ordre des événements, contexte par rôle, recherche partitionnée. | Harmonisation, interopérabilité, qualité, vie privée, compétences et capacités. | Métadonnées article/page et schéma d’événement à compléter. Le modèle de données de l’OMD et l’UN/CEFACT sont des comparateurs tant que leur adoption locale n’est pas confirmée. |
+| M | Recherche/évaluation selon quatre rôles et coordination déterministe; LLM facultatif; requêtes de contrôle du corpus et preuves de scénario documentées dans le dépôt. | Alignement stratégique, contextualisation, provenance des modèles/sources, évaluation, gestion des risques. | Stratégie nationale de l’IA et stratégie de l’Union africaine à titre de contexte; NIST AI RMF et principes de l’OCDE comme références volontaires. Aucun modèle institutionnel entraîné ou validé n’est revendiqué. |
+| P | Divulgation progressive, transfert en attente d’une revue humaine, trace d’audit et possibilité de dérogation dans la démonstration. | Supervision humaine, confiance, responsabilité, collaboration institutionnelle, contestabilité. | La loi n° 2024/017 exige une analyse complète de son applicabilité et une revue juridique. Les articles 4 et 7.4 de l’Accord OMC sont des comparateurs possibles; applicabilité et interprétation restent à vérifier. |
+| D | Résultats limités par rôle avec références, incertitudes et état de revue. | Inclusion de l’interface, explicabilité, accès linguistique, déploiement, énergie et capacité opérationnelle. | Procédures opérateur, interface bilingue accessible, conservation et gestion des incidents à valider. Mesurer les hypothèses de déploiement et d’énergie avant toute affirmation d’échelle. |
+| SINK | Les personnes chargées de la revue reçoivent les recommandations; le prototype ne configure pas les responsabilités institutionnelles nominatives. | Collaboration humain-IA, mandats institutionnels, compétences, supervision et recours. | Identifier les rôles compétents et les voies de recours/dérogation à partir de sources officielles primaires avant de présenter le processus comme institutionnellement fondé. |
+
+Cette cartographie sert de guide d’implémentation et de recherche, et ne prouve pas que chaque politique citée s’applique au prototype. Les dimensions de préparation incluent aussi la capacité institutionnelle, la stratégie, l’infrastructure, l’inclusion de l’interface, la collaboration humaine et la durabilité.
+
+## 5. Scénarios d’erreur
+
+**Scénario A — Conteneur silencieux (principal).** Six étapes synthétiques présentent un scellé et une déclaration, la sortie du terminal, un événement de porte/température avec localisation incertaine, une demande de partage de localisation, une preuve tardive au yard et une inspection proposée. Comportement attendu : chaque rôle ne reçoit que les faits qui lui sont destinés; l’incertitude et les preuves manquantes restent visibles; une preuve tardive peut modifier l’évaluation avec explication; le transfert de localisation reste en attente de revue humaine; une question sans source reçoit une réponse indiquant l’insuffisance des éléments. Le dépôt contient des preuves pour `silent_container_v1` et une procédure de rejeu. Ne pas présenter le scénario synthétique comme un essai sur un transport réel.
+
+**Scénario B — Profilage controversé et demande de données.** Un opérateur fictif propose d’utiliser les événements antérieurs pour profiler les importateurs; une autre partie demande les historiques de localisation. Comportement attendu : le système signale que la finalité et l’autorité restent à établir, ne traite pas les alertes passées comme preuve d’un risque ou d’une faute, cite les passages disponibles, consigne les règles manquantes et transmet la décision à une personne. Aucun indicateur d’impact discriminatoire ni flux douanier réel n’a été validé; il s’agit d’un test de résistance des politiques, pas d’une preuve que le problème est résolu.
+
+## 6. Lacunes de politiques et de normes issues de la cartographie
+
+Le modèle reçu en séance de mentorat présente des hypothèses concernant la suspension du BESC, l’interopérabilité SIGMAT/CAMCIS, le statut d’une autorité, les responsabilités relatives aux scellés et l’IA douanière. Ce sont des exemples et consignes, pas des faits vérifiés sur ARGOS. Ils ne doivent entrer dans le registre final des lacunes qu’après confirmation par des sources officielles primaires. Les éléments actuels étayent ces constats circonscrits :
+
+| Lacune/question | Éléments disponibles | Vérifications restant à faire |
+|---|---|---|
+| Base et finalité juridiques du partage de localisation | Le prototype suspend le transfert du scénario pour revue humaine; le corpus local contient des extraits choisis de la loi n° 2024/017. | Loi applicable complète, textes d’application, rôles, finalité, destinataire, conservation, transferts transfrontaliers; revue juridique indépendante. |
+| Responsabilités aux transferts et valeur probante des événements d’un appareil | Le scénario modélise un événement tardif et une révision de l’évaluation; aucune règle officielle de décision n’est établie dans le dépôt. | Sources primaires douanières, portuaires, ferroviaires/routières et contractuelles; statut des télémétries privées à l’appui d’une action officielle. |
+| Interopérabilité des données d’expédition et d’événement | Le projet possède ses propres formats d’événement et un catalogue local de sources. | Spécifications officielles camerounaises/régionales et preuve de déploiement/adoption; les normes restent des comparateurs jusqu’à confirmation. |
+| Recommandations automatisées, contestation et supervision humaine | Le scénario prévoit une revue humaine/dérogation; aucune voie institutionnelle réelle de recours n’est intégrée. | Règles contraignantes et organismes responsables; processus opérationnel de revue, plainte et audit. |
+| Qualité des preuves et validité terrain | Les rejeux et artefacts de contrôle sont synthétiques; les preuves locales décrivent un comportement déterministe. | Étalonnage des appareils, essais terrain, itinéraires représentatifs, métriques indépendantes, évaluation bilingue des utilisateurs. |
+
+Aucune affirmation ne prétend qu’ARGOS résout ces lacunes. Pour chaque constat final, la soumission devra citer un passage officiel camerounais/régional et un comparateur pertinent. Il faut supprimer les hypothèses non démontrées plutôt que transformer des informations secondaires en faits.
+
+## Conclusion et éléments à compléter
+
+Ce prototype offre un moyen reproductible de mettre en scène des preuves, limiter les informations visibles par rôle, conserver des références de sources et imposer une revue humaine. Il démontre une coordination de politiques autour d’événements de cargaison synthétiques, avec télémétrie IoT facultative; il ne prouve ni conformité juridique, ni adoption institutionnelle, ni performance terrain.
+
+Avant la soumission externe, l’équipe doit compléter les noms et coordonnées, vérifier l’accès public au dépôt, confirmer les textes et citations officiels, exécuter le scénario nommé et conserver les résultats attendus/obtenus, puis confirmer le format demandé par l’organisateur. Ce sont des éléments à compléter, non des réalisations revendiquées.
+
+## Références et note de vérification
+
+Utiliser les versions primaires d’ITU-T Y.3172, du rapport ITU AI Readiness 2.0, de la loi camerounaise n° 2024/017, des textes douaniers/de transit applicables et des dispositions de l’Accord OMC. Consigner URL, autorité émettrice, version/date, date d’accès, section/article/page exacte et nature de la référence : obligatoire, critère de notation, comparateur ou question ouverte. Les affirmations datées du projet de validation concernant le BESC, SIGMAT, le fonctionnement d’une autorité ou les omissions d’une stratégie ne sont pas reprises sans vérification par des sources primaires.

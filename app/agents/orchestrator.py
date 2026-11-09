@@ -146,6 +146,25 @@ def agent_tools(registry, identity, selected_box_ids=None):
     return tools
 
 
+def _deterministic_operational_fallback(raw_tool_results, selected_refs_by_box):
+    """Compose a concise answer from ARGOS rules when the LLM is rate limited."""
+    snapshots = [item for item in raw_tool_results if item.agent_id == "risk_assessor"]
+    if not snapshots:
+        return None
+    result_lines = []
+    for item in snapshots:
+        data = item.data or {}
+        signals = data.get("signals") or []
+        reference = selected_refs_by_box.get(str(data.get("black_box_id"))) or "le conteneur sélectionné"
+        result_lines.append(
+            f"{reference} : niveau calculé {data.get('risk_level', 'indéterminé')}; "
+            f"signaux observés : {', '.join(signals) if signals else 'aucun signal de choc, porte ou alarme dans la dernière mesure'}; "
+            f"position périmée : {'oui' if data.get('stale_position') else 'non'}; "
+            "méthode : règles déterministes ARGOS."
+        )
+    return "\n".join(result_lines)
+
+
 def run_agent_request(message, identity, provider, registry=None, black_box_id=None,
                       black_box_ids=None, trace_id=None, selected_container_refs=None,
                       hidden_identifiers=None):
@@ -214,11 +233,54 @@ def run_agent_request(message, identity, provider, registry=None, black_box_id=N
                 return checked_result(AgentResult(name, "denied", error="Boîte non sélectionnée par l'utilisateur"))
         return checked_result(registry.execute(name, arguments, identity, trace_id))
 
-    results = provider.generate(
-        message=enriched_message,
-        tools=tools,
-        invoke_tool=invoke_tool,
+    # For direct operational questions, collect a deterministic snapshot for
+    # every explicitly selected box before asking the LLM to compose prose.
+    # Gemini's AUTO function mode may return text without calling any tools;
+    # this guarantees both that facts reach the model and that the UI can
+    # report which ARGOS agents actually supplied them.
+    operational_intent = re.search(
+        r"\b(choc|chocs|porte|portes|alerte|alertes|incident|incidents|"
+        r"t[eé]l[eé]m[eé]trie|mesure|mesures|position|positions|trajet|"
+        r"risque|risques|donn[eé]es r[eé]centes|derni[eè]res?)\b",
+        message, re.IGNORECASE,
     )
+    if selected_box_ids and operational_intent:
+        for box_id in selected_box_ids:
+            checked_result(registry.execute(
+                "risk_assessor", {"black_box_id": box_id}, identity, trace_id
+            ))
+
+    quota_fallback_used = False
+    try:
+        results = provider.generate(
+            message=enriched_message,
+            tools=tools,
+            invoke_tool=invoke_tool,
+        )
+    except Exception as provider_error:
+        response = getattr(provider_error, "response", None)
+        fallback = _deterministic_operational_fallback(raw_tool_results, selected_refs_by_box)
+        if getattr(response, "status_code", None) != 429 or not operational_intent or not fallback:
+            raise
+        quota_fallback_used = True
+        results = {
+            "reply": (
+                "Gemini est temporairement limité par son quota de requêtes. "
+                "Voici le résultat ARGOS calculé à partir des données récupérées et des règles déterministes :\n\n"
+                + fallback
+            ),
+            "tool_results": [],
+        }
+    if operational_intent and raw_tool_results and not any(
+        (item.agent_id if isinstance(item, AgentResult) else item.get("agent_id")) in OPERATIONAL_AGENTS
+        for item in raw_tool_results
+    ):
+        # If AUTO mode skips tools, make the returned answer explicitly rely
+        # on the retrieved, selected-box assessment instead of letting the
+        # model ask again for an ID or imply that no agent ran.
+        fallback = _deterministic_operational_fallback(raw_tool_results, selected_refs_by_box)
+        if fallback:
+            results["reply"] = "Voici l’analyse des dernières données récupérées pour le conteneur explicitement sélectionné :\n\n" + fallback
     consulted_order = []
 
     def record_agent(item):
@@ -255,5 +317,8 @@ def run_agent_request(message, identity, provider, registry=None, black_box_id=N
         "agents_consulted": consulted,
         "agent_results": tool_results,
         "sources": deduped_sources,
-        "limitations": ["Les capacités indisponibles ou sans données sont indiquées explicitement."],
+        "limitations": [
+            "Les capacités indisponibles ou sans données sont indiquées explicitement.",
+            *(["Gemini a dépassé une limite de requêtes; cette réponse est une analyse ARGOS déterministe, sans reformulation LLM."] if quota_fallback_used else []),
+        ],
     }

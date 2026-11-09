@@ -11,14 +11,18 @@ réseau sont journalisées; chaque message garde le même UUID lors des reprises
 """
 
 import argparse
+import fcntl
 import json
 import math
+import os
 import queue
 import random
+import tempfile
 import threading
 import time
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 
 import requests
 
@@ -30,6 +34,7 @@ ROUTE = (
 )
 DURATION_SECONDS = 600
 DEVIATION_METERS = 8_000
+SEQUENCE_RESERVATION_SIZE = DURATION_SECONDS
 
 
 def _utc_now():
@@ -151,7 +156,7 @@ def telemetry_payload(args, t_seconds, started_monotonic):
         lat, lon = _offset_lateral(lat, lon, heading, DEVIATION_METERS)
 
     shock_g = 12.0 if state["shock_event"] else round(random.uniform(0.05, 0.35), 2)
-    scenario_id = f"douala-yaounde-bertoua-{int(started_monotonic)}"
+    scenario_id = f"douala-yaounde-bertoua-{int(started_monotonic * 1_000_000)}"
     return {
         "messageId": str(uuid.uuid4()),
         "type": "telemetry",
@@ -219,6 +224,53 @@ def telemetry_payload(args, t_seconds, started_monotonic):
     }
 
 
+def _default_sequence_state_path():
+    state_root = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local" / "state"))
+    return state_root / "argos" / "simulator_sequences.json"
+
+
+def _reserve_start_sequence(device_uid, state_path=None, requested_start=None):
+    """Reserve a unique monotonic sequence range so every run can restart at t=0."""
+    path = Path(state_path) if state_path else _default_sequence_state_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = path.with_suffix(path.suffix + ".lock")
+    lock_path.touch(exist_ok=True)
+    with lock_path.open("r+") as lock_file:
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+        try:
+            try:
+                state = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+            except (OSError, json.JSONDecodeError):
+                state = {}
+            if not isinstance(state, dict):
+                state = {}
+            last_reserved = int(state.get(device_uid, 0) or 0)
+            if requested_start is None:
+                start = max(time.time_ns() // 1_000, last_reserved + 1)
+            else:
+                start = int(requested_start)
+                if start <= last_reserved:
+                    raise ValueError(
+                        f"--start-sequence {start} n'est pas supérieur à la dernière plage réservée "
+                        f"({last_reserved}); retirez cette option pour l'attribution automatique."
+                    )
+            state[device_uid] = start + SEQUENCE_RESERVATION_SIZE - 1
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile(
+                mode="w", encoding="utf-8", dir=path.parent, prefix=f".{path.name}.", delete=False
+            ) as state_file:
+                json.dump(state, state_file, ensure_ascii=False, sort_keys=True)
+                state_file.write("\n")
+                state_file.flush()
+                os.fsync(state_file.fileno())
+                temp_path = Path(state_file.name)
+            os.chmod(temp_path, 0o600)
+            os.replace(temp_path, path)
+            return start
+        finally:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+
+
 def _send_worker(args, outbox, headers):
     session = requests.Session()
     url = f"{args.base_url.rstrip('/')}/api/iot/telemetry"
@@ -248,6 +300,11 @@ def _send_worker(args, outbox, headers):
 
 
 def cmd_simulate_route(args):
+    args.start_sequence = _reserve_start_sequence(
+        args.device_uid,
+        state_path=getattr(args, "sequence_state_file", None),
+        requested_start=args.start_sequence,
+    )
     headers = {"X-Device-Key": args.api_key}
     outbox = queue.Queue()  # non bornée pour ne jamais ralentir/abandonner la simulation
     worker = threading.Thread(target=_send_worker, args=(args, outbox, headers),
@@ -255,6 +312,8 @@ def cmd_simulate_route(args):
     worker.start()
     started = time.monotonic()
     print("Simulation Douala → Yaoundé → Bertoua : 600 points à 1 Hz", flush=True)
+    print(f"Séquences réservées : {args.start_sequence}–{args.start_sequence + DURATION_SECONDS - 1}", flush=True)
+    print("Nouvelle exécution : départ du scénario à Douala (t=0).", flush=True)
     print("Point vert normal; déviation rouge; données marquées SYNTHETIC.", flush=True)
     try:
         for t_seconds in range(DURATION_SECONDS):
@@ -316,7 +375,10 @@ def build_parser():
     simulate.add_argument("--api-key", required=True)
     simulate.add_argument("--black-box-id", type=int, required=True)
     simulate.add_argument("--container-id", required=True)
-    simulate.add_argument("--start-sequence", type=int, default=1)
+    simulate.add_argument("--start-sequence", type=int, default=None,
+                          help="Début explicite (normalement attribué automatiquement à chaque lancement)")
+    simulate.add_argument("--sequence-state-file", default=None,
+                          help="Fichier d'état des séquences; défaut: ~/.local/state/argos/simulator_sequences.json")
     simulate.set_defaults(func=cmd_simulate_route)
 
     ack = sub.add_parser("ack", help="Accuser réception d'une commande appareil")
