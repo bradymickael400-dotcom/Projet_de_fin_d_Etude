@@ -12,7 +12,7 @@
   function loadScript(src) {
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = `${baseUrl}${src}?v=20261028-regulatory-history-v1`;
+      script.src = `${baseUrl}${src}?v=20261108-ai-box-picker-v2`;
       script.async = false;
       script.onload = () => resolve();
       script.onerror = () => reject(new Error(`Impossible de charger ${src}`));

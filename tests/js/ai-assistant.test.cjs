@@ -105,8 +105,20 @@ test('assistant presents its multi-agent identity and container selection UI', (
   assert.match(ui, /const AI_CHAT_ENDPOINT = '\/api\/ai\/chat'/);
   assert.match(ui, /function mountGlobalAIAssistant\(/);
   assert.match(ui, /function renderAIContainerSelection\(containers\)/);
-  assert.match(ui, /Analyser les conteneurs sélectionnés/);
+  assert.match(ui, /Analyser les boîtes sélectionnées/);
+  assert.match(ui, /Données de la boîte · conteneur associé/);
+  assert.match(ui, /item\.label \|\| item\.box_label/);
+  assert.doesNotMatch(ui, /Boîte ARGOS \$\{safeId\}/);
   assert.match(ui, /argos-ai-hero-mark/);
   assert.match(css, /\.argos-ai-hero-mark svg/);
   assert.match(css, /\.argos-ai-toggle\s*\{/);
+});
+
+test('assistant replies use the available width and provide edge resize handles', () => {
+  const css = fs.readFileSync(path.join(root, 'app/static/css/ai-assistant.css'), 'utf8');
+  assert.match(css, /\.argos-ai-messages \.msg-bubble\s*\{[^}]*width:100%/);
+  assert.match(css, /\.argos-ai-resize-handle\.is-left/);
+  assert.match(css, /\.argos-ai-resize-handle\.is-bottom/);
+  assert.match(ui, /Glisser pour ajuster la largeur/);
+  assert.match(ui, /Glisser pour ajuster la hauteur/);
 });

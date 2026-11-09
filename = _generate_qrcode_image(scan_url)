@@ -1,0 +1,6 @@
+              report_uid              |                title                |                                 storage_key                                  |    mime_type    | size 
+--------------------------------------+-------------------------------------+------------------------------------------------------------------------------+-----------------+------
+ 35f9f71b-0eac-4fda-b017-f7e65cb921f7 | Report de démonstration CMAU7654321 | generated_reports/container_CMAU7654321_f2accd75f1e644bd9d9ffa65c2aeeaae.pdf | application/pdf | 3512
+ 0c3edc59-7e5d-4436-a483-2573e1c2f5e9 | Report de démonstration MSCU1234566 | generated_reports/container_MSCU1234566_b5f121b743cd4b3a81fe14b5b91a467f.pdf | application/pdf | 3423
+(2 rows)
+

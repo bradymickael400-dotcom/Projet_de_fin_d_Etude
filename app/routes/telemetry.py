@@ -14,8 +14,38 @@ from app.utils import _sceller_evenement, check_securite_et_seuils, get_boite_fo
 from sqlalchemy import text # type: ignore
 from app import db, seal_block
 from app.utils import *
-from app.utils import get_boites_for_owner, get_boite_for_client, get_boite_for_driver, get_boites_for_agency
+from app.utils import (get_boites_for_owner, get_boite_for_client, get_boite_for_driver,
+                       get_boites_for_agency, get_boites_for_port_authority,
+                       get_caller_identity)
+from app.services.shock_assessment import resolve_shock_threshold
 tel_bp = Blueprint("telemetry", __name__)
+
+
+def _authorized_box_ids(role, user_id):
+    if role == "superadmin":
+        return None
+    if role == "owner":
+        return get_boites_for_owner(user_id) or []
+    if role == "company":
+        return get_boites_for_agency(user_id) or []
+    if role == "client":
+        return get_boite_for_client(user_id) or []
+    if role == "driver":
+        return get_boite_for_driver(user_id) or []
+    if role == "port_authority":
+        return get_boites_for_port_authority(user_id) or []
+    return []
+
+
+def _box_scope(box_ids, column="id_boite", prefix="scope"):
+    if box_ids is None:
+        return "TRUE", {}
+    if not box_ids:
+        return "FALSE", {}
+    params = {f"{prefix}{index}": value for index, value in enumerate(dict.fromkeys(box_ids))}
+    placeholders = ",".join(f":{key}" for key in params)
+    return f"{column} IN ({placeholders})", params
+
 
 # ═══════════════════════════════════════════════════════════
 #  MONITORING
@@ -23,17 +53,26 @@ tel_bp = Blueprint("telemetry", __name__)
 
 @tel_bp.route("/api/monitoring/data", methods=["GET"])
 def get_monitoring_data():
-    containers = db.session.execute(text("SELECT * FROM conteneurs")).fetchall()
-    alerts     = db.session.execute(text("""
+    role, user_id = get_caller_identity()
+    box_ids = _authorized_box_ids(role, user_id)
+    scope, params = _box_scope(box_ids)
+    containers = db.session.execute(text(f"""
+        SELECT * FROM conteneurs
+        WHERE id_conteneurs IN (
+            SELECT id_conteneurs FROM boite_noir
+            WHERE id_conteneurs IS NOT NULL AND {scope}
+        )
+    """), params).fetchall()
+    alerts     = db.session.execute(text(f"""
         SELECT * FROM evenement_save
-        WHERE notif IS NOT NULL AND notif!='[]'
+        WHERE ({scope}) AND notif IS NOT NULL AND notif!='[]'
         ORDER BY horodatage DESC LIMIT 50
-    """)).fetchall()
-    positions  = db.session.execute(text("""
+    """), params).fetchall()
+    positions  = db.session.execute(text(f"""
         SELECT DISTINCT ON (id_boite) id_boite, lat, lon, horodatage
-        FROM evenement_save WHERE lat IS NOT NULL AND lon IS NOT NULL
+        FROM evenement_save WHERE ({scope}) AND lat IS NOT NULL AND lon IS NOT NULL
         ORDER BY id_boite, horodatage DESC
-    """)).fetchall()
+    """), params).fetchall()
     return jsonify({
         "containers": [dict(r._mapping) for r in containers],
         "alerts":     [dict(r._mapping) for r in alerts],
@@ -48,20 +87,28 @@ def get_monitoring_data():
 @tel_bp.route("/api/config/thresholds", methods=["POST"])
 def update_thresholds():
     try:
-        d = request.get_json()
+        d = request.get_json(silent=True) or {}
+        role, user_id = get_caller_identity()
+        if role not in ("superadmin", "owner", "company"):
+            return jsonify({"error": "Accès réservé au gestionnaire de la boîte"}), 403
         id_recv = d.get("id_boite")
+        if id_recv is None:
+            return jsonify({"error": "id_boite requis"}), 400
         boite = db.session.execute(
-            text("SELECT id_boite FROM boite_noir WHERE id_conteneurs=:c LIMIT 1"),
+            text("SELECT id_boite FROM boite_noir WHERE id_conteneurs=CAST(:c AS TEXT) LIMIT 1"),
             {"c": id_recv}
         ).fetchone()
         if not boite:
             boite = db.session.execute(
-                text("SELECT id_boite FROM boite_noir WHERE id_boite=:b LIMIT 1"),
+                text("SELECT id_boite FROM boite_noir WHERE id_boite=CAST(:b AS INTEGER) LIMIT 1"),
                 {"b": id_recv}
             ).fetchone()
         if not boite:
             return jsonify({"error": f"Boîte introuvable: {id_recv}"}), 404
         bid = boite[0]
+        allowed = _authorized_box_ids(role, user_id)
+        if allowed is not None and str(bid) not in {str(value) for value in allowed}:
+            return jsonify({"error": "Accès refusé à cette boîte"}), 403
         db.session.execute(text("""
             INSERT INTO seuils_alerte
                 (id_boite,temp_max,humi_max,choc_max,pression_min,vitesse_max,angle_max,updated_at)
@@ -72,7 +119,7 @@ def update_thresholds():
                 vitesse_max=EXCLUDED.vitesse_max, angle_max=EXCLUDED.angle_max,
                 updated_at=NOW()
         """), {"b": bid, "tm": d.get("temp_max"), "hm": d.get("humi_max"),
-               "cm": d.get("choc_max"), "pm": d.get("pression_min"),
+               "cm": resolve_shock_threshold(d.get("choc_max")), "pm": d.get("pression_min"),
                "vm": d.get("vitesse_max"), "am": d.get("angle_max")})
         from app.regulatory.history import record_decision
         from app.security import current_identity
@@ -95,8 +142,12 @@ def update_thresholds():
 
 @tel_bp.route("/api/config/thresholds/<boite_id>", methods=["GET"])
 def get_thresholds(boite_id):
+    role, user_id = get_caller_identity()
+    allowed = _authorized_box_ids(role, user_id)
+    if allowed is not None and str(boite_id) not in {str(value) for value in allowed}:
+        return jsonify({"error": "Accès refusé à cette boîte"}), 403
     row = db.session.execute(
-        text("SELECT * FROM seuils_alerte WHERE id_boite=:b"), {"b": boite_id}
+        text("SELECT * FROM seuils_alerte WHERE id_boite=CAST(:b AS INTEGER)"), {"b": boite_id}
     ).fetchone()
     if row:
         return jsonify(dict(row._mapping))

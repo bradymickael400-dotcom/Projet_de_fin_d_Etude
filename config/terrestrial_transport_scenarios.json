@@ -1,0 +1,25 @@
+{
+  "douala_ndjamena": {
+    "corridor_width_m": 1000,
+    "route_alert_threshold_percent": 60,
+    "max_test_lateral_deviation_m": 2000,
+    "route_deviation_min_duration_simulated_seconds": 60,
+    "events": {}
+  },
+  "kribi_bertoua": {
+    "corridor_width_m": 1000,
+    "route_alert_threshold_percent": 60,
+    "max_test_lateral_deviation_m": 2000,
+    "route_deviation_min_duration_simulated_seconds": 60,
+    "events": {
+      "route_deviation_minutes": [5, 15],
+      "shock_episode_minutes": [10, 30],
+      "door_open_minutes": [20, 30],
+      "immobilization_minutes": [30, 220],
+      "skid_risk_minutes": [235, 245]
+    },
+    "shock_factors": [1.2, 1.4, 1.1, 2.1],
+    "door_orientation": "N",
+    "skid_risk_confidence": "low"
+  }
+}

@@ -934,7 +934,7 @@ function renderBlackBoxConsultModal(data) {
                 ['flame-detection','Détection de flammes','fa-fire',modes.flameDetectionEnabled]
               ].map(([command,label,icon,checked])=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg3)">
                 <div><div style="font-size:12px;font-weight:600"><i class="fas ${icon}"></i> ${label}</div><div style="font-size:10px;color:var(--text3)">Commande distante</div></div>
-                <label class="toggle-switch"><input type="checkbox" ${checked?'checked':''} onchange="sendContainerCommand('${data.box.id}','${command}',this.checked)"><span class="toggle-slider"></span></label>
+                <label class="toggle-switch"><input type="checkbox" ${checked?'checked':''} onchange="sendContainerCommand('${data.box.id}','${command}',this.checked,this)"><span class="toggle-slider"></span></label>
               </div>`).join('')}
             </div>
           </div>
@@ -1076,7 +1076,7 @@ function reconnectBlackBox(boxId) {
               </div>
               <div style="padding:10px;border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:12px">
                 <div><strong>Mode sécurité des portes</strong><br><small>Réservé aux gestionnaires ; auteur et heure enregistrés.</small></div>
-                <label class="toggle-switch"><input data-argos-security-box="${boxId}" type="checkbox" onchange="sendArgosDirectSecurity(this)"><span class="toggle-slider"></span></label>
+                <label class="toggle-switch"><input data-argos-security-box="${boxId}" type="checkbox" ${(box.telemetry?.modes?.securityEnabled ?? box.telemetry?.security_enabled) ? 'checked' : ''} onchange="sendArgosDirectSecurity(this)"><span class="toggle-slider"></span></label>
               </div>
               ${typeof buildArgosDirectLivePanel === 'function' ? buildArgosDirectLivePanel(boxId) : ''}
             </div>

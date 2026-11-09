@@ -1,0 +1,1235 @@
+{
+  "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+  "scenario_id": "silent_container_v1",
+  "title": "Le conteneur silencieux — scénario synthétique",
+  "jurisdiction": "Cameroon; cross-border transit is out of scope",
+  "origin": "Douala",
+  "destination": "yard intérieur au Cameroun",
+  "synthetic": true,
+  "provider_mode": "deterministic_fallback",
+  "agents": {
+    "A1_OPERATOR": {
+      "role": "operator",
+      "mandate": "Rôle simulé d’opérateur logistique; décrit les faits ARGOS et les vérifications opérationnelles."
+    },
+    "A2_CUSTOMS_PORT": {
+      "role": "customs_port",
+      "mandate": "Rôle simulé douane-port; examine les éléments déclaratifs et de transfert qui lui sont communiqués."
+    },
+    "A3_DATA_PROTECTION": {
+      "role": "data_protection",
+      "mandate": "Rôle simulé de revue données/cybersécurité; examine les catégories de données et le partage proposé."
+    },
+    "A4_POLICY_ADVISER": {
+      "role": "legal_adviser",
+      "mandate": "Rôle simulé de conseil neutre; rapproche les analyses et distingue comparateur international et règle nationale."
+    }
+  },
+  "timeline": [
+    {
+      "step": "T0",
+      "event_id": "EV-T0",
+      "origin": "SIMULATED",
+      "independent_assessments": [
+        {
+          "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+          "step": "T0",
+          "agent_id": "A1_OPERATOR",
+          "status": "insufficient_evidence",
+          "retrieval_agent_id": "policy_operator",
+          "agent_version": "1.0.0-simulated",
+          "origin": "SIMULATED",
+          "input_event_ids": [
+            "EV-T0"
+          ],
+          "visible_facts": [
+            "Fret pharmaceutique fictif déclaré; boîtier ARGOS installé."
+          ],
+          "retrieved_passages": [],
+          "assessment": "Faits opérationnels observés: Fret pharmaceutique fictif déclaré; boîtier ARGOS installé.",
+          "recommended_action": "Conserver les mesures horodatées et vérifier capteur, point GPS, état du scellé et chaîne de garde avec les acteurs concernés.",
+          "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+          "unknowns": [
+            "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+            "Horodatages et chaîne de garde du scénario sont fictifs."
+          ],
+          "uncertainty": "high",
+          "policy_gap_flag": null,
+          "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+          "human_review_status": "PENDING",
+          "national_source_verified": false,
+          "llm_status": "not_requested"
+        },
+        {
+          "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+          "step": "T0",
+          "agent_id": "A2_CUSTOMS_PORT",
+          "status": "success",
+          "retrieval_agent_id": "policy_customs_port",
+          "agent_version": "1.0.0-simulated",
+          "origin": "SIMULATED",
+          "input_event_ids": [
+            "EV-T0"
+          ],
+          "visible_facts": [
+            "Déclaration fictive enregistrée; scellé douanier indiqué intact."
+          ],
+          "retrieved_passages": [
+            {
+              "text": "**Attention à la numérotation :** l’article 7 contient aussi une section 7 sur les opérateurs agréés. Dans la sortie ARGOS, citer « Article 7, section 4 — Risk Management, paragraphe 4.x » avec le lien et le sous-paragraphe exact, et non « 7.4 » sans contexte si la formulation est ambiguë.",
+              "source": "wto_trade_facilitation_selected_articles.md",
+              "line_start": 15,
+              "line_end": 15,
+              "score": 0.1429,
+              "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+              "authority": "Organisation mondiale du commerce",
+              "jurisdiction": "international",
+              "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+              "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+              "source_type": "team_authored_summary_of_primary_text",
+              "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+            },
+            {
+              "text": "La section 4 de l’article 7 (« Risk Management ») prévoit un système de gestion des risques et indique qu’il doit éviter la discrimination arbitraire ou injustifiable et les restrictions déguisées au commerce (paragraphes 4.1–4.2). Le paragraphe 4.4 rattache la gestion à une appréciation du risque fondée sur des critères de sélectivité appropriés. Le texte anglais officiel est la référence pour les formulations exactes.",
+              "source": "wto_trade_facilitation_selected_articles.md",
+              "line_start": 13,
+              "line_end": 13,
+              "score": 0.1111,
+              "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+              "authority": "Organisation mondiale du commerce",
+              "jurisdiction": "international",
+              "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+              "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+              "source_type": "team_authored_summary_of_primary_text",
+              "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+            }
+          ],
+          "assessment": "Éléments douane-port communiqués: Déclaration fictive enregistrée; scellé douanier indiqué intact.",
+          "recommended_action": "Rapprocher les déclarations et journaux de contrôle; faire confirmer la chaîne de garde par les agents habilités.",
+          "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+          "unknowns": [
+            "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+            "Horodatages et chaîne de garde du scénario sont fictifs."
+          ],
+          "uncertainty": "medium",
+          "policy_gap_flag": null,
+          "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+          "human_review_status": "PENDING",
+          "national_source_verified": false,
+          "llm_status": "not_requested"
+        },
+        {
+          "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+          "step": "T0",
+          "agent_id": "A3_DATA_PROTECTION",
+          "status": "insufficient_evidence",
+          "retrieval_agent_id": "policy_data_protection",
+          "agent_version": "1.0.0-simulated",
+          "origin": "SIMULATED",
+          "input_event_ids": [
+            "EV-T0"
+          ],
+          "visible_facts": [],
+          "retrieved_passages": [],
+          "assessment": "Aucun fait de cet événement n’a été transmis à ce rôle à cette étape.",
+          "recommended_action": "Ne pas compléter les faits à partir d’hypothèses; attendre une information autorisée.",
+          "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+          "unknowns": [
+            "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+            "Horodatages et chaîne de garde du scénario sont fictifs."
+          ],
+          "uncertainty": "high",
+          "policy_gap_flag": null,
+          "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+          "human_review_status": "PENDING",
+          "national_source_verified": false,
+          "llm_status": "not_requested"
+        }
+      ],
+      "adviser_reconciliation": {
+        "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+        "step": "T0",
+        "agent_id": "A4_POLICY_ADVISER",
+        "status": "success",
+        "retrieval_agent_id": "policy_adviser",
+        "agent_version": "1.0.0-simulated",
+        "origin": "SIMULATED",
+        "input_event_ids": [
+          "EV-T0"
+        ],
+        "visible_facts": [
+          "Faits opérationnels observés: Fret pharmaceutique fictif déclaré; boîtier ARGOS installé.",
+          "Éléments douane-port communiqués: Déclaration fictive enregistrée; scellé douanier indiqué intact.",
+          "Aucun fait de cet événement n’a été transmis à ce rôle à cette étape."
+        ],
+        "retrieved_passages": [
+          {
+            "text": "**Attention à la numérotation :** l’article 7 contient aussi une section 7 sur les opérateurs agréés. Dans la sortie ARGOS, citer « Article 7, section 4 — Risk Management, paragraphe 4.x » avec le lien et le sous-paragraphe exact, et non « 7.4 » sans contexte si la formulation est ambiguë.",
+            "source": "wto_trade_facilitation_selected_articles.md",
+            "line_start": 15,
+            "line_end": 15,
+            "score": 0.1538,
+            "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+            "authority": "Organisation mondiale du commerce",
+            "jurisdiction": "international",
+            "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+            "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+            "source_type": "team_authored_summary_of_primary_text",
+            "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+          },
+          {
+            "text": "La section 4 de l’article 7 (« Risk Management ») prévoit un système de gestion des risques et indique qu’il doit éviter la discrimination arbitraire ou injustifiable et les restrictions déguisées au commerce (paragraphes 4.1–4.2). Le paragraphe 4.4 rattache la gestion à une appréciation du risque fondée sur des critères de sélectivité appropriés. Le texte anglais officiel est la référence pour les formulations exactes.",
+            "source": "wto_trade_facilitation_selected_articles.md",
+            "line_start": 13,
+            "line_end": 13,
+            "score": 0.1176,
+            "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+            "authority": "Organisation mondiale du commerce",
+            "jurisdiction": "international",
+            "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+            "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+            "source_type": "team_authored_summary_of_primary_text",
+            "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+          }
+        ],
+        "assessment": "Les avis reçus sont des analyses de rôles simulés; ils ne déterminent ni droit applicable ni responsabilité.",
+        "recommended_action": "Distinguer faits, comparateurs internationaux et droit camerounais; demander une vérification juridique nationale avant toute conclusion.",
+        "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+        "unknowns": [
+          "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+          "Horodatages et chaîne de garde du scénario sont fictifs."
+        ],
+        "uncertainty": "medium",
+        "policy_gap_flag": "national_rule_not_verified_in_local_corpus",
+        "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+        "human_review_status": "PENDING",
+        "national_source_verified": false,
+        "llm_status": "not_requested"
+      },
+      "data_transfer": {
+        "status": "NO_PERSONAL_DATA_TRANSFER",
+        "reason": "Scénario de démonstration: une personne doit valider la finalité, le fondement, les destinataires, la durée et les garanties avant tout partage."
+      },
+      "human_gate": "PENDING"
+    },
+    {
+      "step": "T1",
+      "event_id": "EV-T1",
+      "origin": "SIMULATED",
+      "independent_assessments": [
+        {
+          "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+          "step": "T1",
+          "agent_id": "A1_OPERATOR",
+          "status": "insufficient_evidence",
+          "retrieval_agent_id": "policy_operator",
+          "agent_version": "1.0.0-simulated",
+          "origin": "SIMULATED",
+          "input_event_ids": [
+            "EV-T1"
+          ],
+          "visible_facts": [
+            "Sortie du port enregistrée; dernier état du scellé indiqué intact."
+          ],
+          "retrieved_passages": [],
+          "assessment": "Faits opérationnels observés: Sortie du port enregistrée; dernier état du scellé indiqué intact.",
+          "recommended_action": "Conserver les mesures horodatées et vérifier capteur, point GPS, état du scellé et chaîne de garde avec les acteurs concernés.",
+          "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+          "unknowns": [
+            "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+            "Horodatages et chaîne de garde du scénario sont fictifs."
+          ],
+          "uncertainty": "high",
+          "policy_gap_flag": null,
+          "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+          "human_review_status": "PENDING",
+          "national_source_verified": false,
+          "llm_status": "not_requested"
+        },
+        {
+          "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+          "step": "T1",
+          "agent_id": "A2_CUSTOMS_PORT",
+          "status": "success",
+          "retrieval_agent_id": "policy_customs_port",
+          "agent_version": "1.0.0-simulated",
+          "origin": "SIMULATED",
+          "input_event_ids": [
+            "EV-T1"
+          ],
+          "visible_facts": [
+            "Heure fictive de sortie du terminal enregistrée."
+          ],
+          "retrieved_passages": [
+            {
+              "text": "**Attention à la numérotation :** l’article 7 contient aussi une section 7 sur les opérateurs agréés. Dans la sortie ARGOS, citer « Article 7, section 4 — Risk Management, paragraphe 4.x » avec le lien et le sous-paragraphe exact, et non « 7.4 » sans contexte si la formulation est ambiguë.",
+              "source": "wto_trade_facilitation_selected_articles.md",
+              "line_start": 15,
+              "line_end": 15,
+              "score": 0.1429,
+              "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+              "authority": "Organisation mondiale du commerce",
+              "jurisdiction": "international",
+              "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+              "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+              "source_type": "team_authored_summary_of_primary_text",
+              "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+            },
+            {
+              "text": "La section 4 de l’article 7 (« Risk Management ») prévoit un système de gestion des risques et indique qu’il doit éviter la discrimination arbitraire ou injustifiable et les restrictions déguisées au commerce (paragraphes 4.1–4.2). Le paragraphe 4.4 rattache la gestion à une appréciation du risque fondée sur des critères de sélectivité appropriés. Le texte anglais officiel est la référence pour les formulations exactes.",
+              "source": "wto_trade_facilitation_selected_articles.md",
+              "line_start": 13,
+              "line_end": 13,
+              "score": 0.1111,
+              "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+              "authority": "Organisation mondiale du commerce",
+              "jurisdiction": "international",
+              "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+              "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+              "source_type": "team_authored_summary_of_primary_text",
+              "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+            }
+          ],
+          "assessment": "Éléments douane-port communiqués: Heure fictive de sortie du terminal enregistrée.",
+          "recommended_action": "Rapprocher les déclarations et journaux de contrôle; faire confirmer la chaîne de garde par les agents habilités.",
+          "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+          "unknowns": [
+            "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+            "Horodatages et chaîne de garde du scénario sont fictifs."
+          ],
+          "uncertainty": "medium",
+          "policy_gap_flag": null,
+          "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+          "human_review_status": "PENDING",
+          "national_source_verified": false,
+          "llm_status": "not_requested"
+        },
+        {
+          "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+          "step": "T1",
+          "agent_id": "A3_DATA_PROTECTION",
+          "status": "insufficient_evidence",
+          "retrieval_agent_id": "policy_data_protection",
+          "agent_version": "1.0.0-simulated",
+          "origin": "SIMULATED",
+          "input_event_ids": [
+            "EV-T1"
+          ],
+          "visible_facts": [],
+          "retrieved_passages": [],
+          "assessment": "Aucun fait de cet événement n’a été transmis à ce rôle à cette étape.",
+          "recommended_action": "Ne pas compléter les faits à partir d’hypothèses; attendre une information autorisée.",
+          "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+          "unknowns": [
+            "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+            "Horodatages et chaîne de garde du scénario sont fictifs."
+          ],
+          "uncertainty": "high",
+          "policy_gap_flag": null,
+          "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+          "human_review_status": "PENDING",
+          "national_source_verified": false,
+          "llm_status": "not_requested"
+        }
+      ],
+      "adviser_reconciliation": {
+        "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+        "step": "T1",
+        "agent_id": "A4_POLICY_ADVISER",
+        "status": "success",
+        "retrieval_agent_id": "policy_adviser",
+        "agent_version": "1.0.0-simulated",
+        "origin": "SIMULATED",
+        "input_event_ids": [
+          "EV-T1"
+        ],
+        "visible_facts": [
+          "Faits opérationnels observés: Sortie du port enregistrée; dernier état du scellé indiqué intact.",
+          "Éléments douane-port communiqués: Heure fictive de sortie du terminal enregistrée.",
+          "Aucun fait de cet événement n’a été transmis à ce rôle à cette étape."
+        ],
+        "retrieved_passages": [
+          {
+            "text": "**Attention à la numérotation :** l’article 7 contient aussi une section 7 sur les opérateurs agréés. Dans la sortie ARGOS, citer « Article 7, section 4 — Risk Management, paragraphe 4.x » avec le lien et le sous-paragraphe exact, et non « 7.4 » sans contexte si la formulation est ambiguë.",
+            "source": "wto_trade_facilitation_selected_articles.md",
+            "line_start": 15,
+            "line_end": 15,
+            "score": 0.1538,
+            "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+            "authority": "Organisation mondiale du commerce",
+            "jurisdiction": "international",
+            "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+            "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+            "source_type": "team_authored_summary_of_primary_text",
+            "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+          },
+          {
+            "text": "La section 4 de l’article 7 (« Risk Management ») prévoit un système de gestion des risques et indique qu’il doit éviter la discrimination arbitraire ou injustifiable et les restrictions déguisées au commerce (paragraphes 4.1–4.2). Le paragraphe 4.4 rattache la gestion à une appréciation du risque fondée sur des critères de sélectivité appropriés. Le texte anglais officiel est la référence pour les formulations exactes.",
+            "source": "wto_trade_facilitation_selected_articles.md",
+            "line_start": 13,
+            "line_end": 13,
+            "score": 0.1176,
+            "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+            "authority": "Organisation mondiale du commerce",
+            "jurisdiction": "international",
+            "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+            "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+            "source_type": "team_authored_summary_of_primary_text",
+            "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+          }
+        ],
+        "assessment": "Les avis reçus sont des analyses de rôles simulés; ils ne déterminent ni droit applicable ni responsabilité.",
+        "recommended_action": "Distinguer faits, comparateurs internationaux et droit camerounais; demander une vérification juridique nationale avant toute conclusion.",
+        "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+        "unknowns": [
+          "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+          "Horodatages et chaîne de garde du scénario sont fictifs."
+        ],
+        "uncertainty": "medium",
+        "policy_gap_flag": "national_rule_not_verified_in_local_corpus",
+        "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+        "human_review_status": "PENDING",
+        "national_source_verified": false,
+        "llm_status": "not_requested"
+      },
+      "data_transfer": {
+        "status": "NO_PERSONAL_DATA_TRANSFER",
+        "reason": "Scénario de démonstration: une personne doit valider la finalité, le fondement, les destinataires, la durée et les garanties avant tout partage."
+      },
+      "human_gate": "PENDING"
+    },
+    {
+      "step": "T2",
+      "event_id": "EV-T2",
+      "origin": "SIMULATED",
+      "independent_assessments": [
+        {
+          "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+          "step": "T2",
+          "agent_id": "A1_OPERATOR",
+          "status": "insufficient_evidence",
+          "retrieval_agent_id": "policy_operator",
+          "agent_version": "1.0.0-simulated",
+          "origin": "SIMULATED",
+          "input_event_ids": [
+            "EV-T2"
+          ],
+          "visible_facts": [
+            "Ouverture de porte, hausse de température, GPS imprécis puis perte de signal; données SIMULATED."
+          ],
+          "retrieved_passages": [],
+          "assessment": "Faits opérationnels observés: Ouverture de porte, hausse de température, GPS imprécis puis perte de signal; données SIMULATED.",
+          "recommended_action": "Conserver les mesures horodatées et vérifier capteur, point GPS, état du scellé et chaîne de garde avec les acteurs concernés.",
+          "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+          "unknowns": [
+            "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+            "Horodatages et chaîne de garde du scénario sont fictifs."
+          ],
+          "uncertainty": "high",
+          "policy_gap_flag": null,
+          "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+          "human_review_status": "PENDING",
+          "national_source_verified": false,
+          "llm_status": "not_requested"
+        },
+        {
+          "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+          "step": "T2",
+          "agent_id": "A2_CUSTOMS_PORT",
+          "status": "insufficient_evidence",
+          "retrieval_agent_id": "policy_customs_port",
+          "agent_version": "1.0.0-simulated",
+          "origin": "SIMULATED",
+          "input_event_ids": [
+            "EV-T2"
+          ],
+          "visible_facts": [],
+          "retrieved_passages": [],
+          "assessment": "Aucun fait de cet événement n’a été transmis à ce rôle à cette étape.",
+          "recommended_action": "Ne pas compléter les faits à partir d’hypothèses; attendre une information autorisée.",
+          "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+          "unknowns": [
+            "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+            "Horodatages et chaîne de garde du scénario sont fictifs."
+          ],
+          "uncertainty": "high",
+          "policy_gap_flag": null,
+          "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+          "human_review_status": "PENDING",
+          "national_source_verified": false,
+          "llm_status": "not_requested"
+        },
+        {
+          "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+          "step": "T2",
+          "agent_id": "A3_DATA_PROTECTION",
+          "status": "insufficient_evidence",
+          "retrieval_agent_id": "policy_data_protection",
+          "agent_version": "1.0.0-simulated",
+          "origin": "SIMULATED",
+          "input_event_ids": [
+            "EV-T2"
+          ],
+          "visible_facts": [],
+          "retrieved_passages": [],
+          "assessment": "Aucun fait de cet événement n’a été transmis à ce rôle à cette étape.",
+          "recommended_action": "Ne pas compléter les faits à partir d’hypothèses; attendre une information autorisée.",
+          "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+          "unknowns": [
+            "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+            "Horodatages et chaîne de garde du scénario sont fictifs."
+          ],
+          "uncertainty": "high",
+          "policy_gap_flag": null,
+          "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+          "human_review_status": "PENDING",
+          "national_source_verified": false,
+          "llm_status": "not_requested"
+        }
+      ],
+      "adviser_reconciliation": {
+        "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+        "step": "T2",
+        "agent_id": "A4_POLICY_ADVISER",
+        "status": "success",
+        "retrieval_agent_id": "policy_adviser",
+        "agent_version": "1.0.0-simulated",
+        "origin": "SIMULATED",
+        "input_event_ids": [
+          "EV-T2"
+        ],
+        "visible_facts": [
+          "Faits opérationnels observés: Ouverture de porte, hausse de température, GPS imprécis puis perte de signal; données SIMULATED.",
+          "Aucun fait de cet événement n’a été transmis à ce rôle à cette étape.",
+          "Aucun fait de cet événement n’a été transmis à ce rôle à cette étape."
+        ],
+        "retrieved_passages": [
+          {
+            "text": "**Attention à la numérotation :** l’article 7 contient aussi une section 7 sur les opérateurs agréés. Dans la sortie ARGOS, citer « Article 7, section 4 — Risk Management, paragraphe 4.x » avec le lien et le sous-paragraphe exact, et non « 7.4 » sans contexte si la formulation est ambiguë.",
+            "source": "wto_trade_facilitation_selected_articles.md",
+            "line_start": 15,
+            "line_end": 15,
+            "score": 0.1538,
+            "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+            "authority": "Organisation mondiale du commerce",
+            "jurisdiction": "international",
+            "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+            "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+            "source_type": "team_authored_summary_of_primary_text",
+            "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+          },
+          {
+            "text": "La section 4 de l’article 7 (« Risk Management ») prévoit un système de gestion des risques et indique qu’il doit éviter la discrimination arbitraire ou injustifiable et les restrictions déguisées au commerce (paragraphes 4.1–4.2). Le paragraphe 4.4 rattache la gestion à une appréciation du risque fondée sur des critères de sélectivité appropriés. Le texte anglais officiel est la référence pour les formulations exactes.",
+            "source": "wto_trade_facilitation_selected_articles.md",
+            "line_start": 13,
+            "line_end": 13,
+            "score": 0.1176,
+            "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+            "authority": "Organisation mondiale du commerce",
+            "jurisdiction": "international",
+            "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+            "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+            "source_type": "team_authored_summary_of_primary_text",
+            "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+          }
+        ],
+        "assessment": "Les avis reçus sont des analyses de rôles simulés; ils ne déterminent ni droit applicable ni responsabilité.",
+        "recommended_action": "Distinguer faits, comparateurs internationaux et droit camerounais; demander une vérification juridique nationale avant toute conclusion.",
+        "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+        "unknowns": [
+          "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+          "Horodatages et chaîne de garde du scénario sont fictifs."
+        ],
+        "uncertainty": "medium",
+        "policy_gap_flag": "national_rule_not_verified_in_local_corpus",
+        "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+        "human_review_status": "PENDING",
+        "national_source_verified": false,
+        "llm_status": "not_requested"
+      },
+      "data_transfer": {
+        "status": "NO_PERSONAL_DATA_TRANSFER",
+        "reason": "Scénario de démonstration: une personne doit valider la finalité, le fondement, les destinataires, la durée et les garanties avant tout partage."
+      },
+      "human_gate": "PENDING"
+    },
+    {
+      "step": "T3",
+      "event_id": "EV-T3",
+      "origin": "SIMULATED",
+      "independent_assessments": [
+        {
+          "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+          "step": "T3",
+          "agent_id": "A1_OPERATOR",
+          "status": "insufficient_evidence",
+          "retrieval_agent_id": "policy_operator",
+          "agent_version": "1.0.0-simulated",
+          "origin": "SIMULATED",
+          "input_event_ids": [
+            "EV-T3"
+          ],
+          "visible_facts": [
+            "L’opérateur demande s’il peut transmettre l’historique de localisation du conducteur et du véhicule à la douane et à l’assureur."
+          ],
+          "retrieved_passages": [],
+          "assessment": "Faits opérationnels observés: L’opérateur demande s’il peut transmettre l’historique de localisation du conducteur et du véhicule à la douane et à l’assureur.",
+          "recommended_action": "Conserver les mesures horodatées et vérifier capteur, point GPS, état du scellé et chaîne de garde avec les acteurs concernés.",
+          "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+          "unknowns": [
+            "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+            "Horodatages et chaîne de garde du scénario sont fictifs."
+          ],
+          "uncertainty": "high",
+          "policy_gap_flag": null,
+          "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+          "human_review_status": "PENDING",
+          "national_source_verified": false,
+          "llm_status": "not_requested"
+        },
+        {
+          "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+          "step": "T3",
+          "agent_id": "A2_CUSTOMS_PORT",
+          "status": "success",
+          "retrieval_agent_id": "policy_customs_port",
+          "agent_version": "1.0.0-simulated",
+          "origin": "SIMULATED",
+          "input_event_ids": [
+            "EV-T3"
+          ],
+          "visible_facts": [
+            "Une demande d’information est signalée; aucune donnée personnelle n’est transmise dans cette simulation."
+          ],
+          "retrieved_passages": [
+            {
+              "text": "**Attention à la numérotation :** l’article 7 contient aussi une section 7 sur les opérateurs agréés. Dans la sortie ARGOS, citer « Article 7, section 4 — Risk Management, paragraphe 4.x » avec le lien et le sous-paragraphe exact, et non « 7.4 » sans contexte si la formulation est ambiguë.",
+              "source": "wto_trade_facilitation_selected_articles.md",
+              "line_start": 15,
+              "line_end": 15,
+              "score": 0.1429,
+              "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+              "authority": "Organisation mondiale du commerce",
+              "jurisdiction": "international",
+              "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+              "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+              "source_type": "team_authored_summary_of_primary_text",
+              "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+            },
+            {
+              "text": "La section 4 de l’article 7 (« Risk Management ») prévoit un système de gestion des risques et indique qu’il doit éviter la discrimination arbitraire ou injustifiable et les restrictions déguisées au commerce (paragraphes 4.1–4.2). Le paragraphe 4.4 rattache la gestion à une appréciation du risque fondée sur des critères de sélectivité appropriés. Le texte anglais officiel est la référence pour les formulations exactes.",
+              "source": "wto_trade_facilitation_selected_articles.md",
+              "line_start": 13,
+              "line_end": 13,
+              "score": 0.1111,
+              "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+              "authority": "Organisation mondiale du commerce",
+              "jurisdiction": "international",
+              "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+              "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+              "source_type": "team_authored_summary_of_primary_text",
+              "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+            }
+          ],
+          "assessment": "Éléments douane-port communiqués: Une demande d’information est signalée; aucune donnée personnelle n’est transmise dans cette simulation.",
+          "recommended_action": "Rapprocher les déclarations et journaux de contrôle; faire confirmer la chaîne de garde par les agents habilités.",
+          "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+          "unknowns": [
+            "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+            "Horodatages et chaîne de garde du scénario sont fictifs."
+          ],
+          "uncertainty": "medium",
+          "policy_gap_flag": null,
+          "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+          "human_review_status": "PENDING",
+          "national_source_verified": false,
+          "llm_status": "not_requested"
+        },
+        {
+          "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+          "step": "T3",
+          "agent_id": "A3_DATA_PROTECTION",
+          "status": "success",
+          "retrieval_agent_id": "policy_data_protection",
+          "agent_version": "1.0.0-simulated",
+          "origin": "SIMULATED",
+          "input_event_ids": [
+            "EV-T3"
+          ],
+          "visible_facts": [
+            "Catégories demandées: localisation du conducteur et du véhicule; destinataires proposés: douane et assureur; finalité, fondement invoqué et durée de conservation non fournis."
+          ],
+          "retrieved_passages": [
+            {
+              "text": "1. Présenter ces passages comme **extraits contrôlés d’une copie officielle scannée**, non comme la loi complète ou un avis juridique.\n2. Pour une demande de localisation conducteur/véhicule, examiner au minimum la finalité, les catégories de données, les destinataires, la durée, la base alléguée et la présence d’une décision automatisée; déclarer tout champ manquant.\n3. Ne pas assimiler automatiquement un transfert à une violation ou une autorisation à une preuve de licéité. Exiger une revue humaine des faits, du texte complet, des règles d’application, des rôles et des garanties.\n4. Ne pas affirmer que l’autorité de contrôle est opérationnelle ou inactive à partir de ce document; ce statut et les éventuelles dispositions transitoires nécessitent une source officielle distincte.\n5. Les constats de la loi camerounaise ne sont pas automatiquement applicables aux autres pays du corridor.",
+              "source": "cameroon_law_2024_017_excerpts.md",
+              "line_start": 37,
+              "line_end": 41,
+              "score": 0.1368,
+              "title": "Loi camerounaise n° 2024/017 du 23 décembre 2024 relative à la protection des données à caractère personnel au Cameroun",
+              "authority": "Présidence de la République du Cameroun",
+              "jurisdiction": "Cameroon",
+              "official_url": "https://www.prc.cm/files/2b/9f/21/1055fa3c2251b4c4248fd301f584daaf.pdf",
+              "verification_status": "VERIFIED_PRIMARY_EXCERPT_MANUALLY_TRANSCRIBED",
+              "source_type": "manually_transcribed_excerpts_from_primary_official_scan",
+              "applicability_to_cameroon": "ARTICLE_LEVEL_REVIEW_REQUIRED"
+            },
+            {
+              "text": "L’extrait liste les informations à fournir au plus tard lors de la collecte : identité du responsable, finalités, catégories de données, destinataires possibles, durée de conservation et éventualité d’un transfert vers un État étranger. Il mentionne aussi plusieurs droits, notamment accès, rectification, effacement, opposition, limitation, portabilité, réclamation et le droit de ne pas faire l’objet d’une décision individuelle automatisée, y compris le profilage. L’application, les conditions et les exceptions doivent être examinées dans le texte complet et ses dispositions associées.",
+              "source": "cameroon_law_2024_017_excerpts.md",
+              "line_start": 28,
+              "line_end": 28,
+              "score": 0.1277,
+              "title": "Loi camerounaise n° 2024/017 du 23 décembre 2024 relative à la protection des données à caractère personnel au Cameroun",
+              "authority": "Présidence de la République du Cameroun",
+              "jurisdiction": "Cameroon",
+              "official_url": "https://www.prc.cm/files/2b/9f/21/1055fa3c2251b4c4248fd301f584daaf.pdf",
+              "verification_status": "VERIFIED_PRIMARY_EXCERPT_MANUALLY_TRANSCRIBED",
+              "source_type": "manually_transcribed_excerpts_from_primary_official_scan",
+              "applicability_to_cameroon": "ARTICLE_LEVEL_REVIEW_REQUIRED"
+            },
+            {
+              "text": "- **Article 9 :** le traitement est, en principe, subordonné au consentement préalable, libre, éclairé, spécifique et univoque. Le texte énumère des cas où le traitement nécessaire peut déroger à cette exigence, notamment l’obligation légale, une mission d’intérêt public/exercice d’autorité et la préservation de la santé. L’extrait ne permet pas à ARGOS de choisir lui-même la base juridique d’un transfert.\n- **Article 10 :** le traitement doit être licite, loyal et non frauduleux.\n- **Article 11 :** les données sont collectées pour des finalités déterminées, explicites et légitimes; elles ne doivent pas être traitées ultérieurement d’une manière incompatible avec ces finalités.\n- **Article 12 :** les données doivent être complètes, fiables et à jour; le texte prévoit une obligation de rectifier ou d’effacer les données inexactes ou incomplètes.\n- **Article 13 :** les données ne doivent pas être conservées au-delà de la durée nécessaire au traitement; l’alinéa 2 renvoie à une durée précisée dans l’autorisation et aux modalités réglementaires. La durée réelle applicable doit être vérifiée pour le cas précis.",
+              "source": "cameroon_law_2024_017_excerpts.md",
+              "line_start": 13,
+              "line_end": 17,
+              "score": 0.0938,
+              "title": "Loi camerounaise n° 2024/017 du 23 décembre 2024 relative à la protection des données à caractère personnel au Cameroun",
+              "authority": "Présidence de la République du Cameroun",
+              "jurisdiction": "Cameroon",
+              "official_url": "https://www.prc.cm/files/2b/9f/21/1055fa3c2251b4c4248fd301f584daaf.pdf",
+              "verification_status": "VERIFIED_PRIMARY_EXCERPT_MANUALLY_TRANSCRIBED",
+              "source_type": "manually_transcribed_excerpts_from_primary_official_scan",
+              "applicability_to_cameroon": "ARTICLE_LEVEL_REVIEW_REQUIRED"
+            }
+          ],
+          "assessment": "Revue du partage demandé: Catégories demandées: localisation du conducteur et du véhicule; destinataires proposés: douane et assureur; finalité, fondement invoqué et durée de conservation non fournis.",
+          "recommended_action": "Mettre le transfert en attente: la finalité, la base, le périmètre, les destinataires et la durée ne sont pas établis dans les informations reçues.",
+          "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+          "unknowns": [
+            "Les extraits camerounais sont partiels; texte complet, règles d’application et applicabilité aux faits à valider.",
+            "Horodatages et chaîne de garde du scénario sont fictifs."
+          ],
+          "uncertainty": "medium",
+          "policy_gap_flag": "sharing_basis_and_implementation_require_human_review",
+          "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+          "human_review_status": "PENDING",
+          "national_source_verified": true,
+          "llm_status": "not_requested"
+        }
+      ],
+      "adviser_reconciliation": {
+        "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+        "step": "T3",
+        "agent_id": "A4_POLICY_ADVISER",
+        "status": "success",
+        "retrieval_agent_id": "policy_adviser",
+        "agent_version": "1.0.0-simulated",
+        "origin": "SIMULATED",
+        "input_event_ids": [
+          "EV-T3"
+        ],
+        "visible_facts": [
+          "Faits opérationnels observés: L’opérateur demande s’il peut transmettre l’historique de localisation du conducteur et du véhicule à la douane et à l’assureur.",
+          "Éléments douane-port communiqués: Une demande d’information est signalée; aucune donnée personnelle n’est transmise dans cette simulation.",
+          "Revue du partage demandé: Catégories demandées: localisation du conducteur et du véhicule; destinataires proposés: douane et assureur; finalité, fondement invoqué et durée de conservation non fournis."
+        ],
+        "retrieved_passages": [
+          {
+            "text": "1. Présenter ces passages comme **extraits contrôlés d’une copie officielle scannée**, non comme la loi complète ou un avis juridique.\n2. Pour une demande de localisation conducteur/véhicule, examiner au minimum la finalité, les catégories de données, les destinataires, la durée, la base alléguée et la présence d’une décision automatisée; déclarer tout champ manquant.\n3. Ne pas assimiler automatiquement un transfert à une violation ou une autorisation à une preuve de licéité. Exiger une revue humaine des faits, du texte complet, des règles d’application, des rôles et des garanties.\n4. Ne pas affirmer que l’autorité de contrôle est opérationnelle ou inactive à partir de ce document; ce statut et les éventuelles dispositions transitoires nécessitent une source officielle distincte.\n5. Les constats de la loi camerounaise ne sont pas automatiquement applicables aux autres pays du corridor.",
+            "source": "cameroon_law_2024_017_excerpts.md",
+            "line_start": 37,
+            "line_end": 41,
+            "score": 0.1368,
+            "title": "Loi camerounaise n° 2024/017 du 23 décembre 2024 relative à la protection des données à caractère personnel au Cameroun",
+            "authority": "Présidence de la République du Cameroun",
+            "jurisdiction": "Cameroon",
+            "official_url": "https://www.prc.cm/files/2b/9f/21/1055fa3c2251b4c4248fd301f584daaf.pdf",
+            "verification_status": "VERIFIED_PRIMARY_EXCERPT_MANUALLY_TRANSCRIBED",
+            "source_type": "manually_transcribed_excerpts_from_primary_official_scan",
+            "applicability_to_cameroon": "ARTICLE_LEVEL_REVIEW_REQUIRED"
+          },
+          {
+            "text": "L’extrait liste les informations à fournir au plus tard lors de la collecte : identité du responsable, finalités, catégories de données, destinataires possibles, durée de conservation et éventualité d’un transfert vers un État étranger. Il mentionne aussi plusieurs droits, notamment accès, rectification, effacement, opposition, limitation, portabilité, réclamation et le droit de ne pas faire l’objet d’une décision individuelle automatisée, y compris le profilage. L’application, les conditions et les exceptions doivent être examinées dans le texte complet et ses dispositions associées.",
+            "source": "cameroon_law_2024_017_excerpts.md",
+            "line_start": 28,
+            "line_end": 28,
+            "score": 0.1277,
+            "title": "Loi camerounaise n° 2024/017 du 23 décembre 2024 relative à la protection des données à caractère personnel au Cameroun",
+            "authority": "Présidence de la République du Cameroun",
+            "jurisdiction": "Cameroon",
+            "official_url": "https://www.prc.cm/files/2b/9f/21/1055fa3c2251b4c4248fd301f584daaf.pdf",
+            "verification_status": "VERIFIED_PRIMARY_EXCERPT_MANUALLY_TRANSCRIBED",
+            "source_type": "manually_transcribed_excerpts_from_primary_official_scan",
+            "applicability_to_cameroon": "ARTICLE_LEVEL_REVIEW_REQUIRED"
+          },
+          {
+            "text": "- **Article 9 :** le traitement est, en principe, subordonné au consentement préalable, libre, éclairé, spécifique et univoque. Le texte énumère des cas où le traitement nécessaire peut déroger à cette exigence, notamment l’obligation légale, une mission d’intérêt public/exercice d’autorité et la préservation de la santé. L’extrait ne permet pas à ARGOS de choisir lui-même la base juridique d’un transfert.\n- **Article 10 :** le traitement doit être licite, loyal et non frauduleux.\n- **Article 11 :** les données sont collectées pour des finalités déterminées, explicites et légitimes; elles ne doivent pas être traitées ultérieurement d’une manière incompatible avec ces finalités.\n- **Article 12 :** les données doivent être complètes, fiables et à jour; le texte prévoit une obligation de rectifier ou d’effacer les données inexactes ou incomplètes.\n- **Article 13 :** les données ne doivent pas être conservées au-delà de la durée nécessaire au traitement; l’alinéa 2 renvoie à une durée précisée dans l’autorisation et aux modalités réglementaires. La durée réelle applicable doit être vérifiée pour le cas précis.",
+            "source": "cameroon_law_2024_017_excerpts.md",
+            "line_start": 13,
+            "line_end": 17,
+            "score": 0.0938,
+            "title": "Loi camerounaise n° 2024/017 du 23 décembre 2024 relative à la protection des données à caractère personnel au Cameroun",
+            "authority": "Présidence de la République du Cameroun",
+            "jurisdiction": "Cameroon",
+            "official_url": "https://www.prc.cm/files/2b/9f/21/1055fa3c2251b4c4248fd301f584daaf.pdf",
+            "verification_status": "VERIFIED_PRIMARY_EXCERPT_MANUALLY_TRANSCRIBED",
+            "source_type": "manually_transcribed_excerpts_from_primary_official_scan",
+            "applicability_to_cameroon": "ARTICLE_LEVEL_REVIEW_REQUIRED"
+          }
+        ],
+        "assessment": "Les avis reçus sont des analyses de rôles simulés; ils ne déterminent ni droit applicable ni responsabilité.",
+        "recommended_action": "Distinguer faits, comparateurs internationaux et droit camerounais; demander une vérification juridique nationale avant toute conclusion.",
+        "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+        "unknowns": [
+          "Les extraits camerounais sont partiels; texte complet, règles d’application et applicabilité aux faits à valider.",
+          "Horodatages et chaîne de garde du scénario sont fictifs."
+        ],
+        "uncertainty": "medium",
+        "policy_gap_flag": "sector_responsibility_or_applicability_requires_human_review",
+        "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+        "human_review_status": "PENDING",
+        "national_source_verified": true,
+        "llm_status": "not_requested"
+      },
+      "data_transfer": {
+        "status": "BLOCKED_PENDING_HUMAN_REVIEW",
+        "reason": "Scénario de démonstration: une personne doit valider la finalité, le fondement, les destinataires, la durée et les garanties avant tout partage."
+      },
+      "human_gate": "PENDING"
+    },
+    {
+      "step": "T4",
+      "event_id": "EV-T4",
+      "origin": "SIMULATED",
+      "independent_assessments": [
+        {
+          "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+          "step": "T4",
+          "agent_id": "A1_OPERATOR",
+          "status": "insufficient_evidence",
+          "retrieval_agent_id": "policy_operator",
+          "agent_version": "1.0.0-simulated",
+          "origin": "SIMULATED",
+          "input_event_ids": [
+            "EV-T4"
+          ],
+          "visible_facts": [
+            "Une lecture tardive simulée de la mémoire du boîtier situe l’événement dans le yard intérieur."
+          ],
+          "retrieved_passages": [],
+          "assessment": "Faits opérationnels observés: Une lecture tardive simulée de la mémoire du boîtier situe l’événement dans le yard intérieur.",
+          "recommended_action": "Conserver les mesures horodatées et vérifier capteur, point GPS, état du scellé et chaîne de garde avec les acteurs concernés.",
+          "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+          "unknowns": [
+            "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+            "Horodatages et chaîne de garde du scénario sont fictifs."
+          ],
+          "uncertainty": "high",
+          "policy_gap_flag": null,
+          "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+          "human_review_status": "PENDING",
+          "national_source_verified": false,
+          "llm_status": "not_requested"
+        },
+        {
+          "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+          "step": "T4",
+          "agent_id": "A2_CUSTOMS_PORT",
+          "status": "success",
+          "retrieval_agent_id": "policy_customs_port",
+          "agent_version": "1.0.0-simulated",
+          "origin": "SIMULATED",
+          "input_event_ids": [
+            "EV-T4"
+          ],
+          "visible_facts": [
+            "Le point de contrôle intérieur enregistre un scellé brisé; chaîne de garde et heure exacte restent à confirmer."
+          ],
+          "retrieved_passages": [
+            {
+              "text": "**Attention à la numérotation :** l’article 7 contient aussi une section 7 sur les opérateurs agréés. Dans la sortie ARGOS, citer « Article 7, section 4 — Risk Management, paragraphe 4.x » avec le lien et le sous-paragraphe exact, et non « 7.4 » sans contexte si la formulation est ambiguë.",
+              "source": "wto_trade_facilitation_selected_articles.md",
+              "line_start": 15,
+              "line_end": 15,
+              "score": 0.1429,
+              "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+              "authority": "Organisation mondiale du commerce",
+              "jurisdiction": "international",
+              "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+              "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+              "source_type": "team_authored_summary_of_primary_text",
+              "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+            },
+            {
+              "text": "La section 4 de l’article 7 (« Risk Management ») prévoit un système de gestion des risques et indique qu’il doit éviter la discrimination arbitraire ou injustifiable et les restrictions déguisées au commerce (paragraphes 4.1–4.2). Le paragraphe 4.4 rattache la gestion à une appréciation du risque fondée sur des critères de sélectivité appropriés. Le texte anglais officiel est la référence pour les formulations exactes.",
+              "source": "wto_trade_facilitation_selected_articles.md",
+              "line_start": 13,
+              "line_end": 13,
+              "score": 0.1111,
+              "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+              "authority": "Organisation mondiale du commerce",
+              "jurisdiction": "international",
+              "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+              "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+              "source_type": "team_authored_summary_of_primary_text",
+              "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+            }
+          ],
+          "assessment": "Éléments douane-port communiqués: Le point de contrôle intérieur enregistre un scellé brisé; chaîne de garde et heure exacte restent à confirmer.",
+          "recommended_action": "Rapprocher les déclarations et journaux de contrôle; faire confirmer la chaîne de garde par les agents habilités.",
+          "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+          "unknowns": [
+            "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+            "Horodatages et chaîne de garde du scénario sont fictifs."
+          ],
+          "uncertainty": "medium",
+          "policy_gap_flag": null,
+          "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+          "human_review_status": "PENDING",
+          "national_source_verified": false,
+          "llm_status": "not_requested"
+        },
+        {
+          "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+          "step": "T4",
+          "agent_id": "A3_DATA_PROTECTION",
+          "status": "insufficient_evidence",
+          "retrieval_agent_id": "policy_data_protection",
+          "agent_version": "1.0.0-simulated",
+          "origin": "SIMULATED",
+          "input_event_ids": [
+            "EV-T4"
+          ],
+          "visible_facts": [],
+          "retrieved_passages": [],
+          "assessment": "Aucun fait de cet événement n’a été transmis à ce rôle à cette étape.",
+          "recommended_action": "Ne pas compléter les faits à partir d’hypothèses; attendre une information autorisée.",
+          "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+          "unknowns": [
+            "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+            "Horodatages et chaîne de garde du scénario sont fictifs."
+          ],
+          "uncertainty": "high",
+          "policy_gap_flag": null,
+          "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+          "human_review_status": "PENDING",
+          "national_source_verified": false,
+          "llm_status": "not_requested"
+        }
+      ],
+      "adviser_reconciliation": {
+        "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+        "step": "T4",
+        "agent_id": "A4_POLICY_ADVISER",
+        "status": "success",
+        "retrieval_agent_id": "policy_adviser",
+        "agent_version": "1.0.0-simulated",
+        "origin": "SIMULATED",
+        "input_event_ids": [
+          "EV-T4"
+        ],
+        "visible_facts": [
+          "Faits opérationnels observés: Une lecture tardive simulée de la mémoire du boîtier situe l’événement dans le yard intérieur.",
+          "Éléments douane-port communiqués: Le point de contrôle intérieur enregistre un scellé brisé; chaîne de garde et heure exacte restent à confirmer.",
+          "Aucun fait de cet événement n’a été transmis à ce rôle à cette étape."
+        ],
+        "retrieved_passages": [
+          {
+            "text": "**Attention à la numérotation :** l’article 7 contient aussi une section 7 sur les opérateurs agréés. Dans la sortie ARGOS, citer « Article 7, section 4 — Risk Management, paragraphe 4.x » avec le lien et le sous-paragraphe exact, et non « 7.4 » sans contexte si la formulation est ambiguë.",
+            "source": "wto_trade_facilitation_selected_articles.md",
+            "line_start": 15,
+            "line_end": 15,
+            "score": 0.1538,
+            "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+            "authority": "Organisation mondiale du commerce",
+            "jurisdiction": "international",
+            "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+            "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+            "source_type": "team_authored_summary_of_primary_text",
+            "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+          },
+          {
+            "text": "La section 4 de l’article 7 (« Risk Management ») prévoit un système de gestion des risques et indique qu’il doit éviter la discrimination arbitraire ou injustifiable et les restrictions déguisées au commerce (paragraphes 4.1–4.2). Le paragraphe 4.4 rattache la gestion à une appréciation du risque fondée sur des critères de sélectivité appropriés. Le texte anglais officiel est la référence pour les formulations exactes.",
+            "source": "wto_trade_facilitation_selected_articles.md",
+            "line_start": 13,
+            "line_end": 13,
+            "score": 0.1176,
+            "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+            "authority": "Organisation mondiale du commerce",
+            "jurisdiction": "international",
+            "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+            "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+            "source_type": "team_authored_summary_of_primary_text",
+            "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+          }
+        ],
+        "assessment": "Les avis reçus sont des analyses de rôles simulés; ils ne déterminent ni droit applicable ni responsabilité.",
+        "recommended_action": "Distinguer faits, comparateurs internationaux et droit camerounais; demander une vérification juridique nationale avant toute conclusion.",
+        "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+        "unknowns": [
+          "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+          "Horodatages et chaîne de garde du scénario sont fictifs."
+        ],
+        "uncertainty": "medium",
+        "policy_gap_flag": "national_rule_not_verified_in_local_corpus",
+        "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+        "human_review_status": "PENDING",
+        "national_source_verified": false,
+        "llm_status": "not_requested"
+      },
+      "data_transfer": {
+        "status": "NO_PERSONAL_DATA_TRANSFER",
+        "reason": "Scénario de démonstration: une personne doit valider la finalité, le fondement, les destinataires, la durée et les garanties avant tout partage."
+      },
+      "human_gate": "PENDING"
+    },
+    {
+      "step": "T5",
+      "event_id": "EV-T5",
+      "origin": "SIMULATED",
+      "independent_assessments": [
+        {
+          "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+          "step": "T5",
+          "agent_id": "A1_OPERATOR",
+          "status": "insufficient_evidence",
+          "retrieval_agent_id": "policy_operator",
+          "agent_version": "1.0.0-simulated",
+          "origin": "SIMULATED",
+          "input_event_ids": [
+            "EV-T5"
+          ],
+          "visible_facts": [
+            "Le délai de conservation fictif du produit pharmaceutique approche; une inspection conjointe est proposée."
+          ],
+          "retrieved_passages": [],
+          "assessment": "Faits opérationnels observés: Le délai de conservation fictif du produit pharmaceutique approche; une inspection conjointe est proposée.",
+          "recommended_action": "Conserver les mesures horodatées et vérifier capteur, point GPS, état du scellé et chaîne de garde avec les acteurs concernés.",
+          "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+          "unknowns": [
+            "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+            "Horodatages et chaîne de garde du scénario sont fictifs."
+          ],
+          "uncertainty": "high",
+          "policy_gap_flag": null,
+          "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+          "human_review_status": "PENDING",
+          "national_source_verified": false,
+          "llm_status": "not_requested"
+        },
+        {
+          "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+          "step": "T5",
+          "agent_id": "A2_CUSTOMS_PORT",
+          "status": "success",
+          "retrieval_agent_id": "policy_customs_port",
+          "agent_version": "1.0.0-simulated",
+          "origin": "SIMULATED",
+          "input_event_ids": [
+            "EV-T5"
+          ],
+          "visible_facts": [
+            "Une inspection humaine est proposée; aucune décision de saisie ou de responsabilité n’est simulée."
+          ],
+          "retrieved_passages": [
+            {
+              "text": "**Attention à la numérotation :** l’article 7 contient aussi une section 7 sur les opérateurs agréés. Dans la sortie ARGOS, citer « Article 7, section 4 — Risk Management, paragraphe 4.x » avec le lien et le sous-paragraphe exact, et non « 7.4 » sans contexte si la formulation est ambiguë.",
+              "source": "wto_trade_facilitation_selected_articles.md",
+              "line_start": 15,
+              "line_end": 15,
+              "score": 0.1429,
+              "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+              "authority": "Organisation mondiale du commerce",
+              "jurisdiction": "international",
+              "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+              "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+              "source_type": "team_authored_summary_of_primary_text",
+              "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+            },
+            {
+              "text": "La section 4 de l’article 7 (« Risk Management ») prévoit un système de gestion des risques et indique qu’il doit éviter la discrimination arbitraire ou injustifiable et les restrictions déguisées au commerce (paragraphes 4.1–4.2). Le paragraphe 4.4 rattache la gestion à une appréciation du risque fondée sur des critères de sélectivité appropriés. Le texte anglais officiel est la référence pour les formulations exactes.",
+              "source": "wto_trade_facilitation_selected_articles.md",
+              "line_start": 13,
+              "line_end": 13,
+              "score": 0.1111,
+              "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+              "authority": "Organisation mondiale du commerce",
+              "jurisdiction": "international",
+              "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+              "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+              "source_type": "team_authored_summary_of_primary_text",
+              "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+            }
+          ],
+          "assessment": "Éléments douane-port communiqués: Une inspection humaine est proposée; aucune décision de saisie ou de responsabilité n’est simulée.",
+          "recommended_action": "Rapprocher les déclarations et journaux de contrôle; faire confirmer la chaîne de garde par les agents habilités.",
+          "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+          "unknowns": [
+            "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+            "Horodatages et chaîne de garde du scénario sont fictifs."
+          ],
+          "uncertainty": "medium",
+          "policy_gap_flag": null,
+          "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+          "human_review_status": "PENDING",
+          "national_source_verified": false,
+          "llm_status": "not_requested"
+        },
+        {
+          "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+          "step": "T5",
+          "agent_id": "A3_DATA_PROTECTION",
+          "status": "success",
+          "retrieval_agent_id": "policy_data_protection",
+          "agent_version": "1.0.0-simulated",
+          "origin": "SIMULATED",
+          "input_event_ids": [
+            "EV-T5"
+          ],
+          "visible_facts": [
+            "La demande de localisation demeure en attente de validation de la finalité, du fondement, des destinataires et de la durée au regard des extraits nationaux disponibles."
+          ],
+          "retrieved_passages": [
+            {
+              "text": "1. Présenter ces passages comme **extraits contrôlés d’une copie officielle scannée**, non comme la loi complète ou un avis juridique.\n2. Pour une demande de localisation conducteur/véhicule, examiner au minimum la finalité, les catégories de données, les destinataires, la durée, la base alléguée et la présence d’une décision automatisée; déclarer tout champ manquant.\n3. Ne pas assimiler automatiquement un transfert à une violation ou une autorisation à une preuve de licéité. Exiger une revue humaine des faits, du texte complet, des règles d’application, des rôles et des garanties.\n4. Ne pas affirmer que l’autorité de contrôle est opérationnelle ou inactive à partir de ce document; ce statut et les éventuelles dispositions transitoires nécessitent une source officielle distincte.\n5. Les constats de la loi camerounaise ne sont pas automatiquement applicables aux autres pays du corridor.",
+              "source": "cameroon_law_2024_017_excerpts.md",
+              "line_start": 37,
+              "line_end": 41,
+              "score": 0.1368,
+              "title": "Loi camerounaise n° 2024/017 du 23 décembre 2024 relative à la protection des données à caractère personnel au Cameroun",
+              "authority": "Présidence de la République du Cameroun",
+              "jurisdiction": "Cameroon",
+              "official_url": "https://www.prc.cm/files/2b/9f/21/1055fa3c2251b4c4248fd301f584daaf.pdf",
+              "verification_status": "VERIFIED_PRIMARY_EXCERPT_MANUALLY_TRANSCRIBED",
+              "source_type": "manually_transcribed_excerpts_from_primary_official_scan",
+              "applicability_to_cameroon": "ARTICLE_LEVEL_REVIEW_REQUIRED"
+            },
+            {
+              "text": "L’extrait liste les informations à fournir au plus tard lors de la collecte : identité du responsable, finalités, catégories de données, destinataires possibles, durée de conservation et éventualité d’un transfert vers un État étranger. Il mentionne aussi plusieurs droits, notamment accès, rectification, effacement, opposition, limitation, portabilité, réclamation et le droit de ne pas faire l’objet d’une décision individuelle automatisée, y compris le profilage. L’application, les conditions et les exceptions doivent être examinées dans le texte complet et ses dispositions associées.",
+              "source": "cameroon_law_2024_017_excerpts.md",
+              "line_start": 28,
+              "line_end": 28,
+              "score": 0.1277,
+              "title": "Loi camerounaise n° 2024/017 du 23 décembre 2024 relative à la protection des données à caractère personnel au Cameroun",
+              "authority": "Présidence de la République du Cameroun",
+              "jurisdiction": "Cameroon",
+              "official_url": "https://www.prc.cm/files/2b/9f/21/1055fa3c2251b4c4248fd301f584daaf.pdf",
+              "verification_status": "VERIFIED_PRIMARY_EXCERPT_MANUALLY_TRANSCRIBED",
+              "source_type": "manually_transcribed_excerpts_from_primary_official_scan",
+              "applicability_to_cameroon": "ARTICLE_LEVEL_REVIEW_REQUIRED"
+            },
+            {
+              "text": "- **Article 9 :** le traitement est, en principe, subordonné au consentement préalable, libre, éclairé, spécifique et univoque. Le texte énumère des cas où le traitement nécessaire peut déroger à cette exigence, notamment l’obligation légale, une mission d’intérêt public/exercice d’autorité et la préservation de la santé. L’extrait ne permet pas à ARGOS de choisir lui-même la base juridique d’un transfert.\n- **Article 10 :** le traitement doit être licite, loyal et non frauduleux.\n- **Article 11 :** les données sont collectées pour des finalités déterminées, explicites et légitimes; elles ne doivent pas être traitées ultérieurement d’une manière incompatible avec ces finalités.\n- **Article 12 :** les données doivent être complètes, fiables et à jour; le texte prévoit une obligation de rectifier ou d’effacer les données inexactes ou incomplètes.\n- **Article 13 :** les données ne doivent pas être conservées au-delà de la durée nécessaire au traitement; l’alinéa 2 renvoie à une durée précisée dans l’autorisation et aux modalités réglementaires. La durée réelle applicable doit être vérifiée pour le cas précis.",
+              "source": "cameroon_law_2024_017_excerpts.md",
+              "line_start": 13,
+              "line_end": 17,
+              "score": 0.0938,
+              "title": "Loi camerounaise n° 2024/017 du 23 décembre 2024 relative à la protection des données à caractère personnel au Cameroun",
+              "authority": "Présidence de la République du Cameroun",
+              "jurisdiction": "Cameroon",
+              "official_url": "https://www.prc.cm/files/2b/9f/21/1055fa3c2251b4c4248fd301f584daaf.pdf",
+              "verification_status": "VERIFIED_PRIMARY_EXCERPT_MANUALLY_TRANSCRIBED",
+              "source_type": "manually_transcribed_excerpts_from_primary_official_scan",
+              "applicability_to_cameroon": "ARTICLE_LEVEL_REVIEW_REQUIRED"
+            }
+          ],
+          "assessment": "Revue du partage demandé: La demande de localisation demeure en attente de validation de la finalité, du fondement, des destinataires et de la durée au regard des extraits nationaux disponibles.",
+          "recommended_action": "Mettre le transfert en attente: la finalité, la base, le périmètre, les destinataires et la durée ne sont pas établis dans les informations reçues.",
+          "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+          "unknowns": [
+            "Les extraits camerounais sont partiels; texte complet, règles d’application et applicabilité aux faits à valider.",
+            "Horodatages et chaîne de garde du scénario sont fictifs."
+          ],
+          "uncertainty": "medium",
+          "policy_gap_flag": null,
+          "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+          "human_review_status": "PENDING",
+          "national_source_verified": true,
+          "llm_status": "not_requested"
+        }
+      ],
+      "adviser_reconciliation": {
+        "trace_id": "cf23a160-896f-49d4-b936-6faa77f43858",
+        "step": "T5",
+        "agent_id": "A4_POLICY_ADVISER",
+        "status": "success",
+        "retrieval_agent_id": "policy_adviser",
+        "agent_version": "1.0.0-simulated",
+        "origin": "SIMULATED",
+        "input_event_ids": [
+          "EV-T5"
+        ],
+        "visible_facts": [
+          "Faits opérationnels observés: Le délai de conservation fictif du produit pharmaceutique approche; une inspection conjointe est proposée.",
+          "Éléments douane-port communiqués: Une inspection humaine est proposée; aucune décision de saisie ou de responsabilité n’est simulée.",
+          "Revue du partage demandé: La demande de localisation demeure en attente de validation de la finalité, du fondement, des destinataires et de la durée au regard des extraits nationaux disponibles."
+        ],
+        "retrieved_passages": [
+          {
+            "text": "**Attention à la numérotation :** l’article 7 contient aussi une section 7 sur les opérateurs agréés. Dans la sortie ARGOS, citer « Article 7, section 4 — Risk Management, paragraphe 4.x » avec le lien et le sous-paragraphe exact, et non « 7.4 » sans contexte si la formulation est ambiguë.",
+            "source": "wto_trade_facilitation_selected_articles.md",
+            "line_start": 15,
+            "line_end": 15,
+            "score": 0.1538,
+            "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+            "authority": "Organisation mondiale du commerce",
+            "jurisdiction": "international",
+            "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+            "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+            "source_type": "team_authored_summary_of_primary_text",
+            "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+          },
+          {
+            "text": "La section 4 de l’article 7 (« Risk Management ») prévoit un système de gestion des risques et indique qu’il doit éviter la discrimination arbitraire ou injustifiable et les restrictions déguisées au commerce (paragraphes 4.1–4.2). Le paragraphe 4.4 rattache la gestion à une appréciation du risque fondée sur des critères de sélectivité appropriés. Le texte anglais officiel est la référence pour les formulations exactes.",
+            "source": "wto_trade_facilitation_selected_articles.md",
+            "line_start": 13,
+            "line_end": 13,
+            "score": 0.1176,
+            "title": "Accord OMC sur la facilitation des échanges — extraits Articles 4, 7.4, 10.4, 11",
+            "authority": "Organisation mondiale du commerce",
+            "jurisdiction": "international",
+            "official_url": "https://www.wto.org/English/docs_e/legal_e/tfa-nov14_e.htm",
+            "verification_status": "VERIFIED_SUMMARY_OF_PRIMARY",
+            "source_type": "team_authored_summary_of_primary_text",
+            "applicability_to_cameroon": "TO_VERIFY_MEMBER_ACCEPTANCE_AND_NOTIFICATION"
+          }
+        ],
+        "assessment": "Les avis reçus sont des analyses de rôles simulés; ils ne déterminent ni droit applicable ni responsabilité.",
+        "recommended_action": "Distinguer faits, comparateurs internationaux et droit camerounais; demander une vérification juridique nationale avant toute conclusion.",
+        "responsible_actor": "Opérateur humain habilité; rôle exact à confirmer dans les textes applicables.",
+        "unknowns": [
+          "Aucun extrait camerounais pertinent n’a été retrouvé dans le corpus autorisé.",
+          "Horodatages et chaîne de garde du scénario sont fictifs."
+        ],
+        "uncertainty": "medium",
+        "policy_gap_flag": "national_rule_not_verified_in_local_corpus",
+        "reasoning_summary": "Résumé d’audit fondé sur les seuls faits visibles et passages retournés; aucune chaîne de pensée privée n’est enregistrée.",
+        "human_review_status": "PENDING",
+        "national_source_verified": false,
+        "llm_status": "not_requested"
+      },
+      "data_transfer": {
+        "status": "NO_PERSONAL_DATA_TRANSFER",
+        "reason": "Scénario de démonstration: une personne doit valider la finalité, le fondement, les destinataires, la durée et les garanties avant tout partage."
+      },
+      "human_gate": "PENDING"
+    }
+  ],
+  "agents_consulted": [
+    "A1_OPERATOR",
+    "A2_CUSTOMS_PORT",
+    "A3_DATA_PROTECTION",
+    "A4_POLICY_ADVISER"
+  ],
+  "sources": [
+    "cameroon_law_2024_017_excerpts.md",
+    "wto_trade_facilitation_selected_articles.md"
+  ],
+  "limitations": [
+    "Toutes les informations opérationnelles du scénario sont synthétiques.",
+    "La recherche est lexicale et ne constitue ni un avis juridique ni une preuve d’applicabilité.",
+    "Seuls des extraits sélectionnés de la loi camerounaise n° 2024/017 sont indexés; la loi complète et ses textes d’application ne le sont pas.",
+    "Les rôles A1–A4 sont simulés et ne représentent aucune administration réelle."
+  ]
+}

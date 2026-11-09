@@ -749,7 +749,10 @@ async function loadArgosDirectSettingsBoxes() {
   }
   select.innerHTML = '<option value="">Sélectionner une boîte…</option>' + boxes
     .filter(box => box.id_boite && box.device_uid)
-    .map(box => `<option value="${escapeHTML(box.id_boite)}" data-device-uid="${escapeHTML(box.device_uid)}">${escapeHTML(box.numero_serie || `Boîte #${box.id_boite}`)} — ${escapeHTML(box.device_uid)}</option>`)
+    .map(box => {
+      const security = box.telemetry?.modes?.securityEnabled ?? box.telemetry?.security_enabled;
+      return `<option value="${escapeHTML(box.id_boite)}" data-device-uid="${escapeHTML(box.device_uid)}" data-security-enabled="${typeof security === 'boolean' ? String(security) : ''}">${escapeHTML(box.numero_serie || `Boîte #${box.id_boite}`)} — ${escapeHTML(box.device_uid)}</option>`;
+    })
     .join('');
   if (active.boxId) select.value = String(active.boxId);
   argosDirectSettingsBoxChanged();
@@ -760,6 +763,12 @@ function argosDirectSettingsBoxChanged() {
   const boxId = select?.value || '';
   const security = document.getElementById('direct-settings-security');
   if (security) security.dataset.argosSecurityBox = boxId;
+  const selectedSecurity = select?.selectedOptions?.[0]?.dataset.securityEnabled;
+  if (security && selectedSecurity !== undefined && selectedSecurity !== '' &&
+      !(window.argosDirectBridge.lastTelemetry && String(window.argosDirectBridge.boxId) === String(boxId))) {
+    security.checked = selectedSecurity === 'true';
+    window.argosDirectBridge.deviceSecurityEnabled = security.checked;
+  }
   const live = document.getElementById('direct-settings-live');
   if (live) live.innerHTML = boxId ? buildArgosDirectLivePanel(boxId) : '';
   if (window.argosDirectBridge.lastTelemetry && String(window.argosDirectBridge.boxId) === String(boxId)) {

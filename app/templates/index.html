@@ -13,8 +13,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}?v=20261028-regulatory-history-v1">
-<link rel="stylesheet" href="{{url_for('static', filename='css/ai-assistant.css')}}?v=20261027-ai-assistant">
+<link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}?v=20261108-demo-replay-v1">
+<link rel="stylesheet" href="{{url_for('static', filename='css/ai-assistant.css')}}?v=20261108-demo-replay-v1">
 </head>
 <body>
 
@@ -93,9 +93,7 @@
     <div class="topbar-brand">ARGOS</div>
     <div class="topbar-sep"></div>
     <span class="topbar-role" id="topbar-role-label">SUPER ADMIN</span>
-    <div class="topbar-search">
-      <input type="text" placeholder="Rechercher conteneur, entreprise..." id="global-search" oninput="globalSearch(this.value)">
-    </div>
+
     <div class="topbar-actions">
       <center><div id="live-time" style="font-family:var(--mono);font-size:20px;color:var(--cyan);white-space:nowrap;"></div></center>
         <button class="notif-btn" onclick="toggleNotif()" id="notif-btn" aria-label="Ouvrir les notifications">
@@ -118,7 +116,7 @@
     </div>
   </div>
 </div>
-  <script src="{{url_for('static', filename='js/script.js')}}?v=20261028-regulatory-history-v1"></script>
+  <script src="{{url_for('static', filename='js/script.js')}}?v=20261108-ai-box-picker-v2"></script>
   <script>
     const loginHeroSlides = [
       {title:'Supervision navale 360°', subtitle:'Routes, alertes et containers visibles en un seul écran.', metric:'8.2ms', label:'Latence IA'},

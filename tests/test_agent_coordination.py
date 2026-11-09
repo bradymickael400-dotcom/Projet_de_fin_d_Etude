@@ -39,7 +39,8 @@ def test_risk_agent_consumes_two_other_agents_results():
 
     assert calls == ["iot_monitor", "gps_route"]
     assert result.status == "success"
-    assert result.data["signals"] == ["door_open", "shock_above_existing_threshold"]
+    # 4.2 G reste sous le seuil ARGOS par défaut de 5 G.
+    assert result.data["signals"] == ["door_open"]
     assert result.data["stale_position"] is True
     assert [item["agent_id"] for item in result.data["consumed_results"]] == ["iot_monitor", "gps_route"]
     assert len(result.provenance) == 2
@@ -116,12 +117,60 @@ def test_llm_one_request_invokes_multiple_agents_and_receives_results():
     assert len(session.payloads) == 2
     declarations = session.payloads[0]["tools"][0]["functionDeclarations"]
     assert declarations[0]["parameters"]["type"] == "OBJECT"
-    assert declarations[0]["parameters"]["properties"]["black_box_id"]["type"] == "STRING"
+    assert "black_box_id" not in declarations[0]["parameters"]["properties"]
+    assert "black_box_id" not in declarations[0]["parameters"].get("required", [])
     function_responses = session.payloads[1]["contents"][-1]["parts"]
     assert [part["functionResponse"]["name"] for part in function_responses] == [
         "iot_monitor", "gps_route", "risk_assessor", "knowledge_retriever"
     ]
     assert all("data" in part["functionResponse"]["response"] for part in function_responses)
+
+
+def test_gemini_rate_limit_returns_deterministic_selected_box_analysis():
+    from types import SimpleNamespace
+
+    registry = AgentRegistry()
+    calls = []
+
+    def assess(arguments, _identity, _registry):
+        calls.append(arguments["black_box_id"])
+        return AgentResult("risk_assessor", "success", {
+            "black_box_id": 17,
+            "risk_level": "warning",
+            "signals": ["door_open"],
+            "stale_position": False,
+        })
+
+    registry.register(_agent("risk_assessor", assess))
+
+    class RateLimitedProvider:
+        def generate(self, **_kwargs):
+            error = RuntimeError("Gemini quota exceeded")
+            error.response = SimpleNamespace(status_code=429)
+            raise error
+
+    outcome = run_agent_request(
+        "Analyse les dernières alertes de porte.", IDENTITY, RateLimitedProvider(),
+        registry=registry, black_box_ids=["17"], selected_container_refs={"17": "CONT-17"},
+    )
+
+    assert calls == ["17"]
+    assert outcome["agents_consulted"] == ["risk_assessor"]
+    assert "Gemini est temporairement limité" in outcome["reply"]
+    assert "CONT-17" in outcome["reply"]
+    assert "door_open" in outcome["reply"]
+    assert outcome["agent_results"][0]["agent_id"] == "risk_assessor"
+
+    class AvailableProvider:
+        def generate(self, **_kwargs):
+            return {"reply": "Analyse LLM reçue.", "tool_results": []}
+
+    normal_outcome = run_agent_request(
+        "Analyse les dernières alertes de porte.", IDENTITY, AvailableProvider(),
+        registry=registry, black_box_ids=["17"], selected_container_refs={"17": "CONT-17"},
+    )
+    assert normal_outcome["reply"] == "Analyse LLM reçue."
+    assert normal_outcome["agents_consulted"] == ["risk_assessor"]
 
 
 def test_knowledge_search_returns_only_local_cited_passages(tmp_path):
@@ -202,6 +251,35 @@ def test_ai_api_requests_scope_before_provider_even_when_not_configured(monkeypa
     assert response.get_json()["status"] == "needs_container_selection"
 
 
+def test_ai_available_boxes_include_demo_label_and_unassigned_visible_boxes(monkeypatch):
+    from app.routes import dashboard
+
+    class Result:
+        def fetchall(self):
+            return [
+                (5, "ARGU0000012", "ARGOS-DEMO-01"),
+                (6, None, "ARGOS-SPARE-06"),
+            ]
+
+    monkeypatch.setattr(dashboard.db.session, "execute", lambda *_args, **_kwargs: Result())
+    boxes = dashboard._ai_available_containers({"role": "superadmin", "user_id": None})
+
+    assert boxes == [
+        {
+            "black_box_id": "5",
+            "container_id": "ARGU0000012",
+            "box_label": "ARGOS-DEMO-01",
+            "label": "ARGOS-DEMO-01 — conteneur ARGU0000012",
+        },
+        {
+            "black_box_id": "6",
+            "container_id": None,
+            "box_label": "ARGOS-SPARE-06",
+            "label": "ARGOS-SPARE-06 — sans conteneur associé",
+        },
+    ]
+
+
 def test_chat_api_uses_server_registry_and_ignores_browser_context(monkeypatch):
     from app import create_app
     from app.agents import specialists
@@ -259,7 +337,8 @@ def test_chat_api_uses_server_registry_and_ignores_browser_context(monkeypatch):
     assert "SECRET BROWSER CONTEXT" not in FakeProvider.last_message
     assert "override injected by browser" not in FakeProvider.last_message
     assert {tool["name"] for tool in FakeProvider.last_tools} == {
-        "iot_monitor", "gps_route", "risk_assessor", "knowledge_retriever"
+        "iot_monitor", "gps_route", "risk_assessor", "knowledge_retriever",
+        "transport_regulatory", "port_intelligence", "central_africa_data",
     }
 
 
@@ -416,8 +495,11 @@ def test_orchestrator_exposes_operational_agents_only_for_selected_ids():
     without_scope = {tool["name"] for tool in agent_tools(registry, IDENTITY)}
     with_scope = {tool["name"] for tool in agent_tools(registry, IDENTITY, ["17", "18"])}
 
-    assert without_scope == {"knowledge_retriever"}
-    assert with_scope == {"iot_monitor", "gps_route", "risk_assessor", "knowledge_retriever"}
+    assert without_scope == {"knowledge_retriever", "transport_regulatory", "port_intelligence"}
+    assert with_scope == {
+        "iot_monitor", "gps_route", "risk_assessor", "knowledge_retriever",
+        "transport_regulatory", "port_intelligence",
+    }
 
 
 def test_multi_container_llm_turn_queries_only_the_selected_boxes():
@@ -431,7 +513,8 @@ def test_multi_container_llm_turn_queries_only_the_selected_boxes():
 
     class MultiBoxProvider:
         def generate(self, message, tools, invoke_tool):
-            assert "17, 18" in message
+            assert "ID de routage 17" in message
+            assert "ID de routage 18" in message
             assert {tool["name"] for tool in tools} == {"iot_monitor", "gps_route"}
             results = [
                 invoke_tool("iot_monitor", {"black_box_id": "17"}),
@@ -484,6 +567,7 @@ def test_each_registered_production_agent_executes_its_handler_with_local_depend
         registry = build_registry()
         assert {agent["agent_id"] for agent in registry.discover()} == {
             "iot_monitor", "gps_route", "risk_assessor", "knowledge_retriever",
+            "transport_regulatory", "port_intelligence", "central_africa_data",
         }
         telemetry = registry.execute("iot_monitor", {"black_box_id": "17"}, IDENTITY, "trace")
         position = registry.execute("gps_route", {"black_box_id": "17"}, IDENTITY, "trace")

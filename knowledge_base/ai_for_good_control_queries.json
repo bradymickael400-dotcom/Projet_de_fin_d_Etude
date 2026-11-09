@@ -1,0 +1,19 @@
+{
+  "evaluation_id": "argos-policy-kb-v1",
+  "created_at": "2026-10-29",
+  "rules": "Only the source explicitly registered as verified is retrievable. National-law questions without an ingested official source are expected to return insufficient evidence.",
+  "queries": [
+    {"id": "Q01", "partition": "customs_port", "query": "Article 7 section 4 risk management customs", "expected_source": "wto_trade_facilitation_selected_articles.md", "expected": "source_found_as_international_comparator"},
+    {"id": "Q02", "partition": "customs_port", "query": "arbitrary or unjustifiable discrimination risk management", "expected_source": "wto_trade_facilitation_selected_articles.md", "expected": "source_found_as_international_comparator"},
+    {"id": "Q03", "partition": "customs_port", "query": "guichet unique technologies information échanges commerce", "expected_source": "wto_trade_facilitation_selected_articles.md", "expected": "source_found_as_international_comparator"},
+    {"id": "Q04", "partition": "customs_port", "query": "Article 11 freedom of transit formalities", "expected_source": "wto_trade_facilitation_selected_articles.md", "expected": "source_found_as_international_comparator"},
+    {"id": "Q05", "partition": "legal_adviser", "query": "article 4 procédures appel réexamen douanières", "expected_source": "wto_trade_facilitation_selected_articles.md", "expected": "source_found_as_international_comparator"},
+    {"id": "Q06", "partition": "data_protection", "query": "données personnelles consentement obligation légale finalité traitement", "expected_source": "cameroon_law_2024_017_excerpts.md", "expected": "source_found_requires_human_legal_review"},
+    {"id": "Q07", "partition": "data_protection", "query": "données personnelles durée conservation nécessaire finalités", "expected_source": "cameroon_law_2024_017_excerpts.md", "expected": "source_found_requires_full_text_and_implementation_review"},
+    {"id": "Q08", "partition": "customs_port", "query": "Cameroon port customs seal handover responsibility", "expected_source": null, "expected": "insufficient_evidence_national_text_not_ingested"},
+    {"id": "Q09", "partition": "customs_port", "query": "CNCC BESC suspension June 15", "expected_source": null, "expected": "insufficient_evidence_primary_notice_not_ingested"},
+    {"id": "Q10", "partition": "legal_adviser", "query": "Cameroon WTO acceptance notifications trade facilitation agreement", "expected_source": "wto_trade_facilitation_selected_articles.md", "expected": "comparator_found_applicability_to_verify"},
+    {"id": "Q11", "partition": "data_protection", "query": "droit décision individuelle automatisée profilage information personne concernée", "expected_source": "cameroon_law_2024_017_excerpts.md", "expected": "source_found_not_an_automated_decision_compliance_finding"},
+    {"id": "Q12", "partition": "data_protection", "query": "violation données personnelles informer autorité personne concernée sans délai", "expected_source": "cameroon_law_2024_017_excerpts.md", "expected": "source_found_breach_response_still_requires_context"}
+  ]
+}

@@ -12,7 +12,8 @@ from typing import Optional, Tuple
 from sqlalchemy import text
 
 IOT_FRESHNESS_THRESHOLD_MIN = 30
-SHOCK_ALERT_THRESHOLD_G = 3.0
+# Legacy exported name; new evaluations use each box's configured threshold.
+SHOCK_ALERT_THRESHOLD_G = 5.0
 
 
 def _as_utc(dt):

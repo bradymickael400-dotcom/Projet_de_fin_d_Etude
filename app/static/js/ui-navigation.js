@@ -723,25 +723,63 @@ async function addNewClient() {
 // ══════════════════════════════════════════════════════
 //  NOTIFICATIONS & CLOCK
 // ══════════════════════════════════════════════════════
-function buildNotifications(){ buildNotificationsFromDB(); }
+let notificationPollTimer=null;
+let previousNotificationKeys=null;
+function buildNotifications(){
+  buildNotificationsFromDB();
+  if(!notificationPollTimer)notificationPollTimer=setInterval(()=>{
+    if(sessionStorage.getItem('argosAccessToken')||localStorage.getItem('argosAccessToken'))buildNotificationsFromDB();
+  },15000);
+}
 async function buildNotificationsFromDB(){
   const listEl  = document.getElementById('notif-list');
   const countEl = document.getElementById('notif-count');
   if(!listEl) return;
+  let notifs = [];
+  const detailItems = [];
 
-  // 1. Récupérer les alertes matérielles des conteneurs
-  let notifs = DB_CONTAINERS.filter(c=>c.alerts&&c.alerts.length>0).slice(0,6).flatMap(c=>
-    c.alerts.slice(0,2).map(a=>({
-      text:`<i class="fas fa-exclamation-triangle" style="color:var(--amber)"></i> ${c.id_boite}: ${a.substring(0,40)}`,
-      sub:c.lastUpdate, 
-      sev:'warn',
-      action: "navigateTo('events')"
-    }))
-  );
+  // Les notifications ARGOS viennent de l'API authentifiée, filtrée côté
+  // serveur selon le rôle et les boîtes reliées au profil.
+  try {
+    const response = await secureApiFetch('/api/notifications');
+    if(response.ok) {
+      const rows = await response.json();
+      const keyOf=row=>String(row.id??row.id_notification??`${row.type||''}:${row.id_boite||''}:${row.sequence||''}:${row.message||''}:${row.horodatage||''}`);
+      const keys=new Set((Array.isArray(rows)?rows:[]).map(keyOf));
+      if(previousNotificationKeys){
+        const newAlerts=(Array.isArray(rows)?rows:[]).filter(row=>!previousNotificationKeys.has(keyOf(row))&&String(row.type||'').toUpperCase()==='IOT_ALERT');
+        if(newAlerts.length&&notifsEnabled&&typeof soundAlert!=='undefined'){soundAlert.currentTime=0;soundAlert.play().catch(()=>{});}
+      }
+      previousNotificationKeys=keys;
+      (Array.isArray(rows) ? rows : []).forEach(row => {
+        const detailIndex=detailItems.push({
+          title:row.title||row.type||'Notification ARGOS',
+          reason:row.reason||row.message||'Aucun déclencheur détaillé fourni.',
+          details:row.details||row.message||'Aucun détail complémentaire.',
+          type:row.type||'ARGOS',
+          container:row.container_label||(row.id_boite?`Boîte #${row.id_boite}`:'Compte ARGOS'),
+          timestamp:row.horodatage||null,
+          severity:['danger','warning','info','success'].includes(row.severity)?row.severity:'info'
+        })-1;
+        notifs.push({
+          message:row.summary||row.title||'Notification ARGOS',
+          // La liste reste concise; la cause et les mesures sont dans la fiche.
+          container:row.container_label||(row.id_boite?`Boîte #${row.id_boite}`:'Compte ARGOS'),
+          sub:row.horodatage?new Date(row.horodatage).toLocaleString('fr-FR'):'Maintenant',
+          severity:['danger','warning','info','success'].includes(row.severity)?row.severity:'info',
+          action:`openNotificationDetail(${detailIndex})`
+        });
+      });
+    }
+  } catch(e) {
+    console.error('Erreur chargement notifications ARGOS', e);
+  }
+
+  window.argosNotificationDetails=detailItems;
 
   // 2. Récupérer les publications et annonces
   try {
-    const res = await fetch('/api/publications');
+    const res = await secureApiFetch('/api/publications');
     if(res.ok) {
         const pubs = await res.json();
         
@@ -759,11 +797,10 @@ async function buildNotificationsFromDB(){
             }
 
             if(canSee) {
-                let icon = pub.niveau === 'Urgent' ? '<i class="fas fa-exclamation-circle" style="color:var(--red)"></i>' : '<i class="fas fa-bullhorn" style="color:var(--cyan)"></i>';
                 notifs.unshift({
-                    text: `${icon} <strong>Nouveau message :</strong> ${pub.titre}`,
+                    message: `Nouveau message : ${pub.titre}`,
                     sub: new Date(pub.date_pub).toLocaleString('fr-FR'),
-                    sev: pub.niveau === 'Urgent' ? 'danger' : 'info',
+                    severity: pub.niveau === 'Urgent' ? 'danger' : 'info',
                     // MODIFICATION ICI : Appel de la modale au lieu de la redirection
                     action: `openPublicationModal(${pub.id})` 
                 });
@@ -775,24 +812,45 @@ async function buildNotificationsFromDB(){
   }
 
   // 3. Affichage final
-  notifs = notifs.slice(0, 10);
+  notifs = notifs.slice(0, 50);
   if(!notifs.length){
     notifs = [{
-        text:'<i class="fas fa-check-circle" style="color:var(--green)"></i> Aucune nouvelle notification', 
+        message:'Aucune nouvelle notification',
         sub:'Maintenant', 
-        sev:'ok', 
+        severity:'success',
         action: ""
     }];
   }
 
-  listEl.innerHTML  = notifs.map(n=>`
-    <div class="notif-item" onclick="closeNotif(); ${n.action}">
-        <div style="font-size:13px;color:var(--text)">${n.text}</div>
-        <div class="notif-time">${n.sub}</div>
-    </div>
-  `).join('');
+  const severityStyle = {
+    danger: {color:'var(--red)', icon:'fa-circle-exclamation', label:'DANGER'},
+    warning: {color:'var(--amber)', icon:'fa-triangle-exclamation', label:'VIGILANCE'},
+    info: {color:'var(--cyan)', icon:'fa-circle-info', label:'INFO'},
+    success: {color:'var(--green)', icon:'fa-circle-check', label:'OK'}
+  };
+  listEl.innerHTML = notifs.map(n=>{
+    const level = severityStyle[n.severity] || severityStyle.info;
+    return `
+      <div class="notif-item" onclick="closeNotif(); ${n.action || ''}" style="border-left:3px solid ${level.color};padding-left:10px">
+        <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--text)">
+          <i class="fas ${level.icon}" style="color:${level.color};margin-top:2px" aria-hidden="true"></i>
+          <div style="min-width:0;flex:1"><strong>${escapeHTML(n.message)}</strong><div style="font-size:11px;color:var(--text3);margin-top:3px">${escapeHTML(n.container||'')} · Ouvrir pour voir le déclencheur et les détails</div></div>
+          <strong style="margin-left:auto;color:${level.color};font-size:9px;white-space:nowrap">${level.label}</strong>
+        </div>
+        <div class="notif-time">${escapeHTML(n.sub)}</div>
+      </div>`;
+  }).join('');
   
-  if(countEl) countEl.textContent = Math.max(0, notifs.filter(n=>n.sev!=='ok').length);
+  if(countEl) countEl.textContent = Math.max(0, notifs.filter(n=>n.severity!=='success').length);
+}
+
+function openNotificationDetail(index){
+  const item=window.argosNotificationDetails?.[Number(index)];
+  if(!item) return;
+  const severityColor={danger:'var(--red)',warning:'var(--amber)',info:'var(--cyan)',success:'var(--green)'}[item.severity]||'var(--cyan)';
+  const root=document.getElementById('modal-root');
+  if(!root) return;
+  root.innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:620px;width:min(620px,94vw)"><div class="modal-header"><div><div class="modal-title" style="color:${severityColor}">${escapeHTML(item.title)}</div><div style="font-size:11px;color:var(--text3);margin-top:4px">${escapeHTML(item.container)} · ${escapeHTML(item.timestamp?new Date(item.timestamp).toLocaleString('fr-FR'):'Date indisponible')}</div></div><button class="modal-close" onclick="closeModal()" aria-label="Fermer">×</button></div><div class="modal-body"><section style="padding:12px;border-left:3px solid ${severityColor};background:var(--bg3);border-radius:6px;margin-bottom:12px"><strong>Déclencheur</strong><div style="margin-top:5px;font-size:13px">${escapeHTML(item.reason)}</div></section><section><div style="font-size:11px;color:var(--text3);letter-spacing:.5px;margin-bottom:5px">DÉTAILS DE LA NOTIFICATION · ${escapeHTML(item.type)}</div><div style="font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere">${escapeHTML(item.details)}</div></section></div><div class="modal-footer"><button class="btn-secondary" onclick="closeModal()">Fermer</button><button class="btn-primary" onclick="closeModal();navigateTo('events')">Historique des événements</button></div></div></div>`;
 }
 
 
@@ -937,7 +995,7 @@ function openImageModal(imageUrl, altText = 'Image', title = 'Document') {
 
 function closeModal(){ document.getElementById('modal-root').innerHTML = ''; }
 
-function showToast(msg, type='info'){
+function showToast(msg, type='info', playSound=true){
   const panel = document.getElementById('alert-panel');
   if(!panel) return;
   const icons = {info:'<i class="fas fa-info-circle"></i>', success:'<i class="fas fa-check-circle"></i>',
@@ -947,6 +1005,7 @@ function showToast(msg, type='info'){
   toast.innerHTML = `<span>${icons[type]||icons.info}</span><span>${msg}</span>`;
   panel.appendChild(toast);
   try {
+    if(!playSound||!notifsEnabled)return;
     if(type==='danger'||type==='warn'){ soundAlert.currentTime=0; soundAlert.play().catch(()=>{}); }
     else { soundInfo.currentTime=0; soundInfo.play().catch(()=>{}); }
   } catch(e){}
@@ -1463,7 +1522,7 @@ function openAIAssistant(containerId=null){
   }
   if(containerId && !panel.dataset.initializedFor){
     panel.dataset.initializedFor=String(containerId);
-    addAIMessage(`Boîte ${formatAIReply(containerId)} sélectionnée. Posez votre question pour lancer l’analyse.`);
+    addAIMessage('La boîte associée à cette fiche est sélectionnée pour l’analyse.');
   }
   setTimeout(()=>document.getElementById('ai-chat-input')?.focus(),0);
 }
@@ -1475,7 +1534,7 @@ function mountGlobalAIAssistant(){
   root.className='argos-ai-widget';
   root.innerHTML=`<button id="argos-ai-toggle" class="argos-ai-toggle" type="button" aria-expanded="false" aria-controls="argos-ai-panel" aria-label="Ouvrir l’assistant IA ARGOS" onclick="toggleGlobalAIAssistant()"><svg class="argos-ai-toggle-logo" aria-hidden="true" viewBox="0 0 82 40"><path d="M4 34 17 5h7l13 29h-8l-3-8H15l-3 8Zm14-14h5l-2.5-8Z" fill="#75e8f5"/><path d="M44 9h7v24h-7zM40 5h15v4H40zM40 33h15v4H40z" fill="#41b9cc"/><path d="M62 11h14a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4h-5l-5 4v-4h-4a4 4 0 0 1-4-4V15a4 4 0 0 1 4-4Z" fill="none" stroke="#f1f5f9" stroke-width="2"/><circle cx="66" cy="20" r="1.5" fill="#f1f5f9"/><circle cx="71" cy="20" r="1.5" fill="#f1f5f9"/><circle cx="76" cy="20" r="1.5" fill="#f1f5f9"/></svg><span class="sr-only">Ouvrir ARGOS IA</span></button>
     <section id="argos-ai-panel" class="argos-ai-panel" role="dialog" aria-labelledby="argos-ai-title" aria-modal="false" hidden>
-      <header class="argos-ai-header"><div class="argos-ai-brand"><div class="argos-ai-hero-mark" aria-hidden="true"><svg viewBox="0 0 72 76"><path d="M8 67 29 8h10l21 59H44l-4-13H28l-5 13Z" fill="#175b73" transform="translate(8 5)"/><path d="M8 67 29 8h10l21 59H44l-4-13H28l-5 13Z" fill="#58c7d9"/><path d="m29 43 5-15 5 15Z" fill="#11182a"/></svg></div><div><strong id="argos-ai-title">Assistant ARGOS</strong><span>Orchestrateur multi-agents · Logistique & transport</span></div></div><button class="argos-ai-close" type="button" aria-label="Fermer l’assistant" onclick="toggleGlobalAIAssistant(false)">×</button></header>
+      <header class="argos-ai-header"><div class="argos-ai-brand"><div class="argos-ai-hero-mark" aria-hidden="true"><svg viewBox="0 0 72 76"><path d="M8 67 29 8h10l21 59H44l-4-13H28l-5 13Z" fill="#175b73" transform="translate(8 5)"/><path d="M8 67 29 8h10l21 59H44l-4-13H28l-5 13Z" fill="#58c7d9"/><path d="m29 43 5-15 5 15Z" fill="#11182a"/></svg></div><div><strong id="argos-ai-title">Assistant ARGOS</strong><span>Orchestrateur multi-agents · Logistique & transport</span></div></div><div class="argos-ai-header-actions"><button class="argos-ai-size" type="button" aria-label="Réduire la largeur" title="Réduire la largeur" onclick="resizeAIAssistant('width',-80)">W−</button><button class="argos-ai-size" type="button" aria-label="Augmenter la largeur" title="Augmenter la largeur" onclick="resizeAIAssistant('width',80)">W+</button><button class="argos-ai-size" type="button" aria-label="Réduire la hauteur" title="Réduire la hauteur" onclick="resizeAIAssistant('height',-80)">H−</button><button class="argos-ai-size" type="button" aria-label="Augmenter la hauteur" title="Augmenter la hauteur" onclick="resizeAIAssistant('height',80)">H+</button><button class="argos-ai-size" type="button" aria-label="Taille par défaut" title="Taille par défaut" onclick="resetAIAssistantSize()">↺</button><button class="argos-ai-close" type="button" aria-label="Fermer l’assistant" onclick="toggleGlobalAIAssistant(false)">×</button></div></header>
       <div id="ai-chat-messages" class="argos-ai-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
       <nav class="argos-ai-suggestions" aria-label="Exemples de questions à poser à l’assistant">
         <span>Essayez une question</span>
@@ -1488,7 +1547,82 @@ function mountGlobalAIAssistant(){
       <form class="argos-ai-form" onsubmit="event.preventDefault();sendAIMessage()"><label class="sr-only" for="ai-chat-input">Votre question à l’assistant ARGOS</label><textarea id="ai-chat-input" rows="2" maxlength="4000" placeholder="Posez une question aux agents ARGOS…" required></textarea><button id="ai-chat-send" class="argos-ai-send" type="submit" aria-label="Envoyer la question"><i class="fas fa-paper-plane" aria-hidden="true"></i></button></form>
     </section>`;
   document.body.appendChild(root);
+  applyAIAssistantSize();
+  bindAIPanelResizers();
 }
+
+const AI_PANEL_SIZE_KEY='argosAIPanelSizeV1';
+function applyAIAssistantSize(){
+  const panel=document.getElementById('argos-ai-panel');
+  if(!panel) return;
+  let size={};
+  try{size=JSON.parse(localStorage.getItem(AI_PANEL_SIZE_KEY)||'{}')||{};}catch(_error){}
+  const mobile=window.matchMedia('(max-width: 600px)').matches;
+  const maxWidth=Math.max(320,window.innerWidth-(mobile?24:48));
+  const maxHeight=Math.max(320,window.innerHeight-110);
+  const width=Math.min(maxWidth,Math.max(mobile?280:340,Number(size.width)||(mobile?maxWidth:420)));
+  const height=Math.min(maxHeight,Math.max(320,Number(size.height)||(mobile?Math.min(620,Math.floor(window.innerHeight*.7)):620)));
+  panel.style.width=`${width}px`;
+  panel.style.height=`${height}px`;
+}
+function bindAIPanelResizers(){
+  const panel=document.getElementById('argos-ai-panel');
+  if(!panel || panel.dataset.resizersBound) return;
+  panel.dataset.resizersBound='true';
+  [
+    {axis:'width',edge:'left',cursor:'ew-resize'},
+    {axis:'height',edge:'bottom',cursor:'ns-resize'},
+    {axis:'both',edge:'corner',cursor:'nesw-resize'}
+  ].forEach(({axis,edge,cursor})=>{
+    const handle=document.createElement('div');
+    handle.className=`argos-ai-resize-handle is-${edge}`;
+    handle.setAttribute('role','separator');
+    handle.setAttribute('aria-label',edge==='left'?'Glisser pour ajuster la largeur':edge==='bottom'?'Glisser pour ajuster la hauteur':'Glisser pour ajuster la largeur et la hauteur');
+    handle.style.cursor=cursor;
+    handle.addEventListener('pointerdown',event=>{
+      if(event.button!==0) return;
+      event.preventDefault();
+      const start={x:event.clientX,y:event.clientY,width:panel.getBoundingClientRect().width,height:panel.getBoundingClientRect().height};
+      handle.setPointerCapture?.(event.pointerId);
+      const move=moveEvent=>{
+        const dx=moveEvent.clientX-start.x,dy=moveEvent.clientY-start.y;
+        const mobile=window.matchMedia('(max-width: 600px)').matches;
+        const maxWidth=Math.max(280,window.innerWidth-(mobile?24:48));
+        const maxHeight=Math.max(320,window.innerHeight-110);
+        const next={
+          width:Math.round(Math.max(mobile?280:340,Math.min(maxWidth,start.width-(edge==='left'?dx:edge==='corner'?dx:0)))),
+          height:Math.round(Math.max(320,Math.min(maxHeight,start.height-(edge==='bottom'?dy:edge==='corner'?dy:0))))
+        };
+        panel.style.width=`${next.width}px`;panel.style.height=`${next.height}px`;
+        try{localStorage.setItem(AI_PANEL_SIZE_KEY,JSON.stringify(next));}catch(_error){}
+      };
+      const stop=()=>{
+        handle.removeEventListener('pointermove',move);
+        handle.removeEventListener('pointerup',stop);
+        handle.removeEventListener('pointercancel',stop);
+      };
+      handle.addEventListener('pointermove',move);
+      handle.addEventListener('pointerup',stop,{once:true});
+      handle.addEventListener('pointercancel',stop,{once:true});
+    });
+    panel.appendChild(handle);
+  });
+}
+function resizeAIAssistant(axis,delta){
+  const panel=document.getElementById('argos-ai-panel');
+  if(!panel) return;
+  const current={width:parseInt(panel.style.width,10)||420,height:parseInt(panel.style.height,10)||620};
+  current[axis]+=delta;
+  try{localStorage.setItem(AI_PANEL_SIZE_KEY,JSON.stringify(current));}catch(_error){}
+  applyAIAssistantSize();
+}
+function resetAIAssistantSize(){
+  try{localStorage.removeItem(AI_PANEL_SIZE_KEY);}catch(_error){}
+  const panel=document.getElementById('argos-ai-panel');
+  if(panel){panel.style.width='';panel.style.height='';}
+  applyAIAssistantSize();
+}
+if(typeof window!=='undefined') window.addEventListener('resize',()=>applyAIAssistantSize());
 
 function toggleGlobalAIAssistant(force){
   mountGlobalAIAssistant();
@@ -1586,7 +1720,11 @@ async function sendAIMessage(msgText=null, selectedBoxIds=null, alreadyDisplayed
     });
     
     const data = await res.json();
-    if(!res.ok) throw new Error(data.error || `Serveur IA erreur ${res.status}`);
+    if(!res.ok){
+      const error=new Error(data.error || `Serveur IA erreur ${res.status}`);
+      error.traceId=data.trace_id||null;
+      throw error;
+    }
     
     if(data.status==='needs_container_selection'){
       if(loading) loading.remove();
@@ -1612,7 +1750,7 @@ async function sendAIMessage(msgText=null, selectedBoxIds=null, alreadyDisplayed
     const sources=Array.isArray(data.sources)?data.sources:[];
     const agentResults=Array.isArray(data.agent_results)?data.agent_results:[];
     const agentLine=document.createElement('div');
-    agentLine.textContent=agents.length?`Agents consultés : ${agents.map(a=>typeof a==='string'?a:(a.name||a.id||'agent')).join(' · ')}`:'Aucun agent déclaré par l’orchestrateur.';
+    agentLine.textContent=agents.length?`Agents consultés : ${agents.map(a=>typeof a==='string'?a:(a.name||a.id||'agent')).join(' · ')}`:'Aucun agent consulté n’a été retourné pour cette réponse.';
     metadata.appendChild(agentLine);
     if(agentResults.length){
       const outcomes=document.createElement('div');
@@ -1652,7 +1790,8 @@ async function sendAIMessage(msgText=null, selectedBoxIds=null, alreadyDisplayed
     answer?.appendChild(metadata);
   } catch(e){
     if(loading) loading.remove();
-    addAIMessage(`<span style="color:var(--red)">Erreur IA : ${formatAIReply(e.message)}</span>`);
+    const trace=e.traceId?`<br><small>Trace : ${formatAIReply(e.traceId)}</small>`:'';
+    addAIMessage(`<span style="color:var(--red)">Erreur IA : ${formatAIReply(e.message)}${trace}</span>`);
   } finally {
     input.disabled = false;
     if(send) send.disabled=false;
@@ -1673,12 +1812,13 @@ function renderAIContainerSelection(containers){
   }
   const options=containers.map(item=>{
     const id=String(item.black_box_id);
-    const label=String(item.label || item.container_id || `Boîte ${id}`);
+    const label=String(item.label || item.box_label || item.container_id || `Boîte #${id}`);
     const safeId=formatAIReply(id), safeLabel=formatAIReply(label);
     const checked=AI_CHAT_BLACK_BOX_ID && String(AI_CHAT_BLACK_BOX_ID)===id ? ' checked' : '';
-    return `<label class="argos-ai-container-option"><input type="checkbox" name="ai-container" value="${safeId}"${checked}><span><strong>${safeLabel}</strong><small>Boîte ARGOS ${safeId}</small></span></label>`;
+    const detail=item.container_id?'Données de la boîte · conteneur associé':'Boîte sans conteneur associé · données disponibles selon le profil';
+    return `<label class="argos-ai-container-option"><input type="checkbox" name="ai-container" value="${safeId}"${checked}><span><strong>${safeLabel}</strong><small>${detail}</small></span></label>`;
   }).join('');
-  block.innerHTML=`<form onsubmit="event.preventDefault();submitAIContainerSelection(this)"><strong>Choisissez le périmètre d’analyse</strong><div class="argos-ai-container-options">${options}</div><button class="argos-ai-scope-submit" type="submit">Analyser les conteneurs sélectionnés</button></form>`;
+  block.innerHTML=`<form onsubmit="event.preventDefault();submitAIContainerSelection(this)"><strong>Choisissez le périmètre d’analyse · ${containers.length} boîte(s) autorisée(s)</strong><div class="argos-ai-container-options">${options}</div><button class="argos-ai-scope-submit" type="submit">Analyser les boîtes sélectionnées</button></form>`;
   messages.appendChild(block);
   messages.scrollTop=messages.scrollHeight;
 }

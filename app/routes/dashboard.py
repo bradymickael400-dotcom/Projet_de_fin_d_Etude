@@ -101,6 +101,61 @@ def _visible_boites_for(role, user_id):
     return []
 
 
+def _persist_ai_risk_notifications(agent_results, selected_box_ids, identity, trace_id):
+    """Persiste les signaux de l'agent de risque dans le périmètre choisi."""
+    created = []
+
+    def visit(item):
+        if not isinstance(item, dict):
+            return
+        data = item.get("data") or {}
+        if item.get("agent_id") == "risk_assessor":
+            level = str(data.get("risk_level") or "").lower()
+            forecast = data.get("forecast") or {}
+            signal_values = data.get("signals") or forecast.get("signals") or []
+            signals = [str(value)[:100] for value in signal_values[:10]]
+            box_id = str(data.get("black_box_id") or (
+                selected_box_ids[0] if len(selected_box_ids) == 1 else ""
+            ))
+            if level in {"warning", "critical"} and signals and box_id in selected_box_ids:
+                message = (
+                    f"Alerte IA ARGOS — niveau {'critique' if level == 'critical' else 'à surveiller'} "
+                    f"pour la boîte #{box_id}. Signaux observés : {', '.join(signals)}. "
+                    "Évaluation déterministe à partir des mesures disponibles; vérifier les données et le contexte."
+                )
+                exists = db.session.execute(text("""
+                    SELECT 1 FROM notifications
+                    WHERE type='AI_RISK_ALERT' AND initiator_id=:trace
+                      AND id_boite=:box LIMIT 1
+                """), {"trace": trace_id, "box": int(box_id)}).scalar()
+                if not exists:
+                    db.session.execute(text("""
+                        INSERT INTO notifications
+                            (type,message,cible_role,id_boite,initiator_id)
+                        VALUES('AI_RISK_ALERT',:message,'all',:box,:trace)
+                    """), {"message": message, "box": int(box_id), "trace": trace_id})
+                    from app.regulatory.history import record_decision
+                    record_decision(
+                        identity=identity, black_box_id=int(box_id),
+                        subject_type="ai_risk_notification", subject_id=trace_id,
+                        event_type="AI_RISK_NOTIFICATION",
+                        action=f"Notification IA de risque ({level}) créée",
+                        reaction=message,
+                        remarks={"agent_id": "risk_assessor", "risk_level": level,
+                                 "signals": signals, "trace_id": trace_id},
+                        source_keys=["ARGOS_AGENT_RULES", "ARGOS_IOT_TELEMETRY", "ARGOS_GPS_POSITION"],
+                        trace_id=trace_id,
+                    )
+                    created.append({"black_box_id": int(box_id), "type": "AI_RISK_ALERT",
+                                    "severity": "danger" if level == "critical" else "warning"})
+        for child in data.get("consumed_results", []):
+            visit(child)
+
+    for result in agent_results or []:
+        visit(result)
+    return created
+
+
 def _append_boites_filter(parts, params, boites, column="id_boite", prefix="bf"):
     if boites is None:
         return True
@@ -777,12 +832,15 @@ def get_owner_dashboard():
 @dash_bp.route('/api/ai/chat', methods=['POST'])
 @limiter.limit("20/hour")
 def ai_chat():
+    return _process_ai_chat_request(current_identity(), request.get_json(silent=True) or {})
+
+
+def _process_ai_chat_request(identity, data):
+    """Traitement commun de l'assistant avec contrôle serveur du périmètre choisi."""
     from app.agents.audit import persist_agent_run
     from app.agents.orchestrator import run_agent_request
     from app.llm.gemini import GeminiToolProvider
 
-    identity = current_identity()
-    data = request.get_json(silent=True) or {}
     message = data.get("message")
     if not isinstance(message, str) or not message.strip():
         return jsonify({"error": "Le message est requis."}), 400
@@ -850,7 +908,22 @@ def ai_chat():
     try:
         result = run_agent_request(
             message, identity, provider or GeminiToolProvider(),
-            black_box_ids=selected, trace_id=trace_id,
+            black_box_ids=selected,
+            selected_container_refs={
+                item["black_box_id"]: item["container_id"]
+                for item in available
+                if item["black_box_id"] in selected and item.get("container_id")
+            },
+            hidden_identifiers=[
+                value
+                for item in available if item["black_box_id"] not in selected
+                for value in (item.get("black_box_id"), item.get("container_id"), item.get("label"))
+                if value and not str(value).isdigit()
+            ],
+            trace_id=trace_id,
+        )
+        result["notifications_created"] = _persist_ai_risk_notifications(
+            result.get("agent_results"), selected, identity, trace_id
         )
         from app.regulatory.history import search_regulatory_sources
         regulatory_candidates = search_regulatory_sources(message)
@@ -919,7 +992,83 @@ def ai_chat():
             db.session.commit()
         except Exception:
             db.session.rollback()
+        if getattr(getattr(e, "response", None), "status_code", None) == 429:
+            return jsonify({
+                "error": "Le service Gemini a atteint sa limite de requêtes. Réessayez plus tard.",
+                "code": "LLM_RATE_LIMITED", "trace_id": trace_id,
+            }), 429
         return jsonify({"error": "Échec de l'assistant ARGOS.", "trace_id": trace_id}), 502
+
+
+@dash_bp.route('/api/ai/policy-scenarios/<scenario_id>/run', methods=['POST'])
+@limiter.limit("10/hour")
+def run_ai_policy_scenario(scenario_id):
+    """Rejoue une simulation de politique publique avec rôles institutionnels fictifs."""
+    from app.agents.policy_scenario import run_policy_scenario
+    from app.agents.policy_scenario_audit import persist_policy_scenario
+
+    identity = current_identity()
+    data = request.get_json(silent=True) or {}
+    use_llm = data.get("use_llm", False)
+    if not isinstance(use_llm, bool):
+        return jsonify({"error": "use_llm doit être un booléen."}), 400
+    permitted_roles = {"superadmin", "owner", "company", "client", "driver", "port_authority"}
+    if identity.get("role") not in permitted_roles:
+        return jsonify({"error": "Rôle non autorisé pour la démonstration ARGOS."}), 403
+    provider = None
+    if use_llm:
+        if not current_app.config.get("API_KEY"):
+            return jsonify({"error": "Fournisseur Gemini non configuré côté serveur."}), 503
+        from app.llm.gemini import GeminiToolProvider
+        provider = GeminiToolProvider()
+    try:
+        result = run_policy_scenario(scenario_id, provider=provider, identity=identity)
+    except ValueError:
+        return jsonify({"error": "Scénario inconnu."}), 404
+    result["audit_persisted"] = persist_policy_scenario(result, identity)
+    if not result["audit_persisted"]:
+        result["audit_warning"] = "Le rejeu est retourné, mais le journal DB n’a pas confirmé sa persistance."
+    return jsonify(result), 200
+
+
+@dash_bp.route('/api/ai/policy-scenarios/runs/<trace_id>', methods=['GET'])
+@limiter.limit("60/hour")
+def get_ai_policy_scenario_run(trace_id):
+    """Relit un rejeu synthétique appartenant à l'acteur connecté, ou au superadmin."""
+    import uuid
+    from app.security import current_identity
+
+    try:
+        trace_id = str(uuid.UUID(trace_id))
+    except (ValueError, TypeError, AttributeError):
+        return jsonify({"error": "Identifiant de trace invalide."}), 400
+    identity = current_identity()
+    if not identity:
+        return jsonify({"error": "Authentification requise."}), 401
+    try:
+        row = db.session.execute(text("""
+            SELECT scenario_id, actor_role, actor_id, result, created_at
+            FROM brady.policy_scenario_runs
+            WHERE trace_id=:trace_id
+              AND (:is_superadmin OR (actor_role=:role AND actor_id=:actor_id))
+        """), {
+            "trace_id": trace_id,
+            "is_superadmin": identity.get("role") == "superadmin",
+            "role": str(identity.get("role") or ""),
+            "actor_id": str(identity.get("user_id") or ""),
+        }).fetchone()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Lecture trace de scénario impossible trace_id=%s", trace_id)
+        return jsonify({"error": "Journal de scénario indisponible; vérifier la migration dédiée."}), 503
+    if not row:
+        return jsonify({"error": "Trace absente ou accès refusé."}), 404
+    return jsonify({
+        "scenario_id": row.scenario_id,
+        "actor_role": row.actor_role,
+        "created_at": row.created_at.isoformat(),
+        "result": row.result,
+    })
 
 
 def _ai_out_of_scope_sector(message):
@@ -941,26 +1090,45 @@ def _ai_out_of_scope_sector(message):
 
 
 def _ai_available_containers(identity):
-    """Liste minimale des boîtes visibles par l'identité authentifiée."""
+    """Boîtes non archivées visibles par l'identité, même sans conteneur associé."""
     role, user_id = identity.get("role"), identity.get("user_id")
-    if role not in {"superadmin", "owner", "company", "client", "driver"}:
+    if role not in {"superadmin", "owner", "company", "client", "driver", "port_authority"}:
         return []
     visible = _visible_boites_for(role, user_id)
     query = """
         SELECT b.id_boite, c.id_conteneurs, b.numero_serie
         FROM boite_noir b
         LEFT JOIN conteneurs c ON c.id_conteneurs = b.id_conteneurs
+        WHERE COALESCE(b.archived, FALSE) = FALSE
     """
     params = {}
     if visible is not None:
         if not visible:
             return []
         keys = [f"box{i}" for i in range(len(visible))]
-        query += " WHERE b.id_boite IN (" + ",".join(f":{key}" for key in keys) + ")"
+        query += " AND b.id_boite IN (" + ",".join(f":{key}" for key in keys) + ")"
         params.update({key: value for key, value in zip(keys, visible)})
+    if role == "client":
+        query += """
+          AND EXISTS (
+              SELECT 1 FROM abonner a
+              WHERE a.id_boite = b.id_boite
+                AND CAST(a.id_cni AS TEXT) = :actor_id
+                AND LOWER(COALESCE(a.status, '')) = 'actif'
+          )
+        """
+        params["actor_id"] = str(user_id)
     rows = db.session.execute(text(query + " ORDER BY b.id_boite"), params).fetchall()
-    return [{
-        "black_box_id": str(row[0]),
-        "container_id": str(row[1]) if row[1] is not None else None,
-        "label": str(row[1] or row[2] or f"Boîte {row[0]}"),
-    } for row in rows]
+    available = []
+    for row in rows:
+        box_id, container_id, serial = row
+        box_label = str(serial or f"Boîte #{box_id}")
+        container_ref = str(container_id) if container_id is not None else None
+        label = f"{box_label} — conteneur {container_ref}" if container_ref else f"{box_label} — sans conteneur associé"
+        available.append({
+            "black_box_id": str(box_id),
+            "container_id": container_ref,
+            "box_label": box_label,
+            "label": label,
+        })
+    return available

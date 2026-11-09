@@ -1,0 +1,106 @@
+{
+  "model_id": "argos_demo_anomaly_logistic_v2",
+  "datasets": [
+    {
+      "dataset": "datasets/argos_demo_two_routes.json",
+      "sample_count": 240,
+      "scenario_count": 4,
+      "stable_samples": 173,
+      "simulated_anomaly_samples": 67
+    },
+    {
+      "dataset": "datasets/argos_central_africa_60min.json",
+      "sample_count": 61,
+      "scenario_count": 1,
+      "stable_samples": 43,
+      "simulated_anomaly_samples": 18
+    }
+  ],
+  "dataset_synthetic": true,
+  "sample_count": 301,
+  "scenario_count": 5,
+  "class_counts": {
+    "stable": 216,
+    "simulated_anomaly": 85
+  },
+  "validation": "leave_one_scenario_out",
+  "folds": [
+    {
+      "held_out_scenario": "ARGOS-CENTRAL-AFRICA-60MIN-v1",
+      "samples": 61,
+      "positive_samples": 18,
+      "accuracy": 0.8852,
+      "precision": 1.0,
+      "recall": 0.6111,
+      "confusion_matrix": {
+        "true_positive": 11,
+        "true_negative": 43,
+        "false_positive": 0,
+        "false_negative": 7
+      }
+    },
+    {
+      "held_out_scenario": "bertoua_yaounde",
+      "samples": 60,
+      "positive_samples": 22,
+      "accuracy": 0.9167,
+      "precision": 1.0,
+      "recall": 0.7727,
+      "confusion_matrix": {
+        "true_positive": 17,
+        "true_negative": 38,
+        "false_positive": 0,
+        "false_negative": 5
+      }
+    },
+    {
+      "held_out_scenario": "china_cameroon",
+      "samples": 60,
+      "positive_samples": 16,
+      "accuracy": 0.9,
+      "precision": 1.0,
+      "recall": 0.625,
+      "confusion_matrix": {
+        "true_positive": 10,
+        "true_negative": 44,
+        "false_positive": 0,
+        "false_negative": 6
+      }
+    },
+    {
+      "held_out_scenario": "douala_owendo_live",
+      "samples": 60,
+      "positive_samples": 9,
+      "accuracy": 0.9333,
+      "precision": 1.0,
+      "recall": 0.5556,
+      "confusion_matrix": {
+        "true_positive": 5,
+        "true_negative": 51,
+        "false_positive": 0,
+        "false_negative": 4
+      }
+    },
+    {
+      "held_out_scenario": "douala_port_cold_chain",
+      "samples": 60,
+      "positive_samples": 20,
+      "accuracy": 0.7333,
+      "precision": 1.0,
+      "recall": 0.2,
+      "confusion_matrix": {
+        "true_positive": 4,
+        "true_negative": 40,
+        "false_positive": 0,
+        "false_negative": 16
+      }
+    }
+  ],
+  "mean_metrics": {
+    "accuracy": 0.8737,
+    "precision": 1.0,
+    "recall": 0.5529
+  },
+  "artifact": "models/argos_demo_anomaly_logistic_v2.json",
+  "interpretation": "Pipeline demonstration only; leave-one-scenario-out metrics measure agreement with synthetic scenario labels, not real shipment performance. The regional source inventory is not model training data."
+}

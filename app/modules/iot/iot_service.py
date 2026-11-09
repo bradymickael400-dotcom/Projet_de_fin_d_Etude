@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db
 from app.modules.iot import repository as repo
+from app.modules.iot.collector import collect_telemetry
 from app.modules.iot.normalizer import (
     normalize_telemetry_quality,
     telemetry_to_event_payload,
@@ -176,6 +177,18 @@ def _persist_validated_telemetry(validated, raw_id, device, relation, remote_add
         db.session.rollback()
         import logging
         logging.getLogger(__name__).exception("Évaluation proactive des risques indisponible")
+    try:
+        from app.services.route_monitor_service import evaluate_route_position
+        position = validated.get("position") or {}
+        evaluate_route_position(
+            relation.black_box_id, position.get("latitude"), position.get("longitude"),
+            validated["timestamp"], position.get("accuracy", 0),
+            device.device_uid, validated["sequence"],
+        )
+    except Exception:
+        db.session.rollback()
+        import logging
+        logging.getLogger(__name__).exception("Évaluation du corridor de route indisponible")
     opening_alert = event_payload.get("alert") or {}
     if opening_alert.get("raised") and opening_alert.get("label") == "OUVERTURE_CONTENEUR":
         from app.utils import _sceller_evenement
@@ -201,10 +214,9 @@ def _persist_validated_telemetry(validated, raw_id, device, relation, remote_add
 
 def ingest_telemetry(payload, api_key, remote_addr=None):
     repo.ensure_iot_schema()
-    raw_id = None
     try:
-        validated = validate_telemetry_payload(payload)
-        raw_id = repo.insert_raw_message(payload, "telemetry", remote_addr, "VALIDATED")
+        # Node C collects input SRC messages and hands validated records to PP.
+        raw_id, validated = collect_telemetry(payload, remote_addr)
         device = authenticate_device(validated["device_uid"], api_key)
         relation = repo.get_active_black_box_for_device(device.id)
         return _persist_validated_telemetry(
@@ -215,12 +227,10 @@ def ingest_telemetry(payload, api_key, remote_addr=None):
         return {"status": "duplicate", "message": "messageId deja traite"}
     except Exception:
         db.session.rollback()
-        if raw_id is None:
-            try:
-                repo.insert_raw_message(payload or {}, "telemetry", remote_addr, "REJECTED", "validation/auth failed")
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
         raise
 
 
@@ -234,7 +244,9 @@ def ingest_direct_telemetry(payload, black_box_id, actor_role, actor_id, remote_
     repo.ensure_iot_schema()
     raw_id = None
     try:
-        validated = validate_telemetry_payload(payload)
+        # La passerelle Wi-Fi locale est une autre interface d'entrée du même
+        # nœud C; elle ne contourne ni le contrat de collecte ni la traçabilité.
+        raw_id, validated = collect_telemetry(payload, remote_addr, "direct_wifi_telemetry")
         reported_position_source = str(
             (payload.get("position") or {}).get("source")
             or payload.get("positionSource")
@@ -252,7 +264,6 @@ def ingest_direct_telemetry(payload, black_box_id, actor_role, actor_id, remote_
             raise IoTAuthError("Prototype direct inconnu ou revoque")
         relation = repo.get_active_black_box_for_device(device.id)
         _validate_binding_and_sequence(validated, device, relation)
-        raw_id = repo.insert_raw_message(payload, "direct_wifi_telemetry", remote_addr, "VALIDATED")
         return _persist_validated_telemetry(
             validated, raw_id, device, relation, remote_addr,
             "IOT_DIRECT_TELEMETRY_RECEIVED", actor_role, actor_id,
@@ -262,6 +273,10 @@ def ingest_direct_telemetry(payload, black_box_id, actor_role, actor_id, remote_
         return {"status": "duplicate", "message": "messageId deja traite"}
     except Exception:
         db.session.rollback()
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
         raise
 
 

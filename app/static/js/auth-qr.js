@@ -398,6 +398,7 @@ async function initPageScripts(page){
   if(page === 'map'){
     await loadContainerData();
     initMap('map-main', currentRole);
+    if(document.getElementById('map-auto-refresh')?.checked) scheduleMapRefresh();
   }
   if(page === 'sell')   initMap('map-sale', 'sell');
   if(page === 'stats'){
@@ -439,7 +440,7 @@ async function initPageScripts(page){
 function refreshCurrentView() {
     // Si on est sur la carte, on ne recharge pas le HTML, on bouge juste les points
     if (currentPage === 'map') {
-        if (typeof refreshMapMarkers === 'function') refreshMapMarkers();
+        if (typeof loadMapPositions === 'function') loadMapPositions();
         return;
     }
 

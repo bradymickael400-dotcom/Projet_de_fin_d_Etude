@@ -24,6 +24,7 @@ from app.utils import (
 from app.modules.iot.repository import ensure_iot_schema
 from app.modules.iot.iot_service import provision_device
 from app.modules.iot.security import generate_secret, hash_secret
+from app.services.shock_assessment import resolve_shock_threshold
 
 bn_bp = Blueprint("boites_noires", __name__)
 
@@ -305,7 +306,7 @@ def create_boite_noire():
             "tm": data.get("temp_max", 32),
             "ti": data.get("temp_min", -10),
             "hm": data.get("humi_max", 75),
-            "cm": data.get("choc_max", 5),
+            "cm": resolve_shock_threshold(data.get("choc_max", 5)),
             "pm": data.get("pression_min", 995),
             "vm": data.get("vitesse_max", 90),
             "am": data.get("angle_max", 30)

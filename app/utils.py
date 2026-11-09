@@ -552,8 +552,13 @@ def check_securite_et_seuils(id_boite, temp, chocs):
             elif seuils.temp_min is not None and float(temp) < float(seuils.temp_min):
                 alertes.append(f"Température trop basse ({temp}°C < {seuils.temp_min})")
 
-        if chocs is not None and seuils.choc_max is not None and float(chocs) > float(seuils.choc_max):
-            alertes.append(f"Choc critique détecté ({chocs}G)")
+        from app.services.shock_assessment import resolve_shock_threshold
+        shock_threshold = resolve_shock_threshold(seuils.choc_max)
+        if chocs is not None and float(chocs) > shock_threshold:
+            alertes.append(
+                f"Choc au-dessus du seuil opérationnel ARGOS : {float(chocs):.2f} G "
+                f"(seuil {shock_threshold:.2f} G); dommage non confirmé"
+            )
 
         if alertes:
             msg = " | ".join(alertes)

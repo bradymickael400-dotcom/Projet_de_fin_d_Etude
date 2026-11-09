@@ -1,0 +1,1248 @@
+{
+  "dataset_id": "ARGOS-DOUALA-OWENDO-TERMINAL-v1",
+  "simulation": true,
+  "description": "Flux opérateur synthétique destiné à éprouver le pipeline réel ARGOS sur une boîte déjà associée à un conteneur. Modifier les points capteurs ou la position pour provoquer d’autres réponses des agents.",
+  "route": {
+    "name": "Port de Douala → Port d’Owendo (desserte de Libreville)",
+    "mode": "sea",
+    "waypoints": [
+      [
+        4.0583,
+        9.6856
+      ],
+      [
+        3.85,
+        9.52
+      ],
+      [
+        3.25,
+        9.25
+      ],
+      [
+        2.5,
+        9.05
+      ],
+      [
+        1.7,
+        9.02
+      ],
+      [
+        0.95,
+        9.18
+      ],
+      [
+        0.52,
+        9.36
+      ],
+      [
+        0.28548,
+        9.510584
+      ]
+    ],
+    "corridor_width_m": 1000,
+    "alert_threshold": 60
+  },
+  "interval_seconds": 10,
+  "samples": [
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 4.0583,
+        "longitude": 9.6856,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.15,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 4.005064,
+        "longitude": 9.643277,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 3.951828,
+        "longitude": 9.600954,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 3.898592,
+        "longitude": 9.558631,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 3.84459,
+        "longitude": 9.517566,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 3.782571,
+        "longitude": 9.489657,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 3.720551,
+        "longitude": 9.461748,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 3.658532,
+        "longitude": 9.433839,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.15,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 3.596513,
+        "longitude": 9.405931,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 3.534493,
+        "longitude": 9.378022,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 3.472474,
+        "longitude": 9.350113,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 3.410455,
+        "longitude": 9.322205,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 3.348435,
+        "longitude": 9.294296,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 3.286416,
+        "longitude": 9.266387,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 3.222872,
+        "longitude": 9.242766,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.15,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 3.157159,
+        "longitude": 9.225242,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 3.091445,
+        "longitude": 9.207719,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 3.025732,
+        "longitude": 9.190195,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 2.960019,
+        "longitude": 9.172672,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 2.894306,
+        "longitude": 9.155148,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 98,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 2.828593,
+        "longitude": 9.137625,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 2.762879,
+        "longitude": 9.120101,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.15,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 2.697166,
+        "longitude": 9.102578,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 2.631453,
+        "longitude": 9.085054,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 2.56574,
+        "longitude": 9.067531,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 2.500027,
+        "longitude": 9.050007,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 2.432066,
+        "longitude": 9.047452,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "simulated_anomaly",
+      "position": {
+        "latitude": 2.364104,
+        "longitude": 9.044904,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 3.6,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 2.296142,
+        "longitude": 9.042355,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.15,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 2.228181,
+        "longitude": 9.039807,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 2.160219,
+        "longitude": 9.037258,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 2.092257,
+        "longitude": 9.03471,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 2.024295,
+        "longitude": 9.032161,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 1.956334,
+        "longitude": 9.029613,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 1.888372,
+        "longitude": 9.027064,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 1.82041,
+        "longitude": 9.024515,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.15,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "simulated_anomaly",
+      "position": {
+        "latitude": 1.777448,
+        "longitude": 9.161967,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "simulated_anomaly",
+      "position": {
+        "latitude": 1.709817,
+        "longitude": 9.163239,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "simulated_anomaly",
+      "position": {
+        "latitude": 1.6433039999999999,
+        "longitude": 9.177428,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 1.551792,
+        "longitude": 9.051618,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 97,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 1.485279,
+        "longitude": 9.065807,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 96,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 1.418766,
+        "longitude": 9.079997,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 96,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 1.352253,
+        "longitude": 9.094186,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.15,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 96,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 1.28574,
+        "longitude": 9.108375,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 96,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 1.219227,
+        "longitude": 9.122565,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 96,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 1.152715,
+        "longitude": 9.136754,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 96,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 1.086202,
+        "longitude": 9.150944,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 96,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 1.019689,
+        "longitude": 9.165133,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 96,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 0.953176,
+        "longitude": 9.179322,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 96,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 0.890261,
+        "longitude": 9.205007,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.15,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 96,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 0.827526,
+        "longitude": 9.231268,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 96,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "simulated_anomaly",
+      "position": {
+        "latitude": 0.764791,
+        "longitude": 9.257529,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": true,
+        "batteryLevel": 96,
+        "securityAlarm": true
+      }
+    },
+    {
+      "event": "simulated_anomaly",
+      "position": {
+        "latitude": 0.702057,
+        "longitude": 9.28379,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": true,
+        "batteryLevel": 96,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 0.639322,
+        "longitude": 9.310051,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 96,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "simulated_anomaly",
+      "position": {
+        "latitude": 0.65,
+        "longitude": 9.39,
+        "speed": 0,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 96,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "simulated_anomaly",
+      "position": {
+        "latitude": 0.65,
+        "longitude": 9.39,
+        "speed": 0,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 96,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "simulated_anomaly",
+      "position": {
+        "latitude": 0.65,
+        "longitude": 9.39,
+        "speed": 0,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.15,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 96,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 0.399936,
+        "longitude": 9.437092,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 96,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 0.342708,
+        "longitude": 9.473838,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 96,
+        "securityAlarm": false
+      }
+    },
+    {
+      "event": "stable",
+      "position": {
+        "latitude": 0.28548,
+        "longitude": 9.510584,
+        "speed": 34,
+        "heading": 90,
+        "accuracy": 8
+      },
+      "sensors": {
+        "temperature": 22.5,
+        "humidity": 61.0,
+        "shock": 0.08,
+        "pressure": 1008.0,
+        "flameDetected": false,
+        "doorOpen": false,
+        "batteryLevel": 96,
+        "securityAlarm": false
+      }
+    }
+  ]
+}

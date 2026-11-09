@@ -13,6 +13,16 @@ from app.modules.iot.types import DEVICE_ACTIVE, DEVICE_PENDING, DEVICE_REVOKED
 
 def ensure_iot_schema(commit=True):
     db.session.execute(text("""
+        CREATE TABLE IF NOT EXISTS argos_device_mode_state (
+            black_box_id INTEGER PRIMARY KEY,
+            desired_modes JSONB NOT NULL DEFAULT '{}'::jsonb,
+            reported_modes JSONB NOT NULL DEFAULT '{}'::jsonb,
+            delivery_status VARCHAR(20) NOT NULL DEFAULT 'CONFIRMED',
+            updated_by VARCHAR(120),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+    """))
+    db.session.execute(text("""
         CREATE TABLE IF NOT EXISTS iot_devices (
             id SERIAL PRIMARY KEY,
             device_uid VARCHAR(80) NOT NULL UNIQUE,
@@ -427,6 +437,31 @@ def insert_sensor_and_position(raw_id, device, relation, event_payload, validate
         "quality": json.dumps(validated.get("quality") or {}),
         "measured_at": measured_at,
     })
+    if black_box_id:
+        modes_json = json.dumps(validated.get("modes") or {})
+        db.session.execute(text("""
+            INSERT INTO argos_device_mode_state
+                (black_box_id, desired_modes, reported_modes, delivery_status, updated_at)
+            VALUES (:box, CAST(:modes AS JSONB), CAST(:modes AS JSONB), 'CONFIRMED', NOW())
+            ON CONFLICT (black_box_id) DO UPDATE SET
+                reported_modes = EXCLUDED.reported_modes,
+                desired_modes = CASE
+                    WHEN argos_device_mode_state.delivery_status <> 'PENDING'
+                        THEN EXCLUDED.reported_modes
+                    ELSE argos_device_mode_state.desired_modes
+                END,
+                delivery_status = CASE
+                    WHEN argos_device_mode_state.delivery_status <> 'PENDING'
+                      OR NOT EXISTS (
+                          SELECT 1
+                          FROM jsonb_each(argos_device_mode_state.desired_modes) AS desired(key,value)
+                          WHERE EXCLUDED.reported_modes->desired.key IS DISTINCT FROM desired.value
+                      )
+                        THEN 'CONFIRMED'
+                    ELSE 'PENDING'
+                END,
+                updated_at = NOW()
+        """), {"box": black_box_id, "modes": modes_json})
     if not (position["latitude"] == 0 and position["longitude"] == 0):
         db.session.execute(text("""
             INSERT INTO positions
