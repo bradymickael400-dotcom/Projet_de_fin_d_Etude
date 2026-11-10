@@ -1,4 +1,4 @@
-ARGOS Document Corpus (SUPPTIC)
+ARGOS Document Corpus
 Deposit here only documents that the organization is authorized to use (.md, .txt, or .rst). The RAG engine reads local content, preserves the path and line numbers as provenance, and does not fabricate a corpus. Texts must be associated with knowledge_base/source_register.json, specifying authority, jurisdiction, version/date, URL, license, verification status, and access partitions.
 
 Institutional capabilities only consult paths declared as VERIFIED_PRIMARY_REFERENCE, VERIFIED_PRIMARY_EXCERPT_MANUALLY_TRANSCRIBED, or VERIFIED_SUMMARY_OF_PRIMARY in this manifest. An URL catalog or a TO_VERIFY source is not processed as ingested text. Team documents and synthetic events remain explicitly separated from legal sources.
