@@ -1,5 +1,5 @@
 
-# ARGOS — Graduation Project (End-of-Studies Project)
+# TEAM ARGOS SUP'PTIC CAMEROUN — Graduation Project (End-of-Studies Project)
 
 ARGOS is a Flask application for logistics, container supervision, IoT, and GPS positioning. The interface uses server APIs; the assistant routes through the backend multi-agent orchestrator.
 
