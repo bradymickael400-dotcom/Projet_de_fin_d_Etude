@@ -1,28 +1,8 @@
-# Corpus documentaire ARGOS
+ARGOS Document Corpus (SUPPTIC)
+Deposit here only documents that the organization is authorized to use (.md, .txt, or .rst). The RAG engine reads local content, preserves the path and line numbers as provenance, and does not fabricate a corpus. Texts must be associated with knowledge_base/source_register.json, specifying authority, jurisdiction, version/date, URL, license, verification status, and access partitions.
 
-Déposez ici uniquement des documents que l'organisation est autorisée à utiliser
-(`.md`, `.txt` ou `.rst`). Le moteur RAG lit le contenu local, conserve le chemin
-et les lignes comme provenance, et n'invente pas de corpus. Les textes doivent
-être associés à `knowledge_base/source_register.json`, avec autorité, juridiction,
-version/date, URL, licence, état de vérification et partitions d'accès.
+Institutional capabilities only consult paths declared as VERIFIED_PRIMARY_REFERENCE, VERIFIED_PRIMARY_EXCERPT_MANUALLY_TRANSCRIBED, or VERIFIED_SUMMARY_OF_PRIMARY in this manifest. An URL catalog or a TO_VERIFY source is not processed as ingested text. Team documents and synthetic events remain explicitly separated from legal sources.
 
-Les capacités institutionnelles ne consultent que les chemins déclarés comme
-`VERIFIED_PRIMARY_REFERENCE`, `VERIFIED_PRIMARY_EXCERPT_MANUALLY_TRANSCRIBED` ou `VERIFIED_SUMMARY_OF_PRIMARY` dans ce manifeste. Un catalogue d'URL ou une source
-`TO_VERIFY` n'est pas traité comme un texte ingéré. Les documents de l'équipe et
-événements synthétiques restent explicitement séparés des sources de droit.
+The WTO Agreement present in the corpus is a bounded summary of cited official excerpts, intended for international comparison. On its own, it does not demonstrate applicability to Cameroon. Cameroonian Law No. 2024/017 now includes selected excerpts transcribed and visually checked against the official scan. It constitutes neither the full text nor an independent legal validation; agents must specify these limitations and refer to the specific articles/pages used.
 
-L'Accord OMC présent dans le corpus est un résumé borné d'extraits officiels
-cités, destiné à une comparaison internationale. Il ne démontre pas à lui seul
-l'applicabilité au Cameroun. La loi camerounaise n° 2024/017 dispose maintenant
-d'extraits sélectionnés transcrits et contrôlés visuellement depuis le scan officiel.
-Il ne s'agit ni du texte complet ni d'une validation juridique indépendante; les
-agents doivent préciser ces limites et renvoyer aux articles/pages utilisés.
-
-Le corpus transport contient maintenant des synthèses bornées pour le secteur
-ferroviaire camerounais, le Code communautaire de la Marine marchande CEMAC,
-l'Acte OHADA sur le transport routier et des repères douaniers CEMAC, enregistrés
-avec leur provenance dans `../source_register.json`. Le PDF scanné de la loi
-ferroviaire est archivé dans `../source_files/`. Un inventaire de recherche
-`cameroon_transport_law_map.md` liste aussi les textes et procédures à compléter;
-son statut `TO_VERIFY` l'empêche d'être présenté comme une source juridique
-vérifiée aux capacités institutionnelles.
+The transport corpus now contains bounded summaries for the Cameroonian rail sector, the CEMAC Community Merchant Shipping Code, the OHADA Act on Road Transport, and CEMAC customs benchmarks, recorded with their provenance in ../source_register.json. The scanned PDF of the railway law is archived in ../source_files/. A research inventory cameroon_transport_law_map.md also lists texts and procedures to be completed; its TO_VERIFY status prevents it from being presented as a verified legal source to institutional capabilities.
